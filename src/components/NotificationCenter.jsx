@@ -298,43 +298,50 @@ export default function NotificationCenter({ user, roomId }) {
 
         {/* Dropdown Panel */}
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-80 sm:w-92 bg-panel/95 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
-            {/* Browser Notification Permission Banner (if not yet granted) */}
-            {permState === 'default' && (
-              <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 flex items-center justify-between gap-2.5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm">🔔</span>
-                    <p className="text-xs font-bold text-white">Browser Notifications</p>
+          <>
+            {/* Mobile backdrop overlay to tap outside and dismiss */}
+            <div
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] sm:hidden"
+              onClick={() => setOpen(false)}
+            />
+
+            <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 w-[94vw] max-w-sm sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full sm:mt-2 sm:w-92 bg-panel/95 border border-white/15 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] p-4 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+              {/* Browser Notification Permission Banner (if not yet granted) */}
+              {permState === 'default' && (
+                <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 flex items-center justify-between gap-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">🔔</span>
+                      <p className="text-xs font-bold text-white">Browser Notifications</p>
+                    </div>
+                    <p className="text-[10.5px] text-white/70 mt-0.5 leading-snug">
+                      Get instant alerts when friends invite you, even while in another tab.
+                    </p>
                   </div>
-                  <p className="text-[10.5px] text-white/70 mt-0.5 leading-snug">
-                    Get instant alerts when friends invite you, even while in another tab.
+                  <button
+                    type="button"
+                    onClick={handleRequestPermission}
+                    className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow shrink-0"
+                  >
+                    Enable
+                  </button>
+                </div>
+              )}
+
+              {permState === 'denied' && (
+                <div className="mb-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px]">
+                    <span>⚠️</span> Notifications Blocked in Browser
+                  </div>
+                  <p className="text-[10px] text-white/60 mt-0.5 leading-snug">
+                    Click the lock icon (🔒) in your browser address bar and allow Notifications.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRequestPermission}
-                  className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow shrink-0"
-                >
-                  Enable
-                </button>
-              </div>
-            )}
+              )}
 
-            {permState === 'denied' && (
-              <div className="mb-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
-                <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px]">
-                  <span>⚠️</span> Notifications Blocked in Browser
-                </div>
-                <p className="text-[10px] text-white/60 mt-0.5 leading-snug">
-                  Click the lock icon (🔒) in your browser address bar and allow Notifications.
-                </p>
-              </div>
-            )}
-
-            {/* Header with Tabs */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-              <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+              {/* Header with Tabs and Close Button */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3 gap-2">
+                <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 min-w-0">
                 <button
                   type="button"
                   onClick={() => setActiveTab('invites')}
@@ -373,15 +380,26 @@ export default function NotificationCenter({ user, roomId }) {
                 </button>
               </div>
 
-              {activeTab === 'invites' && unreadCount > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                {activeTab === 'invites' && unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkRead}
+                    className="text-[11px] text-green-400 hover:underline shrink-0 font-medium"
+                  >
+                    Mark read
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleMarkRead}
-                  className="text-[11px] text-green-400 hover:underline shrink-0"
+                  onClick={() => setOpen(false)}
+                  className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center text-xs transition active:scale-95"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Mark all read
+                  ✕
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Tab 1: Invites & Personal Notifications */}
@@ -564,8 +582,9 @@ export default function NotificationCenter({ user, roomId }) {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
+    </div>
     </>
   );
 }
