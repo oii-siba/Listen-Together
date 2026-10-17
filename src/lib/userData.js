@@ -1,5 +1,6 @@
 import { db, isFirebaseConfigured } from '../firebase';
-import { ref, set, update, remove, onValue, serverTimestamp } from './db';
+import { ref, get, set, update, remove, onValue, serverTimestamp } from './db';
+
 
 
 // Local storage fallback keys
@@ -109,6 +110,80 @@ export async function saveUserProfile(uid, profileData) {
   }
 }
 
+export function getFriendCode(uid) {
+  return `TT-${(uid || 'USER').slice(0, 6).toUpperCase()}`;
+}
+
+export async function registerUserDirectory(user) {
+  if (!user || !user.uid) return null;
+  const code = getFriendCode(user.uid);
+  const entry = {
+    uid: user.uid,
+    friendCode: code,
+    name: user.displayName || user.email?.split('@')[0] || 'TuneTogether User',
+    photo: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
+    email: user.email || '',
+    registeredAt: Date.now(),
+  };
+
+  // Local directory registry
+  const dir = getLocal('TT_USER_DIRECTORY', {});
+  dir[code] = entry;
+  dir[user.uid] = entry;
+  setLocal('TT_USER_DIRECTORY', dir);
+
+  // Firebase directory registry
+  if (isFirebaseConfigured) {
+    try {
+      await set(ref(db, `friend_directory/${code}`), entry);
+      await set(ref(db, `friend_directory_uids/${user.uid}`), entry);
+    } catch (err) {
+      console.warn('Could not register friend directory:', err);
+    }
+  }
+  return entry;
+}
+
+export async function lookupUserByCodeOrId(searchTerm) {
+  if (!searchTerm || typeof searchTerm !== 'string') return null;
+  const raw = searchTerm.trim().toUpperCase();
+  const withPrefix = raw.startsWith('TT-') ? raw : `TT-${raw}`;
+  const rawTrimmed = searchTerm.trim();
+
+  // 1. Try local storage directory
+  const localDir = getLocal('TT_USER_DIRECTORY', {});
+  if (localDir[withPrefix]) return localDir[withPrefix];
+  if (localDir[raw]) return localDir[raw];
+  if (localDir[rawTrimmed]) return localDir[rawTrimmed];
+
+  // 2. Try Firebase friend_directory
+  if (isFirebaseConfigured) {
+    try {
+      const snapCode = await get(ref(db, `friend_directory/${withPrefix}`));
+      if (snapCode.exists()) return snapCode.val();
+
+      const snapUid = await get(ref(db, `friend_directory_uids/${rawTrimmed}`));
+      if (snapUid.exists()) return snapUid.val();
+
+      const snapProfile = await get(ref(db, `users/${rawTrimmed}/profile`));
+      if (snapProfile.exists()) {
+        const p = snapProfile.val();
+        return {
+          uid: rawTrimmed,
+          friendCode: p.friendCode || getFriendCode(rawTrimmed),
+          name: p.displayName || 'TuneTogether User',
+          photo: p.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${rawTrimmed}`,
+          email: p.email || '',
+        };
+      }
+    } catch (e) {
+      console.warn('Firebase lookup error:', e);
+    }
+  }
+
+  return null;
+}
+
 // ---------------- FRIENDS SYSTEM ----------------
 export function getFriendsList(uid) {
   const raw = getLocal(`${FRIENDS_KEY}_${uid}`, []);
@@ -125,6 +200,7 @@ export function addFriend(uid, friend) {
   }
   return true;
 }
+
 
 export function removeFriend(uid, friendUid) {
   const list = getFriendsList(uid);

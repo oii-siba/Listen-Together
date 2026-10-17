@@ -166,6 +166,21 @@ export function push(refObj, value) {
   return childRef;
 }
 
+export function get(refObj) {
+  if (isFirebaseConfigured) {
+    return rtdb.get(refObj);
+  }
+  const store = getLocalStore();
+  const val = getByPath(store, refObj.path);
+  const snap = {
+    val: () => (val === undefined ? null : val),
+    exists: () => val !== undefined && val !== null,
+    key: refObj.path.split('/').filter(Boolean).pop() || null,
+  };
+  return Promise.resolve(snap);
+}
+
+
 export function onValue(refObj, callback, errorCallback) {
   if (isFirebaseConfigured) {
     return rtdb.onValue(refObj, callback, errorCallback);

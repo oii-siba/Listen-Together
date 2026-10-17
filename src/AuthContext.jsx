@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbSignOut } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from './firebase';
+import { registerUserDirectory } from './lib/userData';
 
 const AuthCtx = createContext(null);
 
@@ -16,12 +17,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user) {
+      registerUserDirectory(user).catch(() => {});
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (isFirebaseConfigured) {
       const unsub = onAuthStateChanged(auth, (u) => {
         if (u) {
           try {
             localStorage.removeItem('LT_DEMO_USER');
           } catch {}
+          registerUserDirectory(u).catch(() => {});
         }
         setUser(u);
         setLoading(false);
@@ -31,6 +39,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
 
   // Returns an error message string, or null on success / user-cancelled.
   const signIn = useCallback(async () => {

@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
-import { getFriendsList, addFriend, removeFriend, addNotification } from '../lib/userData';
+import {
+  getFriendsList,
+  addFriend,
+  removeFriend,
+  lookupUserByCodeOrId,
+  registerUserDirectory,
+  getFriendCode,
+} from '../lib/userData';
 
 export default function FriendsModal({ user, currentRoomId, onClose }) {
   const [friends, setFriends] = useState([]);
   const [friendCodeInput, setFriendCodeInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [searching, setSearching] = useState(false);
 
-  const myCode = `TT-${(user?.uid || 'USER').slice(0, 6).toUpperCase()}`;
+  const myCode = getFriendCode(user?.uid);
 
   useEffect(() => {
     if (!user) return;
+    registerUserDirectory(user).catch(() => {});
     setFriends(getFriendsList(user.uid));
   }, [user]);
 
@@ -20,34 +30,73 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleAddFriend = (e) => {
+  const handleAddFriend = async (e) => {
     e.preventDefault();
-    const clean = friendCodeInput.trim();
-    if (!clean) return;
+    const raw = friendCodeInput.trim();
+    if (!raw) return;
 
-    if (clean === myCode) {
-      setMsg('You cannot add your own code!');
+    const normalized = raw.toUpperCase();
+    const withPrefix = normalized.startsWith('TT-') ? normalized : `TT-${normalized}`;
+
+    // 1. Self check
+    if (
+      withPrefix === myCode ||
+      raw === user?.uid ||
+      (user?.email && raw.toLowerCase() === user.email.toLowerCase())
+    ) {
+      setIsError(true);
+      setMsg('You cannot add your own Friend Code!');
       return;
     }
 
-    const newFriend = {
-      uid: `friend-${Math.random().toString(36).substring(7)}`,
-      friendCode: clean.toUpperCase(),
-      name: clean.length > 8 ? clean.split('@')[0] : `Friend (${clean})`,
-      photo: `https://api.dicebear.com/7.x/bottts/svg?seed=${clean}`,
-      status: 'online',
-      listeningTo: 'TuneTogether Room',
-    };
+    setSearching(true);
+    setIsError(false);
+    setMsg('Searching user directory…');
 
-    const success = addFriend(user.uid, newFriend);
-    if (success) {
+    try {
+      const found = await lookupUserByCodeOrId(raw);
+      if (!found || !found.uid) {
+        setIsError(true);
+        setMsg(`❌ User not found! No user exists with code "${raw}". Please check the Friend Code.`);
+        return;
+      }
+
+      if (found.uid === user.uid) {
+        setIsError(true);
+        setMsg('You cannot add yourself as a friend!');
+        return;
+      }
+
+      const already = friends.some(
+        (f) => f.uid === found.uid || f.friendCode === found.friendCode
+      );
+      if (already) {
+        setIsError(true);
+        setMsg(`"${found.name}" is already in your friends list!`);
+        return;
+      }
+
+      const newFriend = {
+        uid: found.uid,
+        friendCode: found.friendCode || getFriendCode(found.uid),
+        name: found.name || 'Friend',
+        photo: found.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${found.uid}`,
+        status: 'online',
+        listeningTo: 'TuneTogether',
+      };
+
+      addFriend(user.uid, newFriend);
       setFriends(getFriendsList(user.uid));
       setFriendCodeInput('');
-      setMsg('Friend added successfully! 🎉');
-    } else {
-      setMsg('This friend is already in your list.');
+      setIsError(false);
+      setMsg(`Added ${newFriend.name} to your friends list! 🎉`);
+      setTimeout(() => setMsg(''), 4000);
+    } catch {
+      setIsError(true);
+      setMsg('Failed to find user. Please check the code.');
+    } finally {
+      setSearching(false);
     }
-    setTimeout(() => setMsg(''), 3000);
   };
 
   const handleRemoveFriend = (friendUid) => {
@@ -57,11 +106,10 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
 
   const inviteFriend = (friend) => {
     if (!currentRoomId) return;
-    // Send simulated in-app notification to that friend / record
     setMsg(`Room invite sent to ${friend.name}! 🚀`);
+    setIsError(false);
     setTimeout(() => setMsg(''), 3000);
   };
-
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -100,27 +148,38 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
         </div>
 
         {/* Add Friend Form */}
-        <form onSubmit={handleAddFriend} className="flex gap-2 mb-5">
+        <form onSubmit={handleAddFriend} className="flex gap-2 mb-4">
           <input
             value={friendCodeInput}
             onChange={(e) => setFriendCodeInput(e.target.value)}
-            placeholder="Enter Friend Code or Email…"
+            placeholder="Enter friend's Code (e.g. TT-A1B2C3)…"
             className="flex-1 bg-panel2 border border-white/10 rounded-full px-4 py-2.5 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
           />
           <button
             type="submit"
-            disabled={!friendCodeInput.trim()}
-            className="px-4 py-2.5 rounded-full bg-panel2 border border-white/10 font-bold text-xs text-white hover:bg-white/10 active:scale-95 transition disabled:opacity-40"
+            disabled={!friendCodeInput.trim() || searching}
+            className="px-4 py-2.5 rounded-full bg-panel2 border border-white/10 font-bold text-xs text-white hover:bg-white/10 active:scale-95 transition disabled:opacity-40 flex items-center gap-1.5"
           >
-            Add Friend
+            {searching ? (
+              <span className="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              'Add Friend'
+            )}
           </button>
         </form>
 
         {msg && (
-          <p className="text-xs text-center font-medium text-green-400 bg-green-500/10 border border-green-500/20 py-1.5 rounded-xl mb-4">
+          <div
+            className={`text-xs text-center font-medium py-2 px-3 rounded-xl mb-4 transition border ${
+              isError
+                ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                : 'bg-green-500/10 border-green-500/20 text-green-400'
+            }`}
+          >
             {msg}
-          </p>
+          </div>
         )}
+
 
         {/* Friends List */}
         <div>
