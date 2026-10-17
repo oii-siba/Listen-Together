@@ -5,6 +5,8 @@ import {
   markNotificationsRead,
   subscribeToRoomActivity,
   playNotificationChime,
+  acceptFriendRequest,
+  updateNotificationStatus,
 } from '../lib/userData';
 
 export default function NotificationCenter({ user, roomId }) {
@@ -25,7 +27,7 @@ export default function NotificationCenter({ user, roomId }) {
     }
   }, [roomId]);
 
-  // Subscribe to personal notifications (friend invites, etc.)
+  // Subscribe to personal notifications (friend invites, friend requests, etc.)
   useEffect(() => {
     if (!user?.uid) return;
     const unsub = subscribeToNotifications(user.uid, (list) => {
@@ -37,16 +39,19 @@ export default function NotificationCenter({ user, roomId }) {
         return;
       }
 
-      // Detect genuinely NEW unread invites
-      const newInvites = list.filter(
-        (n) => n.unread && !knownIdsRef.current.has(n.id) && n.roomId
+      // Detect genuinely NEW unread notifications (room invites or friend requests)
+      const newAlerts = list.filter(
+        (n) =>
+          n.unread &&
+          !knownIdsRef.current.has(n.id) &&
+          (n.roomId || n.type === 'friend_request' || n.type === 'friend_accepted')
       );
 
       // Update known IDs set
       list.forEach((n) => knownIdsRef.current.add(n.id));
 
-      if (newInvites.length > 0) {
-        const latest = newInvites[0];
+      if (newAlerts.length > 0) {
+        const latest = newAlerts[0];
         setActiveToast(latest);
         playNotificationChime();
         clearTimeout(toastTimerRef.current);
@@ -101,6 +106,29 @@ export default function NotificationCenter({ user, roomId }) {
     nav(`/room/${targetRoomId}`);
   };
 
+  const handleAccept = async (notif) => {
+    if (!user) return;
+    await acceptFriendRequest(user, notif);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notif.id ? { ...n, status: 'accepted', unread: false } : n))
+    );
+    if (activeToast?.id === notif.id) {
+      setActiveToast((prev) => (prev ? { ...prev, accepted: true } : null));
+      setTimeout(() => setActiveToast(null), 2500);
+    }
+  };
+
+  const handleDecline = (notif) => {
+    if (!user) return;
+    updateNotificationStatus(user.uid, notif.id, 'declined');
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notif.id ? { ...n, status: 'declined', unread: false } : n))
+    );
+    if (activeToast?.id === notif.id) {
+      setActiveToast(null);
+    }
+  };
+
   const toggleOpen = () => {
     setOpen((prev) => {
       const next = !prev;
@@ -130,9 +158,9 @@ export default function NotificationCenter({ user, roomId }) {
 
   return (
     <>
-      {/* Instant Floating Banner Toast when an invite arrives */}
+      {/* Instant Floating Banner Toast when an invite or friend request arrives */}
       {activeToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[92vw] bg-black/95 border-2 border-green-400 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] max-w-sm w-[92vw] bg-black/95 border-2 border-green-400 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
           <img
             src={activeToast.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${activeToast.senderUid}`}
             alt=""
@@ -140,20 +168,44 @@ export default function NotificationCenter({ user, roomId }) {
           />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-extrabold text-white truncate">
-              {activeToast.senderName} invited you! 🎧
+              {activeToast.type === 'friend_request'
+                ? `${activeToast.senderName} sent a friend request! 👥`
+                : activeToast.type === 'friend_accepted'
+                ? `${activeToast.senderName} accepted your request! 🎉`
+                : `${activeToast.senderName} invited you! 🎧`}
             </p>
             <p className="text-[11px] text-white/70 truncate">
-              Room: <span className="font-mono text-green-400 font-bold">{activeToast.roomId}</span>
+              {activeToast.type === 'friend_request'
+                ? `Code: ${activeToast.senderCode || 'Friend'}`
+                : activeToast.type === 'friend_accepted'
+                ? 'You are now friends!'
+                : `Room: ${activeToast.roomId}`}
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => handleJoin(activeToast.roomId)}
-              className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
-            >
-              Join Now
-            </button>
+            {activeToast.type === 'friend_request' ? (
+              activeToast.accepted ? (
+                <span className="text-xs font-extrabold text-green-400 bg-green-500/20 px-3 py-1.5 rounded-full">
+                  Friends ✓
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleAccept(activeToast)}
+                  className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
+                >
+                  Accept
+                </button>
+              )
+            ) : activeToast.roomId ? (
+              <button
+                type="button"
+                onClick={() => handleJoin(activeToast.roomId)}
+                className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
+              >
+                Join Now
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setActiveToast(null)}
@@ -200,7 +252,7 @@ export default function NotificationCenter({ user, roomId }) {
                       : 'text-white/60 hover:text-white'
                   }`}
                 >
-                  <span>Invites</span>
+                  <span>Requests & Invites</span>
                   {unreadCount > 0 && (
                     <span
                       className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${
@@ -246,7 +298,7 @@ export default function NotificationCenter({ user, roomId }) {
                 {notifications.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-2xl mb-1">📬</p>
-                    <p className="text-xs text-white/50 font-medium">No new invites or alerts.</p>
+                    <p className="text-xs text-white/50 font-medium">No new invites or requests.</p>
                     <p className="text-[11px] text-white/30 mt-0.5">When friends invite you, they'll appear here.</p>
                   </div>
                 ) : (
@@ -265,7 +317,7 @@ export default function NotificationCenter({ user, roomId }) {
                             <img
                               src={n.senderPhoto}
                               alt=""
-                              className="w-5 h-5 rounded-full border border-green-400/50 shrink-0"
+                              className="w-5 h-5 rounded-full border border-green-400/50 shrink-0 object-cover"
                             />
                           )}
                           <p className="font-bold text-white text-[12px] truncate">{n.title}</p>
@@ -281,7 +333,45 @@ export default function NotificationCenter({ user, roomId }) {
                       </div>
                       <p className="text-white/70 mt-1 leading-relaxed text-[11px]">{n.body}</p>
 
-                      {n.roomId && (
+                      {/* Action Buttons depending on type */}
+                      {n.type === 'friend_request' ? (
+                        n.status === 'accepted' ? (
+                          <div className="mt-2 text-right">
+                            <span className="text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-0.5 rounded-full">
+                              ✓ Friends now
+                            </span>
+                          </div>
+                        ) : n.status === 'declined' ? (
+                          <div className="mt-2 text-right">
+                            <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2.5 py-0.5 rounded-full">
+                              Declined
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 mt-2.5">
+                            <button
+                              type="button"
+                              onClick={() => handleAccept(n)}
+                              className="flex-1 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
+                            >
+                              Accept Friend
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDecline(n)}
+                              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white font-bold text-[11px] active:scale-95 transition"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        )
+                      ) : n.type === 'friend_accepted' ? (
+                        <div className="mt-2">
+                          <span className="text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-0.5 rounded-full">
+                            🎉 Connected as friends
+                          </span>
+                        </div>
+                      ) : n.roomId ? (
                         <button
                           type="button"
                           onClick={() => handleJoin(n.roomId)}
@@ -289,7 +379,7 @@ export default function NotificationCenter({ user, roomId }) {
                         >
                           <span>Join Room ({n.roomId})</span>
                         </button>
-                      )}
+                      ) : null}
                     </div>
                   ))
                 )}

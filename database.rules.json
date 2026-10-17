@@ -16,6 +16,13 @@
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid",
+        "friends": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$fuid": {
+            ".write": "auth != null"
+          }
+        },
         "notifications": {
           ".read": "auth != null",
           ".write": "auth != null",

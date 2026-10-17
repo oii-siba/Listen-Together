@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
   getFriendsList,
-  addFriend,
+  subscribeToFriends,
   removeFriend,
   lookupUserByCodeOrId,
   registerUserDirectory,
   getFriendCode,
   sendRoomInvite,
+  sendFriendRequest,
+  acceptFriendRequest,
+  updateNotificationStatus,
+  subscribeToNotifications,
 } from '../lib/userData';
-
 
 export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
   const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [friendCodeInput, setFriendCodeInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState('');
@@ -23,7 +27,23 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
   useEffect(() => {
     if (!user) return;
     registerUserDirectory(user).catch(() => {});
-    setFriends(getFriendsList(user.uid));
+    // Realtime subscription to friends list
+    const unsubFriends = subscribeToFriends(user.uid, (list) => {
+      setFriends(list);
+    });
+
+    // Realtime subscription to pending friend requests
+    const unsubNotifs = subscribeToNotifications(user.uid, (list) => {
+      const pending = list.filter(
+        (n) => n.type === 'friend_request' && n.status === 'pending'
+      );
+      setPendingRequests(pending);
+    });
+
+    return () => {
+      unsubFriends();
+      unsubNotifs();
+    };
   }, [user]);
 
   const copyMyCode = () => {
@@ -47,7 +67,7 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
       (user?.email && raw.toLowerCase() === user.email.toLowerCase())
     ) {
       setIsError(true);
-      setMsg('You cannot add your own Friend Code!');
+      setMsg('You cannot send a friend request to yourself!');
       return;
     }
 
@@ -65,7 +85,7 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
 
       if (found.uid === user.uid) {
         setIsError(true);
-        setMsg('You cannot add yourself as a friend!');
+        setMsg('You cannot send a friend request to yourself!');
         return;
       }
 
@@ -78,25 +98,23 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
         return;
       }
 
-      const newFriend = {
-        uid: found.uid,
-        friendCode: found.friendCode || getFriendCode(found.uid),
-        name: found.name || 'Friend',
-        photo: found.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${found.uid}`,
-        status: 'online',
-        listeningTo: 'TuneTogether',
-      };
-
-      addFriend(user.uid, newFriend);
-      setFriends(getFriendsList(user.uid));
-      setFriendCodeInput('');
-      setIsError(false);
-      setMsg(`Added ${newFriend.name} to your friends list! 🎉`);
-      setTimeout(() => setMsg(''), 4000);
+      const res = await sendFriendRequest(user, found);
+      if (res.success) {
+        setFriendCodeInput('');
+        setIsError(false);
+        setMsg(`Friend request sent to ${found.name}! 🚀 (They received a notification to accept)`);
+        setTimeout(() => setMsg(''), 5000);
+      } else if (res.reason === 'ALREADY_FRIENDS') {
+        setIsError(true);
+        setMsg(`"${found.name}" is already your friend!`);
+      } else {
+        setIsError(true);
+        setMsg('Could not send friend request. Please try again.');
+      }
     } catch (err) {
       setIsError(true);
       if (err?.message === 'FIREBASE_PERMISSION_DENIED') {
-        setMsg('⚠️ Firebase Database rules need to be updated in Firebase Console to allow friend search. Please update database.rules.json in Firebase Console.');
+        setMsg('⚠️ Firebase Database rules need to be updated in Firebase Console. Please update database.rules.json in Firebase Console.');
       } else {
         setMsg('Failed to find user. Please check the code.');
       }
@@ -105,6 +123,19 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
     }
   };
 
+  const handleAcceptRequest = async (notif) => {
+    await acceptFriendRequest(user, notif);
+    setMsg(`Accepted ${notif.senderName}'s friend request! 🎉 You are now friends.`);
+    setIsError(false);
+    setTimeout(() => setMsg(''), 4000);
+  };
+
+  const handleDeclineRequest = (notif) => {
+    updateNotificationStatus(user.uid, notif.id, 'declined');
+    setMsg(`Declined request.`);
+    setIsError(false);
+    setTimeout(() => setMsg(''), 2500);
+  };
 
   const handleRemoveFriend = (friendUid) => {
     const updated = removeFriend(user.uid, friendUid);
@@ -194,6 +225,59 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
           </div>
         )}
 
+
+        {/* Pending Friend Requests if any */}
+        {pendingRequests.length > 0 && (
+          <div className="mb-5 bg-green-500/10 border border-green-500/30 rounded-2xl p-3.5 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-green-400 mb-2.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span>📬</span>
+                <span>Incoming Friend Requests</span>
+              </span>
+              <span className="text-[10px] bg-green-500 text-black px-2 py-0.5 rounded-full font-extrabold">
+                {pendingRequests.length}
+              </span>
+            </h3>
+            <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+              {pendingRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="bg-black/40 border border-white/5 rounded-xl p-2.5 flex items-center justify-between gap-2.5"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src={req.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${req.senderUid}`}
+                      alt=""
+                      className="w-8 h-8 rounded-full border border-green-400/60 shrink-0 object-cover"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-bold text-xs text-white truncate">{req.senderName}</p>
+                      <p className="text-[10px] text-white/50 truncate font-mono">
+                        {req.senderCode || ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAcceptRequest(req)}
+                      className="px-3 py-1 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeclineRequest(req)}
+                      className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white font-bold text-[11px] transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Friends List */}
         <div>

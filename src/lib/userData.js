@@ -219,6 +219,76 @@ export function getFriendsList(uid) {
   return raw.filter((f) => !f.uid?.startsWith('bot-'));
 }
 
+export function subscribeToFriends(uid, callback) {
+  if (!uid) return () => {};
+
+  const emit = (fbData) => {
+    const localList = getFriendsList(uid);
+    const fbList = fbData
+      ? Object.entries(fbData).map(([key, val]) => ({ uid: key, ...val }))
+      : [];
+    const map = new Map();
+    [...fbList, ...localList].forEach((item) => {
+      if (item && item.uid && !item.uid.startsWith('bot-')) {
+        map.set(item.uid, item);
+      }
+    });
+    const merged = Array.from(map.values());
+    setLocal(`${FRIENDS_KEY}_${uid}`, merged);
+    callback(merged);
+  };
+
+  // Initial local emit
+  emit(null);
+
+  let fbUnsub = () => {};
+  if (isFirebaseConfigured) {
+    const friendsRef = ref(db, `users/${uid}/friends`);
+    fbUnsub = onValue(
+      friendsRef,
+      (snap) => {
+        emit(snap.val());
+      },
+      (err) => {
+        console.warn('Firebase friends subscription error:', err);
+        emit(null);
+      }
+    );
+  }
+
+  let bc = null;
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      bc = new BroadcastChannel('listen-together-sync');
+      bc.onmessage = (e) => {
+        if (
+          (e.data?.type === 'FRIENDS_UPDATED' || e.data?.type === 'FRIEND_REQUEST') &&
+          e.data?.targetUid === uid
+        ) {
+          emit(null);
+        }
+      };
+    } catch {}
+  }
+
+  const handleStorage = (e) => {
+    if (e.key === 'TT_FRIENDS_PING' || e.key === `${FRIENDS_KEY}_${uid}`) {
+      emit(null);
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', handleStorage);
+  }
+
+  return () => {
+    fbUnsub();
+    if (bc) bc.close();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', handleStorage);
+    }
+  };
+}
+
 export function addFriend(uid, friend) {
   const list = getFriendsList(uid);
   if (list.some((f) => f.uid === friend.uid || f.friendCode === friend.friendCode)) return false;
@@ -230,13 +300,165 @@ export function addFriend(uid, friend) {
   return true;
 }
 
-
 export function removeFriend(uid, friendUid) {
   const list = getFriendsList(uid);
   const updated = list.filter((f) => f.uid !== friendUid);
   setLocal(`${FRIENDS_KEY}_${uid}`, updated);
   if (isFirebaseConfigured) {
     remove(ref(db, `users/${uid}/friends/${friendUid}`)).catch(() => {});
+  }
+  return updated;
+}
+
+export async function sendFriendRequest(senderUser, targetUser) {
+  if (!senderUser || !targetUser || !targetUser.uid) return { success: false, reason: 'INVALID' };
+  if (senderUser.uid === targetUser.uid) return { success: false, reason: 'SELF' };
+
+  const currentFriends = getFriendsList(senderUser.uid);
+  if (currentFriends.some((f) => f.uid === targetUser.uid)) {
+    return { success: false, reason: 'ALREADY_FRIENDS' };
+  }
+
+  const notif = {
+    id: `freq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: 'friend_request',
+    title: '👥 Friend Request',
+    body: `${senderUser.displayName || 'Someone'} sent you a friend request!`,
+    senderUid: senderUser.uid,
+    senderName: senderUser.displayName || 'Friend',
+    senderPhoto:
+      senderUser.photoURL ||
+      `https://api.dicebear.com/7.x/bottts/svg?seed=${senderUser.uid}`,
+    senderCode: getFriendCode(senderUser.uid),
+    targetUid: targetUser.uid,
+    timestamp: Date.now(),
+    unread: true,
+    status: 'pending',
+  };
+
+  // 1. Firebase push
+  if (isFirebaseConfigured) {
+    try {
+      await push(ref(db, `users/${targetUser.uid}/notifications`), {
+        ...notif,
+        timestamp: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('Firebase friend request push error:', e);
+    }
+  }
+
+  // 2. Local storage
+  addNotification(targetUser.uid, notif);
+
+  // 3. Broadcast channel
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('listen-together-sync');
+      bc.postMessage({ type: 'FRIEND_REQUEST', targetUid: targetUser.uid, notif });
+    } catch {}
+  }
+
+  // 4. Storage event ping
+  try {
+    localStorage.setItem(
+      'TT_INVITE_PING',
+      JSON.stringify({ targetUid: targetUser.uid, timestamp: Date.now() })
+    );
+  } catch {}
+
+  return { success: true };
+}
+
+export async function acceptFriendRequest(currentUser, requestNotif) {
+  if (!currentUser || !requestNotif || !requestNotif.senderUid) return false;
+
+  const friendA = {
+    uid: requestNotif.senderUid,
+    friendCode: requestNotif.senderCode || getFriendCode(requestNotif.senderUid),
+    name: requestNotif.senderName || 'Friend',
+    photo: requestNotif.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${requestNotif.senderUid}`,
+    status: 'online',
+    listeningTo: 'TuneTogether',
+  };
+
+  const friendB = {
+    uid: currentUser.uid,
+    friendCode: getFriendCode(currentUser.uid),
+    name: currentUser.displayName || 'Friend',
+    photo: currentUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.uid}`,
+    status: 'online',
+    listeningTo: 'TuneTogether',
+  };
+
+  // 1. Add User A to User B's friends
+  addFriend(currentUser.uid, friendA);
+
+  // 2. Add User B to User A's friends (both local & Firebase)
+  addFriend(requestNotif.senderUid, friendB);
+  if (isFirebaseConfigured) {
+    try {
+      await set(ref(db, `users/${requestNotif.senderUid}/friends/${currentUser.uid}`), friendB);
+    } catch (e) {
+      console.warn('Firebase add friend error:', e);
+    }
+  }
+
+  // 3. Send acceptance notification back to User A
+  const acceptNotif = {
+    id: `facc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: 'friend_accepted',
+    title: '🎉 Friend Request Accepted',
+    body: `${currentUser.displayName || 'Friend'} accepted your friend request! You are now friends.`,
+    senderUid: currentUser.uid,
+    senderName: currentUser.displayName || 'Friend',
+    senderPhoto: currentUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.uid}`,
+    timestamp: Date.now(),
+    unread: true,
+  };
+
+  if (isFirebaseConfigured) {
+    try {
+      await push(ref(db, `users/${requestNotif.senderUid}/notifications`), {
+        ...acceptNotif,
+        timestamp: serverTimestamp(),
+      });
+    } catch (e) {}
+  }
+  addNotification(requestNotif.senderUid, acceptNotif);
+
+  // 4. Update the notification status in Current User's list
+  updateNotificationStatus(currentUser.uid, requestNotif.id, 'accepted');
+
+  // 5. Broadcast channel & storage event so both screens update live
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('listen-together-sync');
+      bc.postMessage({ type: 'FRIENDS_UPDATED', targetUid: requestNotif.senderUid });
+      bc.postMessage({ type: 'FRIENDS_UPDATED', targetUid: currentUser.uid });
+    } catch {}
+  }
+  try {
+    localStorage.setItem('TT_FRIENDS_PING', Date.now().toString());
+  } catch {}
+
+  return true;
+}
+
+export function updateNotificationStatus(uid, notifId, status) {
+  const list = getNotifications(uid);
+  const updated = list.map((n) =>
+    n.id === notifId ? { ...n, status, unread: false } : n
+  );
+  setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
+
+  if (isFirebaseConfigured) {
+    try {
+      update(ref(db, `users/${uid}/notifications/${notifId}`), {
+        status,
+        unread: false,
+      }).catch(() => {});
+    } catch {}
   }
   return updated;
 }
