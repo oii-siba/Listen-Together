@@ -190,10 +190,10 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
           <div className="bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 rounded-2xl p-3 mb-4 flex items-center justify-between gap-2.5">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>🔔</span> ব্রাউজার নোটিফিকেশন
+                <span>🔔</span> Browser Notifications
               </p>
               <p className="text-[10.5px] text-white/70 mt-0.5">
-                ফ্রেন্ড রিকোয়েস্ট ও রুম ইনভাইট সরাসরি পেতে পারমিশন চালু করুন।
+                Enable notifications to get alerted when friends accept or invite you.
               </p>
             </div>
             <button
@@ -201,7 +201,7 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
               type="button"
               className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] active:scale-95 transition hover:brightness-110 shadow shrink-0"
             >
-              চালু করুন
+              Enable
             </button>
           </div>
         )}

@@ -308,7 +308,7 @@ export default function NotificationCenter({ user, roomId }) {
                     <p className="text-xs font-bold text-white">Browser Notifications</p>
                   </div>
                   <p className="text-[10.5px] text-white/70 mt-0.5 leading-snug">
-                    অন্য উইন্ডো বা ব্যাকগ্রাউন্ডে থাকলেও ইনভাইট ও ফ্রেন্ড রিকোয়েস্টের নোটিফিকেশন পান।
+                    Get instant alerts when friends invite you, even while in another tab.
                   </p>
                 </div>
                 <button
@@ -316,7 +316,7 @@ export default function NotificationCenter({ user, roomId }) {
                   onClick={handleRequestPermission}
                   className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow shrink-0"
                 >
-                  অনুমতি দিন
+                  Enable
                 </button>
               </div>
             )}
@@ -324,10 +324,10 @@ export default function NotificationCenter({ user, roomId }) {
             {permState === 'denied' && (
               <div className="mb-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
                 <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px]">
-                  <span>⚠️</span> নোটিফিকেশন ব্লক করা আছে
+                  <span>⚠️</span> Notifications Blocked in Browser
                 </div>
                 <p className="text-[10px] text-white/60 mt-0.5 leading-snug">
-                  ব্রাউজারের URL বারে তালা (Lock 🔒) আইকনে ক্লিক করে Notifications "Allow" করুন।
+                  Click the lock icon (🔒) in your browser address bar and allow Notifications.
                 </p>
               </div>
             )}
@@ -544,10 +544,10 @@ export default function NotificationCenter({ user, roomId }) {
                 />
                 <span className="text-[11px] text-white/70 font-medium">
                   {permState === 'granted'
-                    ? 'নোটিফিকেশন পারমিশন: চালু আছে ✓'
+                    ? 'Notifications: Enabled ✓'
                     : permState === 'denied'
-                    ? 'ব্রাউজারে নোটিফিকেশন ব্লক'
-                    : 'নোটিফিকেশন পারমিশন: বন্ধ'}
+                    ? 'Notifications: Blocked'
+                    : 'Notifications: Off'}
                 </span>
               </div>
 
@@ -557,7 +557,7 @@ export default function NotificationCenter({ user, roomId }) {
                   onClick={handleRequestPermission}
                   className="text-[11px] text-green-400 hover:text-green-300 font-bold underline transition"
                 >
-                  চালু করুন
+                  Turn On
                 </button>
               ) : (
                 <span className="text-[10px] text-white/40">Sound & Banners Active</span>
