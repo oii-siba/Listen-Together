@@ -348,8 +348,22 @@ export function PlaybackProvider({ user, children }) {
     if (!('mediaSession' in navigator) || !activeRoomId) return;
 
     try {
-      navigator.mediaSession.setActionHandler('play', () => togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+      navigator.mediaSession.setActionHandler('play', () => {
+        const pb = roomRef.current?.playback;
+        if (!pb?.isPlaying) {
+          togglePlay();
+        } else {
+          try {
+            playerRef.current?.resync();
+          } catch {}
+        }
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        const pb = roomRef.current?.playback;
+        if (pb?.isPlaying) {
+          togglePlay();
+        }
+      });
       navigator.mediaSession.setActionHandler('nexttrack', () => {
         if (hostRef.current) playNext();
       });
