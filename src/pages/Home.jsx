@@ -67,7 +67,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-md mx-auto px-5 pt-2 pb-16 text-white font-sans">
+    <div className="min-h-[100dvh] max-w-md mx-auto px-5 pt-2 pb-28 text-white font-sans">
       {/* Brand Header */}
       <BrandHeader user={user} onSignOut={signOut} showNav={true} />
 

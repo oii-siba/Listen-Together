@@ -1,85 +1,232 @@
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePlayback } from '../context/PlaybackContext';
-import { Play, Pause, Next, Close } from './Icons';
+import { fmtTime } from '../lib/utils';
+import { Play, Pause, Next, Close, Volume } from './Icons';
+
+function Rewind10Icon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 17l-5-5 5-5" />
+      <path d="M18 17l-5-5 5-5" />
+    </svg>
+  );
+}
+
+function VolumeMuteIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+      <line x1="23" y1="9" x2="17" y2="15" />
+      <line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  );
+}
 
 export default function MiniPlayer() {
-  const { activeRoomId, playback, isHost, togglePlay, playNext, leaveRoom } = usePlayback();
+  const {
+    activeRoomId,
+    playback,
+    isHost,
+    togglePlay,
+    playNext,
+    seekTo,
+    leaveRoom,
+    playerRef,
+  } = usePlayback();
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // If no room is active or no song is loaded, do not render
+  const [cur, setCur] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [scrolledDown, setScrolledDown] = useState(false);
+  const scrubBarRef = useRef(null);
+
+  const isInsideRoom = location.pathname === `/room/${activeRoomId}`;
+
+  // Poll player time for live progress bar
+  useEffect(() => {
+    const id = setInterval(() => {
+      const p = playerRef.current;
+      if (!p) return;
+      setCur(p.getCurrentTime() || 0);
+      setDur(p.getDuration() || 0);
+      setMuted(p.isMuted?.() || false);
+    }, 350);
+    return () => clearInterval(id);
+  }, [playerRef]);
+
+  // Track scroll position inside room
+  useEffect(() => {
+    if (!isInsideRoom) {
+      setScrolledDown(false);
+      return;
+    }
+    const onScroll = () => {
+      setScrolledDown(window.scrollY > 280);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isInsideRoom]);
+
+  // If no room is active or no song loaded, hide
   if (!activeRoomId || !playback?.videoId) return null;
 
-  // If the user is currently inside the active room, hide the mini player (full player is visible)
-  if (location.pathname === `/room/${activeRoomId}`) return null;
+  // Inside room: only show if user scrolled down past hero player
+  if (isInsideRoom && !scrolledDown) return null;
 
   const handleOpenRoom = () => {
-    navigate(`/room/${activeRoomId}`);
+    if (!isInsideRoom) {
+      navigate(`/room/${activeRoomId}`);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
+
+  const handleScrub = (e) => {
+    e.stopPropagation();
+    if (!scrubBarRef.current || dur <= 0) return;
+    const rect = scrubBarRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+    seekTo(pct * dur);
+  };
+
+  const handleRewind10 = (e) => {
+    e.stopPropagation();
+    const nextTime = Math.max(0, cur - 10);
+    seekTo(nextTime);
+  };
+
+  const handleToggleMute = (e) => {
+    e.stopPropagation();
+    const p = playerRef.current;
+    if (!p) return;
+    if (muted) {
+      p.unMute?.();
+      setMuted(false);
+    } else {
+      p.mute?.();
+      setMuted(true);
+    }
+  };
+
+  const progressPct = dur > 0 ? Math.min(100, Math.max(0, (cur / dur) * 100)) : 0;
 
   return (
     <aside
-      aria-label="Now Playing Mini Player"
-      className="fixed bottom-4 left-3 right-3 max-w-lg mx-auto z-40 bg-black/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl p-2.5 shadow-[0_12px_45px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom-5 duration-200"
+      aria-label="Global Mini Player Controls"
+      className="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
     >
-      <div className="flex items-center gap-3">
-        {/* Album Artwork (Click to expand) */}
+      {/* Top Edge Interactive Scrubber / Progress Bar */}
+      <div
+        ref={scrubBarRef}
+        onClick={handleScrub}
+        className="w-full h-1.5 bg-white/10 hover:h-2 transition-all cursor-pointer relative group"
+        title="Click to seek"
+      >
+        <div
+          className="h-full bg-gradient-to-r from-green-500 via-emerald-400 to-green-300 shadow-[0_0_10px_rgba(34,197,94,0.8)] relative"
+          style={{ width: `${progressPct}%` }}
+        >
+          <span className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover:opacity-100 shadow transition-opacity" />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 p-2.5">
+        {/* Album Artwork with Spinning Vinyl Pulse */}
         <div
           onClick={handleOpenRoom}
-          className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-green-400/80 cursor-pointer group shadow-[0_0_12px_rgba(34,197,94,0.4)]"
-          title="Open Room"
+          className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-green-400/80 cursor-pointer group shadow-[0_0_12px_rgba(34,197,94,0.35)]"
+          title={isInsideRoom ? 'Scroll to Top' : 'Open Full Room'}
         >
           <img
             src={playback.thumb || `https://i.ytimg.com/vi/${playback.videoId}/hqdefault.jpg`}
             alt=""
-            className="w-full h-full object-cover group-hover:scale-105 transition"
+            className={`w-full h-full object-cover transition ${playback.isPlaying ? 'scale-105' : 'grayscale-[20%]'}`}
           />
           {playback.isPlaying && (
-            <span className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-ping" />
+            <span className="absolute inset-0 bg-green-500/15 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
             </span>
           )}
         </div>
 
-        {/* Title & Room ID (Click to expand) */}
+        {/* Title, Time, & Room ID (Click to Expand / Scroll) */}
         <div onClick={handleOpenRoom} className="min-w-0 flex-1 cursor-pointer">
           <p className="font-extrabold text-xs text-white truncate hover:text-green-400 transition">
             {playback.title || 'Now Playing'}
           </p>
-          <p className="text-[10px] text-green-400 font-medium flex items-center gap-1.5 truncate mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
-            <span className="truncate">Room #{activeRoomId}</span>
-            <span className="text-white/40 shrink-0 font-normal">· Tap to open ↗</span>
-          </p>
+          <div className="flex items-center gap-2 text-[10px] text-green-400 font-medium mt-0.5 truncate">
+            <span className="font-mono text-white/70">
+              {fmtTime(cur)} / {fmtTime(dur)}
+            </span>
+            <span className="text-white/20">·</span>
+            <span className="truncate flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+              Room #{activeRoomId}
+            </span>
+            <span className="text-white/40 shrink-0 font-normal">
+              {isInsideRoom ? '· Scroll ↗' : '· Tap to open ↗'}
+            </span>
+          </div>
         </div>
 
-        {/* Playback Controls */}
+        {/* Global Music Controls */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Rewind 10 Seconds */}
+          <button
+            type="button"
+            onClick={handleRewind10}
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center active:scale-95 transition"
+            title="Rewind 10s"
+          >
+            <Rewind10Icon size={16} />
+          </button>
+
+          {/* Play / Pause Toggle Button */}
           <button
             type="button"
             onClick={togglePlay}
-            className="w-9 h-9 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-95 transition shadow-[0_0_12px_rgba(34,197,94,0.5)]"
+            className="w-10 h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)]"
             title={playback.isPlaying ? 'Pause' : 'Play'}
           >
-            {playback.isPlaying ? <Pause size={18} /> : <Play size={18} />}
+            {playback.isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </button>
 
-          {isHost && (
-            <button
-              type="button"
-              onClick={playNext}
-              className="w-8 h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
-              title="Next Track"
-            >
-              <Next size={16} />
-            </button>
-          )}
+          {/* Next Track Button (Host or when queue is active) */}
+          <button
+            type="button"
+            onClick={playNext}
+            className="w-8 h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
+            title="Next Track"
+          >
+            <Next size={16} />
+          </button>
 
+          {/* Mute / Unmute Button */}
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition active:scale-95 ${
+              muted
+                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white'
+            }`}
+            title={muted ? 'Unmute' : 'Mute'}
+          >
+            {muted ? <VolumeMuteIcon size={16} /> : <Volume size={16} />}
+          </button>
+
+          {/* Close / Leave Room Button */}
           <button
             type="button"
             onClick={leaveRoom}
             className="w-7 h-7 rounded-full bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition ml-0.5"
-            title="Leave Room"
+            title="Leave Room & Stop Music"
             aria-label="Leave Room"
           >
             <Close size={14} />

@@ -325,6 +325,9 @@ const Player = forwardRef(function Player(
         return Number.isFinite(d) ? d : 0;
       },
       setVolume: (v) => ytRef.current?.setVolume?.(v),
+      isMuted: () => ytRef.current?.isMuted?.() || false,
+      mute: () => ytRef.current?.mute?.(),
+      unMute: () => ytRef.current?.unMute?.(),
     }),
     [syncPlayback]
   );
