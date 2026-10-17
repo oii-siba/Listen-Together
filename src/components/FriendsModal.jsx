@@ -6,7 +6,9 @@ import {
   lookupUserByCodeOrId,
   registerUserDirectory,
   getFriendCode,
+  sendRoomInvite,
 } from '../lib/userData';
+
 
 export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
   const [friends, setFriends] = useState([]);
@@ -109,12 +111,19 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
     setFriends(updated);
   };
 
-  const inviteFriend = (friend) => {
-    if (!currentRoomId) return;
-    setMsg(`Room invite sent to ${friend.name}! 🚀`);
-    setIsError(false);
+  const inviteFriend = async (friend) => {
+    if (!currentRoomId || !friend?.uid) return;
+    try {
+      await sendRoomInvite(user, friend.uid, currentRoomId);
+      setMsg(`Room invite sent to ${friend.name}! 🚀`);
+      setIsError(false);
+    } catch {
+      setMsg(`Could not send invite to ${friend.name}.`);
+      setIsError(true);
+    }
     setTimeout(() => setMsg(''), 3000);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">

@@ -1,19 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNotifications, markNotificationsRead } from '../lib/userData';
+import { subscribeToNotifications, markNotificationsRead } from '../lib/userData';
 
 export default function NotificationCenter({ user }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [activeToast, setActiveToast] = useState(null);
+  const prevCountRef = useRef(0);
   const panelRef = useRef(null);
   const nav = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
-    setNotifications(getNotifications(user.uid));
-  }, [user]);
+    if (!user?.uid) return;
+    const unsub = subscribeToNotifications(user.uid, (list) => {
+      setNotifications(list);
+      const unreadList = list.filter((n) => n.unread);
+      // If a new unread invite arrived, trigger instant toast alert!
+      if (unreadList.length > prevCountRef.current && unreadList[0]?.roomId) {
+        setActiveToast(unreadList[0]);
+      }
+      prevCountRef.current = unreadList.length;
+    });
+    return unsub;
+  }, [user?.uid]);
 
-  // Click outside to close
+  // Click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(e) {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
@@ -32,36 +43,75 @@ export default function NotificationCenter({ user }) {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const handleMarkRead = () => {
-    if (!user) return;
-    const updated = markNotificationsRead(user.uid);
+  const handleMarkRead = async () => {
+    if (!user?.uid) return;
+    const updated = await markNotificationsRead(user.uid);
     setNotifications(updated);
   };
 
   const handleJoin = (roomId) => {
     setOpen(false);
+    setActiveToast(null);
     nav(`/room/${roomId}`);
   };
 
   return (
-    <div ref={panelRef} className="relative">
-      {/* Bell Button */}
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="relative w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
-        title="Notifications"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-green-500 text-black font-extrabold text-[10px] flex items-center justify-center shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse">
-            {unreadCount}
-          </span>
-        )}
-      </button>
+    <>
+      {/* Instant Floating Banner Toast when an invite arrives */}
+      {activeToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[92vw] bg-black/90 border-2 border-green-400 rounded-2xl p-3 shadow-[0_0_28px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
+          <img
+            src={activeToast.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${activeToast.senderUid}`}
+            alt=""
+            className="w-10 h-10 rounded-full border border-green-400/80 shrink-0 object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-extrabold text-white truncate">
+              {activeToast.senderName} invited you! 🎧
+            </p>
+            <p className="text-[11px] text-white/70 truncate">
+              Room: <span className="font-mono text-green-400 font-bold">{activeToast.roomId}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleJoin(activeToast.roomId)}
+              className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
+            >
+              Join Now
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveToast(null)}
+              className="text-white/40 hover:text-white p-1 text-xs"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div ref={panelRef} className="relative">
+        {/* Bell Button */}
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="relative w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+          title="Notifications"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-green-500 text-black font-extrabold text-[10px] flex items-center justify-center shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
 
       {/* Dropdown Panel */}
       {open && (
@@ -123,5 +173,8 @@ export default function NotificationCenter({ user }) {
         </div>
       )}
     </div>
-  );
+  </>
+);
 }
+
+

@@ -247,17 +247,124 @@ export function getNotifications(uid) {
   return raw.filter((n) => !n.id?.startsWith('notif-'));
 }
 
-
 export function addNotification(uid, notif) {
   const list = getNotifications(uid);
-  const updated = [{ id: `n-${Date.now()}`, timestamp: Date.now(), unread: true, ...notif }, ...list].slice(0, 20);
+  const updated = [
+    { id: `n-${Date.now()}`, timestamp: Date.now(), unread: true, ...notif },
+    ...list,
+  ].slice(0, 20);
   setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
   return updated;
 }
 
-export function markNotificationsRead(uid) {
+export async function sendRoomInvite(senderUser, targetUid, roomId) {
+  if (!senderUser || !targetUid || !roomId) return false;
+  const notif = {
+    type: 'room_invite',
+    title: '🎧 Room Invite',
+    body: `${senderUser.displayName || 'A friend'} invited you to join room "${roomId}"`,
+    senderUid: senderUser.uid,
+    senderName: senderUser.displayName || 'Friend',
+    senderPhoto:
+      senderUser.photoURL ||
+      `https://api.dicebear.com/7.x/bottts/svg?seed=${senderUser.uid}`,
+    roomId,
+    timestamp: Date.now(),
+    unread: true,
+  };
+
+  // 1. Firebase push
+  if (isFirebaseConfigured) {
+    try {
+      await push(ref(db, `users/${targetUid}/notifications`), {
+        ...notif,
+        timestamp: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('Firebase notification push error:', e);
+    }
+  }
+
+  // 2. Local storage / cross-tab fallback
+  addNotification(targetUid, notif);
+
+  // 3. Broadcast channel for local/demo cross-tab sync
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('listen-together-sync');
+      bc.postMessage({ type: 'ROOM_INVITE', targetUid, notif });
+    } catch {}
+  }
+
+  return true;
+}
+
+export function subscribeToNotifications(uid, callback) {
+  if (!uid) return () => {};
+
+  // Initial trigger
+  callback(getNotifications(uid));
+
+  // Firebase Realtime Database onValue listener
+  let fbUnsub = () => {};
+  if (isFirebaseConfigured) {
+    const notifRef = ref(db, `users/${uid}/notifications`);
+    fbUnsub = onValue(notifRef, (snap) => {
+      const data = snap.val();
+      if (!data) {
+        callback(getNotifications(uid));
+        return;
+      }
+      const list = Object.entries(data)
+        .map(([key, val]) => ({
+          id: key,
+          ...val,
+        }))
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      callback(list);
+    });
+  }
+
+  // Broadcast channel for instantaneous cross-tab alerts
+  let bc = null;
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      bc = new BroadcastChannel('listen-together-sync');
+      bc.onmessage = (e) => {
+        if (e.data?.type === 'ROOM_INVITE' && e.data?.targetUid === uid) {
+          callback(getNotifications(uid));
+        }
+      };
+    } catch {}
+  }
+
+  return () => {
+    fbUnsub();
+    if (bc) bc.close();
+  };
+}
+
+export async function markNotificationsRead(uid) {
   const list = getNotifications(uid);
   const updated = list.map((n) => ({ ...n, unread: false }));
   setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
+
+  if (isFirebaseConfigured) {
+    try {
+      const snap = await get(ref(db, `users/${uid}/notifications`));
+      if (snap.exists()) {
+        const data = snap.val();
+        const updates = {};
+        Object.keys(data).forEach((k) => {
+          updates[`${k}/unread`] = false;
+        });
+        await update(ref(db, `users/${uid}/notifications`), updates);
+      }
+    } catch (e) {
+      console.warn('Could not mark notifications read in Firebase:', e);
+    }
+  }
+
   return updated;
 }
+

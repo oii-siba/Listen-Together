@@ -15,9 +15,15 @@
     "users": {
       "$uid": {
         ".read": "auth != null",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid",
+        "notifications": {
+          "$nid": {
+            ".write": "auth != null"
+          }
+        }
       }
     },
+
     "rooms": {
       "$roomId": {
         ".read": "auth != null",
