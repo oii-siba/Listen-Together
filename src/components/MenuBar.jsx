@@ -264,6 +264,24 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                   </div>
                   <span className="text-white/30 text-xs">→</span>
                 </button>
+
+                {/* 7. Install App */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    window.dispatchEvent(new CustomEvent('tt-open-install'));
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/25 hover:bg-green-500/20 transition active:scale-95 shadow-[0_0_10px_rgba(34,197,94,0.15)]"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base">📲</span>
+                    <span>Install App on Device</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold bg-green-500 text-black px-2 py-0.5 rounded-full">
+                    FREE
+                  </span>
+                </button>
               </nav>
             </div>
 

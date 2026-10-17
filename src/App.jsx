@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Room from './pages/Room';
 import { PlaybackProvider } from './context/PlaybackContext';
 import MiniPlayer from './components/MiniPlayer';
+import InstallPrompt from './components/InstallPrompt';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <MiniPlayer />
+      <InstallPrompt />
     </PlaybackProvider>
   );
 }

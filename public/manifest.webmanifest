@@ -1,0 +1,45 @@
+{
+  "name": "TuneTogether - Sync Music",
+  "short_name": "TuneTogether",
+  "description": "Listen to YouTube music with friends in real-time sync with live chat, reactions, and mini player.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#050806",
+  "theme_color": "#050806",
+  "orientation": "portrait-primary",
+  "categories": ["music", "social", "entertainment"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home & Discover",
+      "short_name": "Home",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
