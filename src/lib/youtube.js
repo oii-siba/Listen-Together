@@ -28,10 +28,29 @@ function decode(s = '') {
   return t.value;
 }
 
-export async function searchYouTube(q) {
-  // 1. Try local dev server proxy (works with zero API keys)
+// Live YouTube Auto-suggestions
+export async function getYouTubeSuggestions(q) {
+  if (!q || !q.trim() || q.trim().length < 2) return [];
   try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const res = await fetch(`/api/suggest?q=${encodeURIComponent(q.trim())}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data.slice(0, 7);
+    }
+  } catch (err) {
+    // ignore suggestion errors
+  }
+  return [];
+}
+
+// Deep YouTube search
+export async function searchYouTube(q) {
+  const query = q.trim();
+  if (!query) return [];
+
+  // 1. Primary: Edge / Local Search Proxy
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -39,22 +58,25 @@ export async function searchYouTube(q) {
           videoId: item.videoId,
           title: decode(item.title),
           author: decode(item.author),
+          duration: item.duration || '',
+          views: item.views || '',
+          thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`,
         }));
       }
     }
   } catch (err) {
-    console.warn('Local search proxy error:', err);
+    console.warn('Search proxy error:', err);
   }
 
-  // 2. Fallback to YouTube Data API v3 if key exists
+  // 2. Fallback: YouTube Data API v3 if key exists
   if (KEY) {
     try {
       const params = new URLSearchParams({
         part: 'snippet',
         type: 'video',
         videoEmbeddable: 'true',
-        maxResults: '8',
-        q,
+        maxResults: '15',
+        q: query,
         key: KEY,
       });
       const r = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
@@ -64,6 +86,9 @@ export async function searchYouTube(q) {
           videoId: i.id.videoId,
           title: decode(i.snippet.title),
           author: decode(i.snippet.channelTitle),
+          duration: '',
+          views: '',
+          thumbnail: i.snippet.thumbnails?.high?.url || i.snippet.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${i.id.videoId}/mqdefault.jpg`,
         }));
       }
     } catch (err) {

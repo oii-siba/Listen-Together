@@ -202,16 +202,18 @@ export default function Room() {
   }, [exists, isHost, hostPresent, oldestUid, user.uid, roomId, showToast]);
 
   /* ---------- everyone: add / remove songs ---------- */
-  async function addSong(song) {
+  async function addSong(song, playImmediately = false) {
     const r = roomRef.current;
     const item = {
       videoId: song.videoId,
       title: song.title || 'YouTube video',
-      thumb: thumbFor(song.videoId),
+      thumb: song.thumbnail || thumbFor(song.videoId),
       addedBy: user.uid,
       addedByName: user.displayName || 'Someone',
     };
-    if (hostRef.current && !r?.playback?.videoId) {
+    if (playImmediately && hostRef.current) {
+      await playItem(item);
+    } else if (hostRef.current && !r?.playback?.videoId) {
       await playItem(item);
     } else {
       await push(ref(db, `rooms/${roomId}/queue`), item);
@@ -358,7 +360,7 @@ export default function Room() {
       <div className="mt-4">
         {tab === 'queue' ? (
           <div className="space-y-4">
-            <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} />
+            <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} />
             <Queue items={queue} isHost={isHost} uid={user.uid} onRemove={removeFromQueue} onPlayNow={playItem} />
           </div>
         ) : (
