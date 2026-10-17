@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCenter from './NotificationCenter';
 import FriendsModal from './FriendsModal';
 import ProfileModal from './ProfileModal';
 import MenuBar from './MenuBar';
+import { isInstalled, triggerDirectInstall } from '../lib/pwa';
 
 export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateUser }) {
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    setInstalled(isInstalled());
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener('tt-installed', onInstalled);
+    return () => window.removeEventListener('tt-installed', onInstalled);
+  }, []);
 
   return (
     <>
@@ -55,16 +64,43 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                   />
                 </button>
 
+                {/* Front Direct Install App Button */}
+                {!installed && (
+                  <button
+                    type="button"
+                    onClick={triggerDirectInstall}
+                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_12px_rgba(34,197,94,0.2)] active:scale-95"
+                    title="Direct Install App"
+                  >
+                    <span className="text-sm">📲</span>
+                    <span className="hidden sm:inline">Install App</span>
+                    <span className="sm:hidden">Install</span>
+                  </button>
+                )}
+
                 {/* Navigation Menu Bar Drawer Button */}
                 <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
               </>
             ) : (
-              <a
-                href="#how-it-works"
-                className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-panel2/80 text-white/80 hover:text-white border border-green-500/20 active:scale-95 transition"
-              >
-                How it works
-              </a>
+              <div className="flex items-center gap-2">
+                {!installed && (
+                  <button
+                    type="button"
+                    onClick={triggerDirectInstall}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_12px_rgba(34,197,94,0.2)] active:scale-95"
+                    title="Direct Install App"
+                  >
+                    <span className="text-sm">📲</span>
+                    <span>Install App</span>
+                  </button>
+                )}
+                <a
+                  href="#how-it-works"
+                  className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-panel2/80 text-white/80 hover:text-white border border-green-500/20 active:scale-95 transition hidden xs:inline-block"
+                >
+                  How it works
+                </a>
+              </div>
             )}
           </div>
         )}

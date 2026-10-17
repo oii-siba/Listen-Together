@@ -17,6 +17,7 @@ import FriendsModal from '../components/FriendsModal';
 import ProfileModal from '../components/ProfileModal';
 import MenuBar from '../components/MenuBar';
 import { Back, People, Play, QueueIcon, ChatIcon } from '../components/Icons';
+import { isInstalled, triggerDirectInstall } from '../lib/pwa';
 
 export default function Room() {
   const { roomId } = useParams();
@@ -52,7 +53,15 @@ export default function Room() {
   const [toast, setToast] = useState('');
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [installed, setInstalled] = useState(false);
   const toastTimer = useRef(null);
+
+  useEffect(() => {
+    setInstalled(isInstalled());
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener('tt-installed', onInstalled);
+    return () => window.removeEventListener('tt-installed', onInstalled);
+  }, []);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -136,6 +145,18 @@ export default function Room() {
           >
             <span className="text-sm">👥</span>
           </button>
+          {/* Front Direct Install App Button */}
+          {!installed && (
+            <button
+              type="button"
+              onClick={triggerDirectInstall}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.2)] active:scale-95"
+              title="Direct Install App"
+            >
+              <span className="text-xs">📲</span>
+              <span className="hidden sm:inline">Install</span>
+            </button>
+          )}
           <MenuBar user={user} roomId={roomId} onPlaySong={addSong} />
           <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2.5 py-1.5 shrink-0">
             <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />

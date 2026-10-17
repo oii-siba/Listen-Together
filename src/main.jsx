@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './AuthContext';
 import { initClientSecurity } from './lib/security';
+import './lib/pwa';
 import './index.css';
 
 // Initialize anti-inspect and DevTools shield

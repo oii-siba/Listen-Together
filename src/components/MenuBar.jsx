@@ -4,6 +4,7 @@ import { getFriendCode, getFriendsList, getFavoriteSongs, getListeningHistory, g
 import FriendsModal from './FriendsModal';
 import ProfileModal from './ProfileModal';
 import FavoritesModal from './FavoritesModal';
+import { triggerDirectInstall, isInstalled } from '../lib/pwa';
 
 export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -268,9 +269,9 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                 {/* 7. Install App */}
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setIsOpen(false);
-                    window.dispatchEvent(new CustomEvent('tt-open-install'));
+                    await triggerDirectInstall();
                   }}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/25 hover:bg-green-500/20 transition active:scale-95 shadow-[0_0_10px_rgba(34,197,94,0.15)]"
                 >
