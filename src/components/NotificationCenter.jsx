@@ -7,6 +7,7 @@ import {
   playNotificationChime,
   acceptFriendRequest,
   updateNotificationStatus,
+  addNotification,
 } from '../lib/userData';
 
 export default function NotificationCenter({ user, roomId }) {
@@ -33,9 +34,24 @@ export default function NotificationCenter({ user, roomId }) {
     const unsub = subscribeToNotifications(user.uid, (list) => {
       setNotifications(list);
 
-      // On initial load, register known IDs without firing alerts
+      // On initial load, register known IDs; if any unread is from the last 60 seconds, show toast
       if (knownIdsRef.current === null) {
         knownIdsRef.current = new Set(list.map((n) => n.id));
+        const recentUnread = list.find(
+          (n) =>
+            n.unread &&
+            n.timestamp &&
+            Date.now() - n.timestamp < 60000 &&
+            (n.roomId || n.type === 'friend_request' || n.type === 'friend_accepted')
+        );
+        if (recentUnread) {
+          setActiveToast(recentUnread);
+          playNotificationChime();
+          clearTimeout(toastTimerRef.current);
+          toastTimerRef.current = setTimeout(() => {
+            setActiveToast(null);
+          }, 10000);
+        }
         return;
       }
 
@@ -126,6 +142,34 @@ export default function NotificationCenter({ user, roomId }) {
     );
     if (activeToast?.id === notif.id) {
       setActiveToast(null);
+    }
+  };
+
+  const handleSendTestNotification = () => {
+    if (!user) return;
+    const testNotif = {
+      id: `freq-test-${Date.now()}`,
+      type: 'friend_request',
+      title: '👥 Friend Request (Test)',
+      body: 'Alex sent you a friend request! Tap Accept to become friends.',
+      senderUid: 'demo-test-friend',
+      senderName: 'Alex (Test)',
+      senderPhoto: 'https://api.dicebear.com/7.x/bottts/svg?seed=alex-test',
+      senderCode: 'TT-ALEX99',
+      targetUid: user.uid,
+      timestamp: Date.now(),
+      unread: true,
+      status: 'pending',
+    };
+    addNotification(user.uid, testNotif);
+    setActiveToast(testNotif);
+    playNotificationChime();
+    clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setActiveToast(null), 10000);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('tt-notification', { detail: { targetUid: user.uid, notif: testNotif } })
+      );
     }
   };
 
@@ -437,6 +481,19 @@ export default function NotificationCenter({ user, roomId }) {
                 )}
               </div>
             )}
+
+            {/* Panel Footer with Test Notification Button */}
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={handleSendTestNotification}
+                className="px-2.5 py-1 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 text-green-400 font-bold text-[11px] flex items-center gap-1.5 active:scale-95 transition"
+                title="Send a sample notification to yourself to check sound and toast banner"
+              >
+                <span>🔔 Test Notification</span>
+              </button>
+              <span className="text-[10px] text-white/40">Check Sound & Toast</span>
+            </div>
           </div>
         )}
       </div>

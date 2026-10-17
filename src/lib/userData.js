@@ -1,5 +1,5 @@
 import { db, isFirebaseConfigured } from '../firebase';
-import { ref, get, set, update, remove, onValue, serverTimestamp } from './db';
+import { ref, get, set, update, remove, push, onValue, serverTimestamp } from './db';
 
 
 
@@ -319,8 +319,9 @@ export async function sendFriendRequest(senderUser, targetUser) {
     return { success: false, reason: 'ALREADY_FRIENDS' };
   }
 
+  const notifId = `freq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const notif = {
-    id: `freq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: notifId,
     type: 'friend_request',
     title: '👥 Friend Request',
     body: `${senderUser.displayName || 'Someone'} sent you a friend request!`,
@@ -336,15 +337,15 @@ export async function sendFriendRequest(senderUser, targetUser) {
     status: 'pending',
   };
 
-  // 1. Firebase push
+  // 1. Firebase write with direct key so notif.id is the key
   if (isFirebaseConfigured) {
     try {
-      await push(ref(db, `users/${targetUser.uid}/notifications`), {
+      await set(ref(db, `users/${targetUser.uid}/notifications/${notifId}`), {
         ...notif,
         timestamp: serverTimestamp(),
       });
     } catch (e) {
-      console.warn('Firebase friend request push error:', e);
+      console.warn('Firebase friend request set error:', e);
     }
   }
 
@@ -366,6 +367,13 @@ export async function sendFriendRequest(senderUser, targetUser) {
       JSON.stringify({ targetUid: targetUser.uid, timestamp: Date.now() })
     );
   } catch {}
+
+  // 5. In-window event dispatch
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('tt-notification', { detail: { targetUid: targetUser.uid, notif } }));
+    } catch {}
+  }
 
   return { success: true };
 }
@@ -405,8 +413,9 @@ export async function acceptFriendRequest(currentUser, requestNotif) {
   }
 
   // 3. Send acceptance notification back to User A
+  const acceptId = `facc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const acceptNotif = {
-    id: `facc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: acceptId,
     type: 'friend_accepted',
     title: '🎉 Friend Request Accepted',
     body: `${currentUser.displayName || 'Friend'} accepted your friend request! You are now friends.`,
@@ -419,11 +428,13 @@ export async function acceptFriendRequest(currentUser, requestNotif) {
 
   if (isFirebaseConfigured) {
     try {
-      await push(ref(db, `users/${requestNotif.senderUid}/notifications`), {
+      await set(ref(db, `users/${requestNotif.senderUid}/notifications/${acceptId}`), {
         ...acceptNotif,
         timestamp: serverTimestamp(),
       });
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Firebase accept notification error:', e);
+    }
   }
   addNotification(requestNotif.senderUid, acceptNotif);
 
@@ -436,11 +447,23 @@ export async function acceptFriendRequest(currentUser, requestNotif) {
       const bc = new BroadcastChannel('listen-together-sync');
       bc.postMessage({ type: 'FRIENDS_UPDATED', targetUid: requestNotif.senderUid });
       bc.postMessage({ type: 'FRIENDS_UPDATED', targetUid: currentUser.uid });
+      bc.postMessage({ type: 'FRIEND_ACCEPTED', targetUid: requestNotif.senderUid, notif: acceptNotif });
     } catch {}
   }
   try {
     localStorage.setItem('TT_FRIENDS_PING', Date.now().toString());
+    localStorage.setItem(
+      'TT_INVITE_PING',
+      JSON.stringify({ targetUid: requestNotif.senderUid, timestamp: Date.now() })
+    );
   } catch {}
+
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('tt-notification', { detail: { targetUid: requestNotif.senderUid, notif: acceptNotif } }));
+      window.dispatchEvent(new CustomEvent('tt-notification', { detail: { targetUid: currentUser.uid } }));
+    } catch {}
+  }
 
   return true;
 }
@@ -466,13 +489,13 @@ export function updateNotificationStatus(uid, notifId, status) {
 // ---------------- NOTIFICATIONS ----------------
 export function getNotifications(uid) {
   const raw = getLocal(`${NOTIFICATIONS_KEY}_${uid}`, []);
-  return raw.filter((n) => !n.id?.startsWith('notif-'));
+  return raw.filter((n) => !n.id?.startsWith('notif-fake-'));
 }
 
 export function addNotification(uid, notif) {
   const list = getNotifications(uid);
   const updated = [
-    { id: `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, timestamp: Date.now(), unread: true, ...notif },
+    { id: notif.id || `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, timestamp: Date.now(), unread: true, ...notif },
     ...list,
   ].slice(0, 30);
   setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
@@ -481,8 +504,9 @@ export function addNotification(uid, notif) {
 
 export async function sendRoomInvite(senderUser, targetUid, roomId) {
   if (!senderUser || !targetUid || !roomId) return false;
+  const notifId = `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const notif = {
-    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: notifId,
     type: 'room_invite',
     title: '🎧 Room Invite',
     body: `${senderUser.displayName || 'A friend'} invited you to join room "${roomId}"`,
@@ -496,15 +520,15 @@ export async function sendRoomInvite(senderUser, targetUid, roomId) {
     unread: true,
   };
 
-  // 1. Firebase push
+  // 1. Firebase set
   if (isFirebaseConfigured) {
     try {
-      await push(ref(db, `users/${targetUid}/notifications`), {
+      await set(ref(db, `users/${targetUid}/notifications/${notifId}`), {
         ...notif,
         timestamp: serverTimestamp(),
       });
     } catch (e) {
-      console.warn('Firebase notification push error:', e);
+      console.warn('Firebase notification set error:', e);
     }
   }
 
@@ -526,6 +550,13 @@ export async function sendRoomInvite(senderUser, targetUid, roomId) {
       JSON.stringify({ targetUid, timestamp: Date.now() })
     );
   } catch {}
+
+  // 5. In-window custom event
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('tt-notification', { detail: { targetUid, notif } }));
+    } catch {}
+  }
 
   return true;
 }
@@ -580,7 +611,13 @@ export function subscribeToNotifications(uid, callback) {
     try {
       bc = new BroadcastChannel('listen-together-sync');
       bc.onmessage = (e) => {
-        if (e.data?.type === 'ROOM_INVITE' && e.data?.targetUid === uid) {
+        if (
+          (e.data?.type === 'ROOM_INVITE' ||
+            e.data?.type === 'FRIEND_REQUEST' ||
+            e.data?.type === 'FRIEND_ACCEPTED' ||
+            e.data?.type === 'NOTIFICATION') &&
+          e.data?.targetUid === uid
+        ) {
           emit();
         }
       };
@@ -589,7 +626,11 @@ export function subscribeToNotifications(uid, callback) {
 
   // Storage listener for cross-window / multi-tab sync
   const handleStorage = (e) => {
-    if (e.key === 'TT_INVITE_PING' || e.key === `${NOTIFICATIONS_KEY}_${uid}`) {
+    if (
+      e.key === 'TT_INVITE_PING' ||
+      e.key === 'TT_FRIENDS_PING' ||
+      e.key === `${NOTIFICATIONS_KEY}_${uid}`
+    ) {
       emit();
     }
   };
@@ -597,11 +638,22 @@ export function subscribeToNotifications(uid, callback) {
     window.addEventListener('storage', handleStorage);
   }
 
+  // Same-window in-app event
+  const handleCustomEvent = (e) => {
+    if (!e.detail?.targetUid || e.detail.targetUid === uid) {
+      emit();
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('tt-notification', handleCustomEvent);
+  }
+
   return () => {
     fbUnsub();
     if (bc) bc.close();
     if (typeof window !== 'undefined') {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('tt-notification', handleCustomEvent);
     }
   };
 }
