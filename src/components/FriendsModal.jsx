@@ -11,6 +11,8 @@ import {
   acceptFriendRequest,
   updateNotificationStatus,
   subscribeToNotifications,
+  getBrowserNotificationPermission,
+  requestBrowserNotificationPermission,
 } from '../lib/userData';
 
 export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
@@ -21,6 +23,7 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
   const [msg, setMsg] = useState('');
   const [isError, setIsError] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [permState, setPermState] = useState(() => getBrowserNotificationPermission());
 
   const myCode = getFriendCode(user?.uid);
 
@@ -50,6 +53,11 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
     navigator.clipboard.writeText(myCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRequestPermission = async () => {
+    const res = await requestBrowserNotificationPermission();
+    setPermState(res);
   };
 
   const handleAddFriend = async (e) => {
@@ -176,6 +184,27 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
             <p className="text-xs text-white/50">Listen in sync with your squad</p>
           </div>
         </div>
+
+        {/* Permission Banner if default */}
+        {permState === 'default' && (
+          <div className="bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 rounded-2xl p-3 mb-4 flex items-center justify-between gap-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>🔔</span> ব্রাউজার নোটিফিকেশন
+              </p>
+              <p className="text-[10.5px] text-white/70 mt-0.5">
+                ফ্রেন্ড রিকোয়েস্ট ও রুম ইনভাইট সরাসরি পেতে পারমিশন চালু করুন।
+              </p>
+            </div>
+            <button
+              onClick={handleRequestPermission}
+              type="button"
+              className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] active:scale-95 transition hover:brightness-110 shadow shrink-0"
+            >
+              চালু করুন
+            </button>
+          </div>
+        )}
 
         {/* My Friend Code Box */}
         <div className="bg-panel2/80 border border-green-500/30 rounded-2xl p-3.5 mb-5 flex items-center justify-between">

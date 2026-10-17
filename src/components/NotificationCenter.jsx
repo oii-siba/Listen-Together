@@ -7,7 +7,9 @@ import {
   playNotificationChime,
   acceptFriendRequest,
   updateNotificationStatus,
-  addNotification,
+  getBrowserNotificationPermission,
+  requestBrowserNotificationPermission,
+  showNativeNotification,
 } from '../lib/userData';
 
 export default function NotificationCenter({ user, roomId }) {
@@ -16,6 +18,7 @@ export default function NotificationCenter({ user, roomId }) {
   const [notifications, setNotifications] = useState([]);
   const [roomActivities, setRoomActivities] = useState([]);
   const [activeToast, setActiveToast] = useState(null);
+  const [permState, setPermState] = useState(() => getBrowserNotificationPermission());
   const knownIdsRef = useRef(null);
   const toastTimerRef = useRef(null);
   const panelRef = useRef(null);
@@ -27,6 +30,11 @@ export default function NotificationCenter({ user, roomId }) {
       setActiveTab('activity');
     }
   }, [roomId]);
+
+  // Check browser notification permission status on mount
+  useEffect(() => {
+    setPermState(getBrowserNotificationPermission());
+  }, []);
 
   // Subscribe to personal notifications (friend invites, friend requests, etc.)
   useEffect(() => {
@@ -70,6 +78,30 @@ export default function NotificationCenter({ user, roomId }) {
         const latest = newAlerts[0];
         setActiveToast(latest);
         playNotificationChime();
+
+        // Native Browser Notification (OS / desktop level banner)
+        const nativeTitle =
+          latest.type === 'friend_request'
+            ? `👥 Friend Request: ${latest.senderName}`
+            : latest.type === 'friend_accepted'
+            ? `🎉 Friend Connected: ${latest.senderName}`
+            : `🎧 Room Invite: ${latest.senderName}`;
+
+        showNativeNotification(nativeTitle, {
+          body:
+            latest.body ||
+            (latest.roomId ? `Click to join room "${latest.roomId}"` : 'Open TuneTogether to view'),
+          icon: latest.senderPhoto || '/logo.png',
+          onClick: () => {
+            if (latest.roomId) {
+              handleJoin(latest.roomId);
+            } else {
+              setOpen(true);
+              setActiveTab('invites');
+            }
+          },
+        });
+
         clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => {
           setActiveToast(null);
@@ -145,31 +177,14 @@ export default function NotificationCenter({ user, roomId }) {
     }
   };
 
-  const handleSendTestNotification = () => {
-    if (!user) return;
-    const testNotif = {
-      id: `freq-test-${Date.now()}`,
-      type: 'friend_request',
-      title: '👥 Friend Request (Test)',
-      body: 'Alex sent you a friend request! Tap Accept to become friends.',
-      senderUid: 'demo-test-friend',
-      senderName: 'Alex (Test)',
-      senderPhoto: 'https://api.dicebear.com/7.x/bottts/svg?seed=alex-test',
-      senderCode: 'TT-ALEX99',
-      targetUid: user.uid,
-      timestamp: Date.now(),
-      unread: true,
-      status: 'pending',
-    };
-    addNotification(user.uid, testNotif);
-    setActiveToast(testNotif);
-    playNotificationChime();
-    clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setActiveToast(null), 10000);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('tt-notification', { detail: { targetUid: user.uid, notif: testNotif } })
-      );
+  const handleRequestPermission = async () => {
+    const res = await requestBrowserNotificationPermission();
+    setPermState(res);
+    if (res === 'granted') {
+      playNotificationChime();
+      showNativeNotification('🔔 Notifications Enabled!', {
+        body: 'TuneTogether will now alert you when friends invite you to rooms or send friend requests.',
+      });
     }
   };
 
@@ -284,6 +299,39 @@ export default function NotificationCenter({ user, roomId }) {
         {/* Dropdown Panel */}
         {open && (
           <div className="absolute right-0 top-full mt-2 w-80 sm:w-92 bg-panel/95 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+            {/* Browser Notification Permission Banner (if not yet granted) */}
+            {permState === 'default' && (
+              <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 flex items-center justify-between gap-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">🔔</span>
+                    <p className="text-xs font-bold text-white">Browser Notifications</p>
+                  </div>
+                  <p className="text-[10.5px] text-white/70 mt-0.5 leading-snug">
+                    অন্য উইন্ডো বা ব্যাকগ্রাউন্ডে থাকলেও ইনভাইট ও ফ্রেন্ড রিকোয়েস্টের নোটিফিকেশন পান।
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRequestPermission}
+                  className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow shrink-0"
+                >
+                  অনুমতি দিন
+                </button>
+              </div>
+            )}
+
+            {permState === 'denied' && (
+              <div className="mb-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px]">
+                  <span>⚠️</span> নোটিফিকেশন ব্লক করা আছে
+                </div>
+                <p className="text-[10px] text-white/60 mt-0.5 leading-snug">
+                  ব্রাউজারের URL বারে তালা (Lock 🔒) আইকনে ক্লিক করে Notifications "Allow" করুন।
+                </p>
+              </div>
+            )}
+
             {/* Header with Tabs */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
               <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
@@ -482,17 +530,38 @@ export default function NotificationCenter({ user, roomId }) {
               </div>
             )}
 
-            {/* Panel Footer with Test Notification Button */}
+            {/* Panel Footer: Permission status & toggle */}
             <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={handleSendTestNotification}
-                className="px-2.5 py-1 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 text-green-400 font-bold text-[11px] flex items-center gap-1.5 active:scale-95 transition"
-                title="Send a sample notification to yourself to check sound and toast banner"
-              >
-                <span>🔔 Test Notification</span>
-              </button>
-              <span className="text-[10px] text-white/40">Check Sound & Toast</span>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    permState === 'granted'
+                      ? 'bg-green-400 shadow-[0_0_8px_rgba(34,197,94,0.8)]'
+                      : permState === 'denied'
+                      ? 'bg-amber-400'
+                      : 'bg-white/40'
+                  }`}
+                />
+                <span className="text-[11px] text-white/70 font-medium">
+                  {permState === 'granted'
+                    ? 'নোটিফিকেশন পারমিশন: চালু আছে ✓'
+                    : permState === 'denied'
+                    ? 'ব্রাউজারে নোটিফিকেশন ব্লক'
+                    : 'নোটিফিকেশন পারমিশন: বন্ধ'}
+                </span>
+              </div>
+
+              {permState !== 'granted' && permState !== 'unsupported' ? (
+                <button
+                  type="button"
+                  onClick={handleRequestPermission}
+                  className="text-[11px] text-green-400 hover:text-green-300 font-bold underline transition"
+                >
+                  চালু করুন
+                </button>
+              ) : (
+                <span className="text-[10px] text-white/40">Sound & Banners Active</span>
+              )}
             </div>
           </div>
         )}

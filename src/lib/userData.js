@@ -735,6 +735,62 @@ export function playNotificationChime() {
   } catch {}
 }
 
+// ---------------- BROWSER NATIVE NOTIFICATIONS ----------------
+export function getBrowserNotificationPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    return 'unsupported';
+  }
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+
+export async function requestBrowserNotificationPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    return 'unsupported';
+  }
+  try {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const perm = await Notification.requestPermission();
+    return perm;
+  } catch (e) {
+    console.warn('Error requesting notification permission:', e);
+    return Notification.permission;
+  }
+}
+
+export function showNativeNotification(title, options = {}) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return null;
+  if (Notification.permission !== 'granted') return null;
+
+  try {
+    const notif = new Notification(title, {
+      body: options.body || '',
+      icon: options.icon || options.photo || '/logo.png',
+      badge: '/logo.png',
+      tag: options.tag || `tt-${Date.now()}`,
+      silent: true, // Audio chime already handles pleasant tone
+      ...options,
+    });
+
+    notif.onclick = () => {
+      try {
+        window.focus();
+      } catch {}
+      if (typeof options.onClick === 'function') {
+        options.onClick();
+      }
+      notif.close();
+    };
+
+    return notif;
+  } catch (e) {
+    console.warn('Could not show native notification:', e);
+    return null;
+  }
+}
+
 // ---------------- ROOM ACTIVITY ----------------
 export async function logRoomActivity(roomId, activity) {
   if (!roomId || !activity) return;
