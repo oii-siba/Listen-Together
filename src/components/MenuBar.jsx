@@ -13,6 +13,7 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
   const [showFavorites, setShowFavorites] = useState(false);
   const [favInitialTab, setFavInitialTab] = useState('favorites');
   const [copied, setCopied] = useState(false);
+  const [appInstalled, setAppInstalled] = useState(false);
 
   const nav = useNavigate();
   const location = useLocation();
@@ -22,6 +23,13 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
   const favoritesCount = getFavoriteSongs(user?.uid).length;
   const historyCount = getListeningHistory(user?.uid).length;
   const unreadNotifs = getNotifications(user?.uid).filter((n) => n.unread).length;
+
+  useEffect(() => {
+    setAppInstalled(isInstalled());
+    const onInstalled = () => setAppInstalled(true);
+    window.addEventListener('tt-installed', onInstalled);
+    return () => window.removeEventListener('tt-installed', onInstalled);
+  }, []);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -64,158 +72,218 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
 
   return (
     <>
-      {/* Menu Bar Trigger Button (Hamburger) */}
+      {/* Ultra Stylish Menu Bar Trigger Button (Hamburger) */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition hover:border-green-500/40 shadow"
-        title="Open Navigation Menu"
+        className="group relative w-10 h-10 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex flex-col items-center justify-center gap-1 text-white hover:text-green-400 active:scale-95 transition-all duration-300 hover:border-green-500/50 hover:shadow-[0_0_20px_rgba(34,197,94,0.35)] backdrop-blur-xl"
+        title="Open Menu"
         aria-label="Navigation Menu"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
+        <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400" />
+        <span className="w-3.5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400 self-center" />
+        <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400" />
       </button>
 
       {/* Slide-over Drawer Backdrop & Panel */}
       {isOpen && (
         <div className="fixed inset-0 z-[300] flex justify-end">
-          {/* Backdrop */}
+          {/* Backdrop with ultra smooth blur */}
           <div
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300"
           />
 
           {/* Drawer Menu Panel */}
-          <div className="relative w-full max-w-[310px] sm:max-w-xs h-full bg-[#0d1410]/95 border-l border-white/10 p-5 shadow-2xl flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-250">
-            {/* Top Section */}
-            <div className="overflow-y-auto pr-1">
-              {/* Header: Logo + Close Button */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src="/logo.png"
-                    alt="TuneTogether"
-                    className="w-8 h-8 rounded-full border border-green-400 p-0.5"
-                  />
+          <aside
+            aria-label="Side Navigation Menu"
+            className="relative w-full max-w-[325px] sm:max-w-sm h-full bg-gradient-to-b from-[#0e1712] via-[#09100c] to-[#040805] border-l border-emerald-500/25 p-5 sm:p-6 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.15)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden"
+          >
+            {/* Ambient Background Glows */}
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-16 -left-16 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Scrollable Main Section */}
+            <div className="overflow-y-auto pr-1 -mr-1 space-y-5 relative z-10 custom-scrollbar">
+              {/* Header: Brand & Close */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-9 h-9 rounded-2xl overflow-hidden p-0.5 border border-emerald-400/80 shadow-[0_0_15px_rgba(34,197,94,0.5)] bg-black">
+                    <img
+                      src="/logo.png"
+                      alt="TuneTogether"
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                  </div>
                   <div>
-                    <h2 className="font-extrabold text-sm text-white tracking-tight leading-none">
-                      Tune<span className="text-green-400">Together</span>
+                    <h2 className="font-black text-base text-white tracking-tight leading-none flex items-center gap-1.5">
+                      <span>Tune</span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">Together</span>
                     </h2>
-                    <p className="text-[10px] text-white/40 mt-0.5">One Beat. One Connection.</p>
+                    <p className="text-[10px] text-emerald-400/70 font-semibold tracking-wide uppercase mt-1">
+                      UltraSync Music Room
+                    </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition text-sm"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-90"
                   aria-label="Close Menu"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* User Profile Card */}
+              {/* User Profile VIP Card */}
               {user && (
-                <div className="bg-panel2/80 border border-green-500/25 rounded-2xl p-3.5 mb-5 shadow-[0_0_15px_rgba(34,197,94,0.12)]">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-emerald-950/40 border border-emerald-500/30 p-3.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] group">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <img
                         src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
                         alt=""
-                        className="w-11 h-11 rounded-full border-2 border-green-400 object-cover"
+                        className="w-12 h-12 rounded-2xl border-2 border-emerald-400/90 object-cover shadow-[0_0_15px_rgba(16,185,129,0.4)]"
                       />
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-panel animate-pulse" />
+                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#0e1712] shadow-sm animate-pulse" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-extrabold text-sm text-white truncate leading-tight">
-                        {user.displayName || 'TuneTogether Fan'}
-                      </p>
-                      <p className="text-[10px] text-white/50 truncate mt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-extrabold text-sm text-white truncate leading-tight">
+                          {user.displayName || 'TuneTogether Fan'}
+                        </p>
+                        <span className="text-[10px]" title="Active Member">⭐</span>
+                      </div>
+                      <p className="text-[11px] text-white/50 truncate mt-0.5 font-medium">
                         {user.email || 'Online Listener'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Friend Code Pill with Instant Copy */}
-                  <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between">
+                  {/* Friend Code with Copy Button */}
+                  <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between">
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-green-400/80">Friend Code</p>
-                      <p className="text-xs font-mono font-extrabold text-white">{myCode}</p>
+                      <p className="text-[9px] font-extrabold uppercase tracking-widest text-emerald-400/90">
+                        Your Friend Code
+                      </p>
+                      <p className="text-xs font-mono font-black text-white tracking-wider mt-0.5">
+                        {myCode}
+                      </p>
                     </div>
                     <button
                       type="button"
                       onClick={copyCode}
-                      className="px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 font-bold text-[10px] hover:bg-green-500 hover:text-black transition active:scale-95"
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 to-green-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-[10px] hover:from-emerald-500 hover:to-green-500 hover:text-black transition-all duration-200 active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.2)] flex items-center gap-1"
                     >
-                      {copied ? 'Copied! ✓' : 'Copy'}
+                      <span>{copied ? '✓' : '📋'}</span>
+                      <span>{copied ? 'Copied!' : 'Copy Code'}</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Navigation Menu List */}
-              <nav className="space-y-1">
-                {/* 1. Home / Explore */}
+              {/* SECTION 1: DISCOVER & LISTEN */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+                  Discover &amp; Rooms
+                </p>
+
+                {/* 1. Home / Discover */}
                 <button
                   type="button"
                   onClick={() => handleNav('/')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                  className={`w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
                     location.pathname === '/'
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                      : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      ? 'bg-gradient-to-r from-emerald-500/25 to-green-500/15 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
+                      : 'text-white/80 hover:bg-white/5 hover:text-white border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base">🏠</span>
-                    <span>Home & Discover</span>
+                    <span className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-sm shadow-sm group-hover:scale-110 transition-transform">
+                      🏠
+                    </span>
+                    <div className="text-left">
+                      <p className="font-extrabold text-white text-xs">Home &amp; Discover</p>
+                      <p className="text-[10px] text-white/40 font-medium">Browse &amp; create sync rooms</p>
+                    </div>
                   </div>
-                  <span className="text-white/30 text-xs">→</span>
+                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                 </button>
 
-                {/* 2. Active Room / Room Launcher */}
+                {/* 2. Current Room (if in room) or Create Room */}
                 {roomId ? (
                   <button
                     type="button"
                     onClick={() => handleNav(`/room/${roomId}`)}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-green-500 text-black shadow-[0_0_14px_rgba(34,197,94,0.5)] transition"
+                    className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-400 text-black shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-95"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base">🎧</span>
-                      <span>Current Room ({roomId})</span>
+                      <span className="w-8 h-8 rounded-xl bg-black/20 flex items-center justify-center text-sm">
+                        🎧
+                      </span>
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-black text-black text-xs">Current Room</p>
+                          <span className="text-[9px] uppercase font-mono font-black bg-black/20 px-1.5 py-0.5 rounded-md">
+                            {roomId}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-black/75 font-semibold">Active playback &amp; chat</p>
+                      </div>
                     </div>
-                    <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-3 bg-black rounded-full animate-bounce" />
+                      <span className="w-1.5 h-4 bg-black rounded-full animate-bounce [animation-delay:0.15s]" />
+                      <span className="w-1.5 h-2 bg-black rounded-full animate-bounce [animation-delay:0.3s]" />
+                    </div>
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => handleNav('/')}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition"
+                    className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base">➕</span>
-                      <span>Create or Join Room</span>
+                      <span className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                        ➕
+                      </span>
+                      <div className="text-left">
+                        <p className="font-extrabold text-white text-xs">Create or Join Room</p>
+                        <p className="text-[10px] text-white/40 font-medium">Party code or instant room</p>
+                      </div>
                     </div>
-                    <span className="text-white/30 text-xs">→</span>
+                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                   </button>
                 )}
+              </div>
+
+              {/* SECTION 2: SOCIAL & LIBRARY */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+                  Social &amp; Collection
+                </p>
 
                 {/* 3. Friends System */}
                 <button
                   type="button"
                   onClick={openFriends}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition"
+                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base">👥</span>
-                    <span>Friends & Directory</span>
+                    <span className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                      👥
+                    </span>
+                    <div className="text-left">
+                      <p className="font-extrabold text-white text-xs">Friends &amp; Directory</p>
+                      <p className="text-[10px] text-white/40 font-medium">Send &amp; accept requests</p>
+                    </div>
                   </div>
-                  {friendsCount > 0 && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white/10 text-white/80">
+                  {friendsCount > 0 ? (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                       {friendsCount}
                     </span>
+                  ) : (
+                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                   )}
                 </button>
 
@@ -223,16 +291,23 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                 <button
                   type="button"
                   onClick={() => openFavs('favorites')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition"
+                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base">❤️</span>
-                    <span>Favorite Songs</span>
+                    <span className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                      ❤️
+                    </span>
+                    <div className="text-left">
+                      <p className="font-extrabold text-white text-xs">Favorite Songs</p>
+                      <p className="text-[10px] text-white/40 font-medium">Your curated tracks</p>
+                    </div>
                   </div>
-                  {favoritesCount > 0 && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">
+                  {favoritesCount > 0 ? (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                       {favoritesCount}
                     </span>
+                  ) : (
+                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                   )}
                 </button>
 
@@ -240,54 +315,82 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                 <button
                   type="button"
                   onClick={() => openFavs('history')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition"
+                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base">🕒</span>
-                    <span>Listening History</span>
+                    <span className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                      🕒
+                    </span>
+                    <div className="text-left">
+                      <p className="font-extrabold text-white text-xs">Listening History</p>
+                      <p className="text-[10px] text-white/40 font-medium">Recently played songs</p>
+                    </div>
                   </div>
-                  {historyCount > 0 && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                  {historyCount > 0 ? (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       {historyCount}
                     </span>
+                  ) : (
+                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                   )}
                 </button>
+              </div>
 
-                {/* 6. Profile Settings */}
+              {/* SECTION 3: APP & PREFERENCES */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+                  Settings &amp; App
+                </p>
+
+                {/* 6. Profile Customization */}
                 <button
                   type="button"
                   onClick={openProfile}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition"
+                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-base">⚙️</span>
-                    <span>Profile Customization</span>
+                    <span className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                      ⚙️
+                    </span>
+                    <div className="text-left">
+                      <p className="font-extrabold text-white text-xs">Profile Customization</p>
+                      <p className="text-[10px] text-white/40 font-medium">Avatar &amp; display name</p>
+                    </div>
                   </div>
-                  <span className="text-white/30 text-xs">→</span>
+                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                 </button>
 
-                {/* 7. Install App */}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsOpen(false);
-                    await triggerDirectInstall();
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/25 hover:bg-green-500/20 transition active:scale-95 shadow-[0_0_10px_rgba(34,197,94,0.15)]"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-base">📲</span>
-                    <span>Install App on Device</span>
-                  </div>
-                  <span className="text-[10px] font-extrabold bg-green-500 text-black px-2 py-0.5 rounded-full">
-                    FREE
-                  </span>
-                </button>
-              </nav>
+                {/* 7. Install App on Device (VIP Highlight Card) */}
+                {!appInstalled && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsOpen(false);
+                      await triggerDirectInstall();
+                    }}
+                    className="w-full group relative overflow-hidden flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold bg-gradient-to-r from-emerald-500/20 via-green-500/15 to-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-xl bg-emerald-500 text-black flex items-center justify-center text-base shadow-[0_0_10px_rgba(34,197,94,0.5)] group-hover:scale-110 transition-transform">
+                        📲
+                      </span>
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-black text-emerald-300 text-xs">Install App on Device</p>
+                        </div>
+                        <p className="text-[10px] text-white/60 font-medium">Full screen &amp; background play</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-black px-2 py-0.5 rounded-full shadow-sm">
+                      Free App
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Bottom Footer Section */}
-            <div className="pt-4 border-t border-white/10 mt-4 space-y-3">
+            <div className="pt-4 border-t border-white/10 mt-3 space-y-3 relative z-10">
               {onSignOut && (
                 <button
                   type="button"
@@ -295,18 +398,22 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                     setIsOpen(false);
                     onSignOut();
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95"
+                  className="w-full py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 font-bold text-xs flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-sm"
                 >
                   <span>🚪</span>
                   <span>Sign Out</span>
                 </button>
               )}
 
-              <p className="text-[10px] text-white/35 text-center font-medium">
-                TuneTogether v2.0 · Live YouTube Sync
-              </p>
+              <div className="flex items-center justify-between text-[10px] text-white/40 font-medium px-1">
+                <span>TuneTogether v2.0</span>
+                <span className="flex items-center gap-1 text-emerald-400/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  UltraSync Engine
+                </span>
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
       )}
 
