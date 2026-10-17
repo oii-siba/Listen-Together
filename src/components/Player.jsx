@@ -2,10 +2,11 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
 import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
-// Ultra-tight synchronization settings
-const HARD_DRIFT_THRESHOLD = 0.45; // 450ms: Hard seek immediately
-const MICRO_DRIFT_THRESHOLD = 0.15; // 150ms: Smooth playback rate adjustment
-const SYNC_HEARTBEAT_MS = 250; // Check sync 4 times a second (was 1000ms)
+// Reliable, smooth synchronization settings
+const HARD_DRIFT_THRESHOLD = 2.5; // 2.5s: Only hard seek if genuinely far behind or ahead
+const MICRO_DRIFT_THRESHOLD = 0.75; // 750ms: Smooth 4% playback rate adjustment without audio stutter
+const MIN_SEEK_COOLDOWN_MS = 3500; // 3.5s cooldown between hard seeks to avoid buffer loops
+const SYNC_HEARTBEAT_MS = 1000; // Gentle 1-second check (stable, no browser thrashing)
 
 const UNSTARTED = -1;
 const ENDED = 0;
@@ -52,6 +53,7 @@ const Player = forwardRef(function Player(
   };
 
   const setRate = (yt, rate) => {
+    if (!yt) return;
     if (currentRate.current !== rate) {
       currentRate.current = rate;
       try {
@@ -60,7 +62,7 @@ const Player = forwardRef(function Player(
     }
   };
 
-  // Synchronize local player with the exact expected position
+  // Synchronize local player with the exact expected position without stutter
   const syncPlayback = useCallback((force = false) => {
     const yt = ytRef.current;
     const pb = stateRef.current;
@@ -76,10 +78,14 @@ const Player = forwardRef(function Player(
       if (!enabledRef.current) return;
       if (st === ENDED) return;
 
-      // If player paused or stopped unexpectedly, resume
+      // If player paused or stopped unexpectedly, resume playback
       if (st !== PLAYING && st !== BUFFERING) {
-        if (absDiff > HARD_DRIFT_THRESHOLD) seek(yt, want);
-        yt.playVideo();
+        if (absDiff > HARD_DRIFT_THRESHOLD) {
+          seek(yt, want);
+        }
+        try {
+          yt.playVideo();
+        } catch {}
         return;
       }
 
@@ -87,22 +93,22 @@ const Player = forwardRef(function Player(
       if (st === PLAYING) {
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. If difference is large (> 450ms) or forced (e.g. just finished buffering): hard seek
-        if (absDiff > HARD_DRIFT_THRESHOLD && (force || timeSinceLastSeek > 800)) {
+        // 1. If difference is large (> 2.5s) AND cooldown passed (> 3.5s) or forced: hard seek
+        if (absDiff > HARD_DRIFT_THRESHOLD && (force || timeSinceLastSeek > MIN_SEEK_COOLDOWN_MS)) {
           seek(yt, want);
           setRate(yt, 1.0);
         }
-        // 2. If slight drift (150ms - 450ms): dynamically adjust speed without audio stutter
+        // 2. If slight drift (0.75s - 2.5s): dynamically adjust speed without ANY audio stutter
         else if (absDiff > MICRO_DRIFT_THRESHOLD) {
           if (diff > 0) {
-            // We are slightly behind, run 5% faster to catch up
-            setRate(yt, 1.05);
+            // We are slightly behind, run 4% faster to gently catch up
+            setRate(yt, 1.04);
           } else {
-            // We are slightly ahead, run 5% slower to let the other catch up
-            setRate(yt, 0.95);
+            // We are slightly ahead, run 4% slower to gently let others catch up
+            setRate(yt, 0.96);
           }
         }
-        // 3. Perfect sync (< 150ms): normal speed
+        // 3. Perfect sync (< 750ms): normal speed, 100% continuous uninterrupted music
         else {
           setRate(yt, 1.0);
         }
@@ -111,9 +117,11 @@ const Player = forwardRef(function Player(
       // Paused state
       setRate(yt, 1.0);
       if (st === PLAYING || st === BUFFERING) {
-        yt.pauseVideo();
+        try {
+          yt.pauseVideo();
+        } catch {}
       }
-      if (st !== CUED && st !== UNSTARTED && absDiff > 0.2) {
+      if (st !== CUED && st !== UNSTARTED && absDiff > 0.5) {
         seek(yt, pb.position || 0);
       }
     }
@@ -127,7 +135,9 @@ const Player = forwardRef(function Player(
 
     if (!pb || !pb.videoId) {
       if (loadedId.current) {
-        yt.stopVideo();
+        try {
+          yt.stopVideo();
+        } catch {}
         loadedId.current = null;
       }
       return;
@@ -141,15 +151,36 @@ const Player = forwardRef(function Player(
       lastSeekAt.current = Date.now();
       setRate(yt, 1.0);
       if (pb.isPlaying && enabledRef.current) {
-        yt.loadVideoById({ videoId: pb.videoId, startSeconds: want });
+        yt.loadVideoById({ videoId: pb.videoId, startSeconds: Math.max(0, want) });
       } else {
-        yt.cueVideoById({ videoId: pb.videoId, startSeconds: pb.isPlaying ? want : pb.position || 0 });
+        yt.cueVideoById({
+          videoId: pb.videoId,
+          startSeconds: pb.isPlaying ? Math.max(0, want) : Math.max(0, pb.position || 0),
+        });
       }
       return;
     }
 
-    syncPlayback(false);
-  }, [syncPlayback]);
+    // Same song: update play / pause status smoothly
+    if (pb.isPlaying) {
+      if (enabledRef.current) {
+        const st = yt.getPlayerState();
+        if (st !== PLAYING && st !== BUFFERING) {
+          const cur = yt.getCurrentTime() || 0;
+          if (Math.abs(want - cur) > HARD_DRIFT_THRESHOLD) {
+            seek(yt, want);
+          }
+          try {
+            yt.playVideo();
+          } catch {}
+        }
+      }
+    } else {
+      try {
+        yt.pauseVideo();
+      } catch {}
+    }
+  }, []);
 
   // Create YouTube player instance
   useEffect(() => {
@@ -178,10 +209,10 @@ const Player = forwardRef(function Player(
           },
           onStateChange: (e) => {
             if (e.data === ENDED) onEndedRef.current?.();
-            // CRITICAL FIX: As soon as video finishes buffering and transitions to PLAYING,
-            // immediately snap directly to the exact live second to eliminate the 1-3s buffer lag!
+            // When transitioning to PLAYING, reset rate to normal and do NOT force-seek (prevents stutter feedback loop)
             if (e.data === PLAYING) {
-              syncPlayback(true);
+              setRate(ytRef.current, 1.0);
+              onBlockedRef.current?.(false);
             }
           },
           onAutoplayBlocked: () => onBlockedRef.current?.(true),
@@ -199,16 +230,16 @@ const Player = forwardRef(function Player(
       ytRef.current = null;
       if (wrapRef.current) wrapRef.current.innerHTML = '';
     };
-  }, [apply, syncPlayback]);
+  }, [apply]);
 
-  // React immediately to room state changes from WebSocket
+  // React immediately to room state changes from WebSocket/Firebase
   useEffect(() => {
     stateRef.current = playback;
     enabledRef.current = enabled;
     apply();
   }, [playback?.videoId, playback?.isPlaying, playback?.position, playback?.updatedAt, enabled, apply]);
 
-  // High-frequency sync heartbeat (every 250ms)
+  // Stable sync heartbeat (every 1000ms instead of aggressive 250ms)
   useEffect(() => {
     const id = setInterval(() => {
       const yt = ytRef.current;
