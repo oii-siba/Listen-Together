@@ -13,7 +13,7 @@ export default function NotificationCenter({ user, roomId }) {
   const [notifications, setNotifications] = useState([]);
   const [roomActivities, setRoomActivities] = useState([]);
   const [activeToast, setActiveToast] = useState(null);
-  const prevCountRef = useRef(0);
+  const knownIdsRef = useRef(null);
   const toastTimerRef = useRef(null);
   const panelRef = useRef(null);
   const nav = useNavigate();
@@ -30,17 +30,30 @@ export default function NotificationCenter({ user, roomId }) {
     if (!user?.uid) return;
     const unsub = subscribeToNotifications(user.uid, (list) => {
       setNotifications(list);
-      const unreadList = list.filter((n) => n.unread);
-      // If a new unread invite arrived, trigger audio chime & instant toast alert!
-      if (unreadList.length > prevCountRef.current && unreadList[0]?.roomId) {
-        setActiveToast(unreadList[0]);
+
+      // On initial load, register known IDs without firing alerts
+      if (knownIdsRef.current === null) {
+        knownIdsRef.current = new Set(list.map((n) => n.id));
+        return;
+      }
+
+      // Detect genuinely NEW unread invites
+      const newInvites = list.filter(
+        (n) => n.unread && !knownIdsRef.current.has(n.id) && n.roomId
+      );
+
+      // Update known IDs set
+      list.forEach((n) => knownIdsRef.current.add(n.id));
+
+      if (newInvites.length > 0) {
+        const latest = newInvites[0];
+        setActiveToast(latest);
         playNotificationChime();
         clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => {
           setActiveToast(null);
-        }, 8000);
+        }, 10000);
       }
-      prevCountRef.current = unreadList.length;
     });
     return unsub;
   }, [user?.uid]);
@@ -86,6 +99,16 @@ export default function NotificationCenter({ user, roomId }) {
     setOpen(false);
     setActiveToast(null);
     nav(`/room/${targetRoomId}`);
+  };
+
+  const toggleOpen = () => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next && unreadCount > 0) {
+        setActiveTab('invites');
+      }
+      return next;
+    });
   };
 
   const getActivityIcon = (type) => {
@@ -147,7 +170,7 @@ export default function NotificationCenter({ user, roomId }) {
         {/* Bell Button */}
         <button
           type="button"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={toggleOpen}
           className="relative w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
           title="Notifications & Activity"
         >

@@ -250,9 +250,9 @@ export function getNotifications(uid) {
 export function addNotification(uid, notif) {
   const list = getNotifications(uid);
   const updated = [
-    { id: `n-${Date.now()}`, timestamp: Date.now(), unread: true, ...notif },
+    { id: `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, timestamp: Date.now(), unread: true, ...notif },
     ...list,
-  ].slice(0, 20);
+  ].slice(0, 30);
   setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
   return updated;
 }
@@ -260,6 +260,7 @@ export function addNotification(uid, notif) {
 export async function sendRoomInvite(senderUser, targetUid, roomId) {
   if (!senderUser || !targetUid || !roomId) return false;
   const notif = {
+    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     type: 'room_invite',
     title: '🎧 Room Invite',
     body: `${senderUser.displayName || 'A friend'} invited you to join room "${roomId}"`,
@@ -296,33 +297,59 @@ export async function sendRoomInvite(senderUser, targetUid, roomId) {
     } catch {}
   }
 
+  // 4. Trigger localStorage storage event across all tabs/windows
+  try {
+    localStorage.setItem(
+      'TT_INVITE_PING',
+      JSON.stringify({ targetUid, timestamp: Date.now() })
+    );
+  } catch {}
+
   return true;
+}
+
+function mergeNotifications(fbData, uid) {
+  const fbList = fbData
+    ? Object.entries(fbData).map(([key, val]) => ({ id: key, ...val }))
+    : [];
+  const localList = getNotifications(uid);
+  const map = new Map();
+  [...fbList, ...localList].forEach((item) => {
+    const key = item.id || `${item.timestamp}_${item.roomId}`;
+    if (!map.has(key)) map.set(key, item);
+  });
+  return Array.from(map.values()).sort(
+    (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
+  );
 }
 
 export function subscribeToNotifications(uid, callback) {
   if (!uid) return () => {};
 
+  let currentFbData = null;
+
+  const emit = () => {
+    callback(mergeNotifications(currentFbData, uid));
+  };
+
   // Initial trigger
-  callback(getNotifications(uid));
+  emit();
 
   // Firebase Realtime Database onValue listener
   let fbUnsub = () => {};
   if (isFirebaseConfigured) {
     const notifRef = ref(db, `users/${uid}/notifications`);
-    fbUnsub = onValue(notifRef, (snap) => {
-      const data = snap.val();
-      if (!data) {
-        callback(getNotifications(uid));
-        return;
+    fbUnsub = onValue(
+      notifRef,
+      (snap) => {
+        currentFbData = snap.val();
+        emit();
+      },
+      (err) => {
+        console.warn('Firebase notifications subscription error:', err);
+        emit();
       }
-      const list = Object.entries(data)
-        .map(([key, val]) => ({
-          id: key,
-          ...val,
-        }))
-        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      callback(list);
-    });
+    );
   }
 
   // Broadcast channel for instantaneous cross-tab alerts
@@ -332,15 +359,28 @@ export function subscribeToNotifications(uid, callback) {
       bc = new BroadcastChannel('listen-together-sync');
       bc.onmessage = (e) => {
         if (e.data?.type === 'ROOM_INVITE' && e.data?.targetUid === uid) {
-          callback(getNotifications(uid));
+          emit();
         }
       };
     } catch {}
   }
 
+  // Storage listener for cross-window / multi-tab sync
+  const handleStorage = (e) => {
+    if (e.key === 'TT_INVITE_PING' || e.key === `${NOTIFICATIONS_KEY}_${uid}`) {
+      emit();
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', handleStorage);
+  }
+
   return () => {
     fbUnsub();
     if (bc) bc.close();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', handleStorage);
+    }
   };
 }
 
@@ -368,12 +408,40 @@ export async function markNotificationsRead(uid) {
   return updated;
 }
 
-// ---------------- AUDIO CHIME ----------------
+// ---------------- AUDIO CHIME & AUTOPLAY UNLOCK ----------------
+let sharedAudioCtx = null;
+function getAudioContext() {
+  if (typeof window === 'undefined') return null;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+    sharedAudioCtx = new AudioCtx();
+  }
+  return sharedAudioCtx;
+}
+
+// Unlock audio on first user touch/click anywhere in window
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    try {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch {}
+    window.removeEventListener('click', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+    window.removeEventListener('touchstart', unlockAudio);
+  };
+  window.addEventListener('click', unlockAudio, { once: true, passive: true });
+  window.addEventListener('keydown', unlockAudio, { once: true, passive: true });
+  window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+}
+
 export function playNotificationChime() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (!ctx) return;
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
     }
@@ -381,10 +449,10 @@ export function playNotificationChime() {
     const gain = ctx.createGain();
     osc.type = 'sine';
     const now = ctx.currentTime;
-    // Harmonic pleasant two-tone chime (587Hz -> 880Hz)
+    // Harmonic pleasant two-tone chime (587.33Hz D5 -> 880Hz A5)
     osc.frequency.setValueAtTime(587.33, now);
     osc.frequency.setValueAtTime(880, now + 0.12);
-    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.setValueAtTime(0.18, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -428,32 +496,58 @@ export async function logRoomActivity(roomId, activity) {
       bc.postMessage({ type: 'ROOM_ACTIVITY', roomId, activity: entry });
     } catch {}
   }
+
+  // Trigger storage event across tabs
+  try {
+    localStorage.setItem(
+      'TT_ACTIVITY_PING',
+      JSON.stringify({ roomId, timestamp: Date.now() })
+    );
+  } catch {}
+}
+
+function mergeRoomActivities(fbData, roomId) {
+  const localKey = `TT_ROOM_ACTIVITY_${roomId}`;
+  const localList = getLocal(localKey, []);
+  const fbList = fbData
+    ? Object.entries(fbData).map(([key, val]) => ({ id: key, ...val }))
+    : [];
+  const map = new Map();
+  [...fbList, ...localList].forEach((item) => {
+    const key = item.id || `${item.timestamp}_${item.type}_${item.body}`;
+    if (!map.has(key)) map.set(key, item);
+  });
+  return Array.from(map.values())
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 40);
 }
 
 export function subscribeToRoomActivity(roomId, callback) {
   if (!roomId) return () => {};
 
-  const localKey = `TT_ROOM_ACTIVITY_${roomId}`;
+  let currentFbData = null;
+
+  const emit = () => {
+    callback(mergeRoomActivities(currentFbData, roomId));
+  };
+
   // Initial local emit
-  callback(getLocal(localKey, []));
+  emit();
 
   let fbUnsub = () => {};
   if (isFirebaseConfigured) {
     const actRef = ref(db, `rooms/${roomId}/activity`);
-    fbUnsub = onValue(actRef, (snap) => {
-      const data = snap.val();
-      if (!data) {
-        callback(getLocal(localKey, []));
-        return;
+    fbUnsub = onValue(
+      actRef,
+      (snap) => {
+        currentFbData = snap.val();
+        emit();
+      },
+      (err) => {
+        console.warn('Firebase room activity listener error:', err);
+        emit();
       }
-      const list = Object.entries(data)
-        .map(([key, val]) => ({
-          id: key,
-          ...val,
-        }))
-        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      callback(list.slice(0, 40));
-    });
+    );
   }
 
   let bc = null;
@@ -462,15 +556,27 @@ export function subscribeToRoomActivity(roomId, callback) {
       bc = new BroadcastChannel('listen-together-sync');
       bc.onmessage = (e) => {
         if (e.data?.type === 'ROOM_ACTIVITY' && e.data?.roomId === roomId) {
-          callback(getLocal(localKey, []));
+          emit();
         }
       };
     } catch {}
   }
 
+  const handleStorage = (e) => {
+    if (e.key === 'TT_ACTIVITY_PING' || e.key === `TT_ROOM_ACTIVITY_${roomId}`) {
+      emit();
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', handleStorage);
+  }
+
   return () => {
     fbUnsub();
     if (bc) bc.close();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', handleStorage);
+    }
   };
 }
 

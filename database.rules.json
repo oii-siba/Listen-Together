@@ -17,6 +17,8 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid",
         "notifications": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           "$nid": {
             ".write": "auth != null"
           }
@@ -46,23 +48,28 @@
         },
 
         "chat": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           "$mid": {
             ".write": "auth != null"
           }
         },
 
         "reactions": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           "$rid": {
             ".write": "auth != null"
           }
         },
 
         "activity": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           "$aid": {
             ".write": "auth != null"
           }
         },
-
 
         "presence": {
           "$uid": {

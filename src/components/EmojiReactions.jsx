@@ -20,7 +20,23 @@ export default function EmojiReactions({ roomId, user, className = '' }) {
       const fresh = list.filter((r) => now - (r.timestamp || 0) < 5000);
       setActiveReactions(fresh);
     });
-    return unsub;
+
+    let bc = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('listen-together-sync');
+        bc.onmessage = (e) => {
+          if (e.data?.type === 'ROOM_REACTION' && e.data?.roomId === roomId) {
+            setActiveReactions((prev) => [...prev, e.data.reaction]);
+          }
+        };
+      } catch {}
+    }
+
+    return () => {
+      unsub();
+      if (bc) bc.close();
+    };
   }, [roomId]);
 
   // Clean up old reactions periodically
@@ -42,6 +58,18 @@ export default function EmojiReactions({ roomId, user, className = '' }) {
       xOffset: offset,
       id: Math.random().toString(36).substring(7),
     };
+
+    // Instant local feedback
+    setActiveReactions((prev) => [...prev, reaction]);
+
+    // Cross-tab broadcast
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('listen-together-sync');
+        bc.postMessage({ type: 'ROOM_REACTION', roomId, reaction });
+      } catch {}
+    }
+
     try {
       await push(ref(db, `rooms/${roomId}/reactions`), reaction);
     } catch {}
