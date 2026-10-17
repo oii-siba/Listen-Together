@@ -2,7 +2,11 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
 import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
-const DRIFT = 1.5; // seconds of drift tolerated before auto-seek
+// Ultra-tight synchronization settings
+const HARD_DRIFT_THRESHOLD = 0.45; // 450ms: Hard seek immediately
+const MICRO_DRIFT_THRESHOLD = 0.15; // 150ms: Smooth playback rate adjustment
+const SYNC_HEARTBEAT_MS = 250; // Check sync 4 times a second (was 1000ms)
+
 const UNSTARTED = -1;
 const ENDED = 0;
 const PLAYING = 1;
@@ -10,7 +14,7 @@ const PAUSED = 2;
 const BUFFERING = 3;
 const CUED = 5;
 
-// Where the song *should* be right now, based on the host's last write + server clock.
+// Where the song *should* be right now, based on the host's last write + global server clock.
 export function expectedPosition(pb) {
   if (!pb) return 0;
   const base = pb.position || 0;
@@ -28,6 +32,7 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
   const loadedId = useRef(null);
   const lastSeekAt = useRef(0);
   const notPlaying = useRef(0);
+  const currentRate = useRef(1.0);
 
   const onEndedRef = useRef(onEnded);
   const onErrorRef = useRef(onError);
@@ -38,10 +43,80 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
 
   const seek = (yt, t) => {
     lastSeekAt.current = Date.now();
-    yt.seekTo(Math.max(0, t), true);
+    try {
+      yt.seekTo(Math.max(0, t), true);
+    } catch {}
   };
 
-  // Make the local player match the shared room state.
+  const setRate = (yt, rate) => {
+    if (currentRate.current !== rate) {
+      currentRate.current = rate;
+      try {
+        yt.setPlaybackRate(rate);
+      } catch {}
+    }
+  };
+
+  // Synchronize local player with the exact expected position
+  const syncPlayback = useCallback((force = false) => {
+    const yt = ytRef.current;
+    const pb = stateRef.current;
+    if (!yt || !readyRef.current || !pb || !pb.videoId) return;
+
+    const st = yt.getPlayerState();
+    const cur = yt.getCurrentTime() || 0;
+    const want = expectedPosition(pb);
+    const diff = want - cur; // positive => we are behind; negative => we are ahead
+    const absDiff = Math.abs(diff);
+
+    if (pb.isPlaying) {
+      if (!enabledRef.current) return;
+      if (st === ENDED) return;
+
+      // If player paused or stopped unexpectedly, resume
+      if (st !== PLAYING && st !== BUFFERING) {
+        if (absDiff > HARD_DRIFT_THRESHOLD) seek(yt, want);
+        yt.playVideo();
+        return;
+      }
+
+      // If currently playing:
+      if (st === PLAYING) {
+        const timeSinceLastSeek = Date.now() - lastSeekAt.current;
+
+        // 1. If difference is large (> 450ms) or forced (e.g. just finished buffering): hard seek
+        if (absDiff > HARD_DRIFT_THRESHOLD && (force || timeSinceLastSeek > 800)) {
+          seek(yt, want);
+          setRate(yt, 1.0);
+        }
+        // 2. If slight drift (150ms - 450ms): dynamically adjust speed without audio stutter
+        else if (absDiff > MICRO_DRIFT_THRESHOLD) {
+          if (diff > 0) {
+            // We are slightly behind, run 5% faster to catch up
+            setRate(yt, 1.05);
+          } else {
+            // We are slightly ahead, run 5% slower to let the other catch up
+            setRate(yt, 0.95);
+          }
+        }
+        // 3. Perfect sync (< 150ms): normal speed
+        else {
+          setRate(yt, 1.0);
+        }
+      }
+    } else {
+      // Paused state
+      setRate(yt, 1.0);
+      if (st === PLAYING || st === BUFFERING) {
+        yt.pauseVideo();
+      }
+      if (st !== CUED && st !== UNSTARTED && absDiff > 0.2) {
+        seek(yt, pb.position || 0);
+      }
+    }
+  }, []);
+
+  // Main apply function for new video or state update
   const apply = useCallback(() => {
     const yt = ytRef.current;
     const pb = stateRef.current;
@@ -57,9 +132,11 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
 
     const want = expectedPosition(pb);
 
+    // If new song selected
     if (loadedId.current !== pb.videoId) {
       loadedId.current = pb.videoId;
       lastSeekAt.current = Date.now();
+      setRate(yt, 1.0);
       if (pb.isPlaying && enabledRef.current) {
         yt.loadVideoById({ videoId: pb.videoId, startSeconds: want });
       } else {
@@ -68,28 +145,10 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
       return;
     }
 
-    const st = yt.getPlayerState();
-    const cur = yt.getCurrentTime() || 0;
-    const recentlySeeked = Date.now() - lastSeekAt.current < 1500;
+    syncPlayback(false);
+  }, [syncPlayback]);
 
-    if (pb.isPlaying) {
-      if (!enabledRef.current) return;
-      if (st === ENDED) return;
-      if (st !== PLAYING && st !== BUFFERING) {
-        if (Math.abs(cur - want) > 1) seek(yt, want);
-        yt.playVideo();
-      } else if (!recentlySeeked && Math.abs(cur - want) > DRIFT) {
-        seek(yt, want);
-      }
-    } else {
-      if (st === PLAYING || st === BUFFERING) yt.pauseVideo();
-      if (st !== CUED && st !== UNSTARTED && !recentlySeeked && Math.abs(cur - (pb.position || 0)) > 0.5) {
-        seek(yt, pb.position || 0);
-      }
-    }
-  }, []);
-
-  // Create the YouTube player once.
+  // Create YouTube player instance
   useEffect(() => {
     let destroyed = false;
     loadYT().then((YT) => {
@@ -116,7 +175,11 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
           },
           onStateChange: (e) => {
             if (e.data === ENDED) onEndedRef.current?.();
-            if (e.data === PLAYING) apply(); // quick drift correction right after buffering
+            // CRITICAL FIX: As soon as video finishes buffering and transitions to PLAYING,
+            // immediately snap directly to the exact live second to eliminate the 1-3s buffer lag!
+            if (e.data === PLAYING) {
+              syncPlayback(true);
+            }
           },
           onAutoplayBlocked: () => onBlockedRef.current?.(true),
           onError: (e) => onErrorRef.current?.(e.data),
@@ -129,28 +192,28 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
       loadedId.current = null;
       try {
         ytRef.current?.destroy();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
       ytRef.current = null;
       if (wrapRef.current) wrapRef.current.innerHTML = '';
     };
-  }, [apply]);
+  }, [apply, syncPlayback]);
 
-  // React to room state changes.
+  // React immediately to room state changes from WebSocket
   useEffect(() => {
     stateRef.current = playback;
     enabledRef.current = enabled;
     apply();
   }, [playback?.videoId, playback?.isPlaying, playback?.position, playback?.updatedAt, enabled, apply]);
 
-  // Heartbeat: drift correction + autoplay-blocked detection.
+  // High-frequency sync heartbeat (every 250ms)
   useEffect(() => {
     const id = setInterval(() => {
       const yt = ytRef.current;
       const pb = stateRef.current;
       if (!yt || !readyRef.current) return;
-      apply();
+
+      syncPlayback(false);
+
       if (pb?.videoId && pb.isPlaying && enabledRef.current) {
         const st = yt.getPlayerState();
         if (st === PLAYING || st === BUFFERING) {
@@ -158,28 +221,26 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
           onBlockedRef.current?.(false);
         } else if (st === UNSTARTED || st === CUED || st === PAUSED) {
           notPlaying.current += 1;
-          if (notPlaying.current >= 3) onBlockedRef.current?.(true);
+          if (notPlaying.current >= 4) onBlockedRef.current?.(true);
         }
       } else {
         notPlaying.current = 0;
         onBlockedRef.current?.(false);
       }
-    }, 1000);
+    }, SYNC_HEARTBEAT_MS);
+
     return () => clearInterval(id);
-  }, [apply]);
+  }, [syncPlayback]);
 
   useImperativeHandle(
     ref,
     () => ({
-      // Call this from a tap handler: unlocks audio on mobile and jumps to the live position.
       resync() {
         enabledRef.current = true;
         try {
           ytRef.current?.unMute?.();
-        } catch {
-          /* ignore */
-        }
-        apply();
+        } catch {}
+        syncPlayback(true);
       },
       getCurrentTime: () => {
         const t = ytRef.current?.getCurrentTime?.();
@@ -191,16 +252,15 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
       },
       setVolume: (v) => ytRef.current?.setVolume?.(v),
     }),
-    [apply]
+    [syncPlayback]
   );
 
   return (
     <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg shadow-black/40">
-      {/* pointer-events-none: nobody can tap the video and desync themselves */}
       <div ref={wrapRef} className="absolute inset-0 pointer-events-none [&_iframe]:w-full [&_iframe]:h-full" />
       {!playback?.videoId && (
         <div className="absolute inset-0 grid place-items-center bg-panel text-white/50 text-sm text-center px-6">
-          Nothing playing yet — add a YouTube song below 🎵
+          Nothing playing yet — search or add a YouTube song below 🎵
         </div>
       )}
       {children}
