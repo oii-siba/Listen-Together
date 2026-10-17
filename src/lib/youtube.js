@@ -23,9 +23,12 @@ const KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 export const searchEnabled = true;
 
 function decode(s = '') {
-  const t = document.createElement('textarea');
-  t.innerHTML = s;
-  return t.value;
+  try {
+    const doc = new DOMParser().parseFromString(s, 'text/html');
+    return doc.documentElement.textContent || '';
+  } catch {
+    return s;
+  }
 }
 
 // Live YouTube Auto-suggestions

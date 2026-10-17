@@ -31,7 +31,7 @@ export default function Chat({ roomId, user }) {
 
   const sendMessage = async (e) => {
     e?.preventDefault();
-    const clean = text.trim();
+    const clean = text.trim().slice(0, 450);
     if (!clean || sending) return;
     setSending(true);
 
@@ -133,6 +133,7 @@ export default function Chat({ roomId, user }) {
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
+          maxLength={450}
           placeholder="Send a message to everyone…"
           className="flex-1 bg-panel border border-white/10 rounded-full px-4 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
         />
