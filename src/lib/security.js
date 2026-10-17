@@ -66,9 +66,4 @@ export function initClientSecurity() {
       return false;
     }
   });
-
-  // 4. Protect against DevTools variable tampering
-  try {
-    Object.freeze(Object.prototype);
-  } catch {}
 }
