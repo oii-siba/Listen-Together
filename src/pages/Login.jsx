@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { isInAppBrowser } from '../lib/utils';
-import { Music } from '../components/Icons';
 
 function GoogleG() {
   return (
@@ -38,118 +37,59 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-md mx-auto px-6 py-10 flex flex-col justify-center">
-      <div className="text-center">
-        <div className="mx-auto w-20 h-20 rounded-3xl bg-accent text-black grid place-items-center shadow-lg shadow-accent/20">
-          <Music size={44} />
+    <div className="min-h-[100dvh] max-w-md mx-auto px-6 py-10 flex flex-col justify-center text-white font-sans">
+      <div className="text-center flex flex-col items-center">
+        {/* TuneTogether Official Logo with glowing aura */}
+        <div className="relative w-24 h-24 rounded-full overflow-hidden p-1 border-2 border-green-400 shadow-[0_0_35px_rgba(34,197,94,0.7)] animate-pulse">
+          <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
         </div>
-        <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Listen Together</h1>
-        <p className="mt-2 text-white/60">Play a YouTube song — everyone with the link hears it at the same time.</p>
+
+        {/* Brand Tagline Badge */}
+        <div className="mt-5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[10px] font-bold tracking-wider uppercase">
+          ★ ONE BEAT. ONE CONNECTION.
+        </div>
+
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight">
+          Tune<span className="text-green-400">Together</span>
+        </h1>
+        <p className="mt-1.5 text-sm text-white/60 max-w-xs">
+          Listen to YouTube songs together in real-time with friends.
+        </p>
       </div>
 
-      {/* Mode Badge */}
-      <div className="mt-6 flex items-center justify-center gap-2">
-        <span
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
-            isFirebaseConfigured
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              isFirebaseConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-            }`}
-          />
-          {isFirebaseConfigured ? 'Firebase Connected' : 'Localhost Demo Mode (Broadcast Sync)'}
-        </span>
-      </div>
-
-      <div className="mt-6 bg-panel rounded-2xl p-5 border border-white/5 shadow-xl">
-        <p className="text-sm text-white/70">
-          We use Google sign-in only to know who is in the room. We ask for just your <b>name</b>, <b>email</b> and{' '}
-          <b>profile photo</b> — nothing else.
+      <div className="mt-8 bg-panel rounded-[24px] p-6 border border-white/10 shadow-xl">
+        <p className="text-xs text-white/70 text-center leading-relaxed">
+          Sign in with Google to enter or create rooms. We only request your <b>name</b>, <b>email</b>, and <b>profile photo</b>.
         </p>
 
-        {isFirebaseConfigured ? (
-          <button
-            onClick={go}
-            disabled={busy}
-            className="mt-4 w-full flex items-center justify-center gap-3 bg-white text-black font-semibold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100"
-          >
-            <GoogleG />
-            {busy ? 'Opening Google…' : 'Continue with Google'}
-          </button>
-        ) : (
-          <div className="mt-4 space-y-2.5">
-            <button
-              onClick={() => signInDemo('Alex (Host)', 'demo-host')}
-              className="w-full flex items-center justify-center gap-2 bg-accent text-black font-bold rounded-full py-3 active:scale-[0.98] transition hover:brightness-105 shadow-md shadow-accent/20"
-            >
-              <span>👑</span> Continue as Alex (Host)
-            </button>
-            <button
-              onClick={() => signInDemo('Sam (Guest)', 'demo-guest')}
-              className="w-full flex items-center justify-center gap-2 bg-panel2 text-white font-semibold rounded-full py-3 active:scale-[0.98] transition hover:bg-panel2/80 border border-white/10"
-            >
-              <span>🎧</span> Continue as Sam (Guest)
-            </button>
-          </div>
-        )}
+        <button
+          onClick={go}
+          disabled={busy}
+          className="mt-5 w-full flex items-center justify-center gap-3 bg-white text-black font-bold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100 shadow-md"
+        >
+          <GoogleG />
+          {busy ? 'Connecting to Google…' : 'Continue with Google'}
+        </button>
 
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
       </div>
 
-      {/* Demo Switch for quick multi-tab testing even when configured */}
-      {isFirebaseConfigured && (
-        <div className="mt-3 text-center">
-          <button
-            onClick={() => signInDemo('Alex (Demo Host)', 'demo-host')}
-            className="text-xs text-white/40 hover:text-white/70 transition underline"
-          >
-            Or test quickly with a local demo user
-          </button>
-        </div>
-      )}
-
-      {/* Setup Guide Collapsible */}
-      {!isFirebaseConfigured && (
-        <div className="mt-4 bg-panel2/60 border border-white/10 rounded-2xl p-4 text-xs">
-          <div
-            onClick={() => setShowSetup((v) => !v)}
-            className="flex items-center justify-between cursor-pointer text-white/80 font-medium"
-          >
-            <span>🛠️ How to connect real Firebase for phones</span>
-            <span>{showSetup ? '▲' : '▼'}</span>
-          </div>
-
-          {showSetup && (
-            <div className="mt-3 space-y-2 text-white/60 leading-relaxed border-t border-white/10 pt-3">
-              <p>
-                To sync across different phones anywhere on the internet, add your credentials to{' '}
-                <code className="text-accent bg-black/40 px-1 py-0.5 rounded">.env</code>:
-              </p>
-              <ol className="list-decimal list-inside space-y-1 pl-1">
-                <li>Create project at <span className="text-white/90">console.firebase.google.com</span></li>
-                <li>Enable <span className="text-white/90">Google Sign-in</span> in Authentication</li>
-                <li>Create a <span className="text-white/90">Realtime Database</span></li>
-                <li>Copy values from Project Settings → Web App into <span className="text-white/90">.env</span></li>
-              </ol>
-              <p className="text-[11px] text-white/40 pt-1">
-                Meanwhile, you can test complete synchronized playback between two browser tabs right now using the buttons above!
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Instant Demo Switch */}
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => signInDemo('Alex (Host)', 'demo-host')}
+          className="text-xs text-green-400/80 hover:text-green-300 transition underline font-medium"
+        >
+          Or continue with instant demo account
+        </button>
+      </div>
 
       {(inApp || (error && isFirebaseConfigured)) && (
-        <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-4 text-sm">
+        <div className="mt-5 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-4 text-xs">
           <p>
-            Google sign-in often doesn’t work inside in-app browsers (Instagram, Facebook, some chat apps). If it fails, open
-            this page in <b>Chrome</b> or <b>Safari</b>.
+            Google sign-in often doesn’t work inside in-app browsers (Instagram, WhatsApp, Facebook). Open this link directly in <b>Chrome</b> or <b>Safari</b>.
           </p>
-          <button onClick={copyLink} className="mt-2 underline font-medium">
+          <button onClick={copyLink} className="mt-2 text-green-400 underline font-semibold">
             Copy link
           </button>
         </div>

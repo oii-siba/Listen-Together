@@ -4,8 +4,8 @@ import { ref, serverTimestamp, set } from '../lib/db';
 import { db } from '../firebase';
 import { useAuth } from '../AuthContext';
 import { parseRoomId, randomRoomId } from '../lib/utils';
-import Avatar from '../components/Avatar';
-import { Add, Logout, Music } from '../components/Icons';
+import BrandHeader from '../components/BrandHeader';
+import { Add } from '../components/Icons';
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -33,7 +33,7 @@ export default function Home() {
                 () =>
                   reject(
                     new Error(
-                      'Realtime Database connection timed out. Please make sure you clicked "Create Database" under Build → Realtime Database in Firebase Console.'
+                      'Realtime Database connection timed out. Please verify your Firebase configuration.'
                     )
                   ),
                 7000
@@ -60,63 +60,252 @@ export default function Home() {
     e.preventDefault();
     const id = parseRoomId(code);
     if (!id) {
-      setError('Paste a valid room link or code.');
+      setError('Please paste a valid room link or code.');
       return;
     }
     nav(`/room/${id}`);
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-md mx-auto px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-10">
-      <header className="flex items-center gap-3">
-        <Avatar name={user.displayName || 'You'} photo={user.photoURL} size={44} />
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-white/50">Signed in as</p>
-          <p className="font-semibold truncate">{user.displayName || user.email}</p>
+    <div className="min-h-[100dvh] max-w-md mx-auto px-5 pt-2 pb-16 text-white font-sans">
+      {/* Brand Header */}
+      <BrandHeader user={user} onSignOut={signOut} showNav={true} />
+
+      {/* Hero Section */}
+      <div className="mt-8 text-center flex flex-col items-center">
+        {/* Top Tagline Badge matching screenshot */}
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[11px] font-bold tracking-wider uppercase shadow-[0_0_12px_rgba(34,197,94,0.3)]">
+          <span>★</span> ONE BEAT. ONE CONNECTION.
         </div>
+
+        {/* Heading matching screenshot */}
+        <h1 className="mt-5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-[1.15]">
+          Listen together,<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-400 to-green-300">
+            in perfect sync.
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="mt-3.5 text-sm text-white/60 leading-relaxed max-w-xs">
+          Create a room, share the link on WhatsApp, and everyone hears the same YouTube song at the same moment, on any device.
+        </p>
+
+        {/* Big Neon Green "Create a room" Button */}
         <button
-          onClick={signOut}
-          className="w-11 h-11 rounded-full bg-panel grid place-items-center text-white/70 active:scale-90 transition"
-          aria-label="Sign out"
+          onClick={createRoom}
+          disabled={busy}
+          className="mt-6 w-full py-4 rounded-full bg-green-500 text-black font-extrabold text-base flex items-center justify-center gap-2 shadow-[0_0_28px_rgba(34,197,94,0.6)] hover:brightness-110 active:scale-[0.98] transition disabled:opacity-50"
         >
-          <Logout size={20} />
+          <Add size={22} className="stroke-[3]" />
+          {busy ? 'Creating room…' : 'Create a room'}
         </button>
-      </header>
 
-      <div className="mt-12 text-center">
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/15 text-accent grid place-items-center">
-          <Music size={34} />
+        {/* Join Room Form */}
+        <form onSubmit={join} className="mt-3.5 w-full flex items-center gap-2">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Paste room link or code"
+            className="flex-1 min-w-0 bg-panel border border-white/10 rounded-full px-5 py-3 text-sm text-white outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 placeholder:text-white/35 transition"
+          />
+          <button
+            type="submit"
+            className="px-6 py-3 rounded-full bg-panel2 border border-white/10 font-bold text-sm text-white hover:bg-white/10 active:scale-95 transition"
+          >
+            Join
+          </button>
+        </form>
+
+        {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
+      </div>
+
+      {/* Hero AirPods Neon Green HUD Preview matching reference image */}
+      <div className="relative mt-10 w-full rounded-[28px] overflow-hidden bg-black border border-green-500/30 shadow-[0_0_35px_rgba(34,197,94,0.25)]">
+        <div className="relative w-full aspect-[9/12] overflow-hidden">
+          <img
+            src="/airpods_green.jpg"
+            alt="TuneTogether Earbuds"
+            className="absolute inset-0 w-full h-full object-cover object-bottom"
+          />
+
+          {/* Ambient Glow Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#052e16]/80 via-transparent to-black/85 pointer-events-none" />
+
+          {/* Floating Neon Green HUD Player Capsule */}
+          <div className="absolute top-[16%] left-4 right-4 z-20">
+            <div className="neon-green-box rounded-[24px] bg-black/80 backdrop-blur-xl p-4 shadow-2xl">
+              {/* Row 1: Artwork + Title + Live badge */}
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                  <span className="text-xl">🎵</span>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <span className="inline-block text-[10px] font-bold text-green-400 tracking-wider uppercase">
+                    ● LIVE · 1 LISTENING
+                  </span>
+                  <h3 className="font-extrabold text-white text-base leading-tight truncate">Midnight Drive</h3>
+                  <p className="text-xs text-white/50 truncate font-medium">Demo Artist</p>
+                </div>
+              </div>
+
+              {/* Row 2: Progress Slider */}
+              <div className="mt-3">
+                <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full w-[65%]" />
+                </div>
+                <div className="flex justify-between text-[11px] font-semibold text-white/60 mt-1 tabular-nums px-0.5">
+                  <span>2:05</span>
+                  <span>-1:18</span>
+                </div>
+              </div>
+
+              {/* Row 3: Player Controls */}
+              <div className="mt-1 flex items-center justify-center gap-6">
+                <button className="text-white/70 hover:text-white transition">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                  </svg>
+                </button>
+                <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                  <div className="flex gap-1 items-center justify-center">
+                    <div className="w-1 h-3.5 bg-black rounded-sm" />
+                    <div className="w-1 h-3.5 bg-black rounded-sm" />
+                  </div>
+                </div>
+                <button className="text-white/70 hover:text-white transition">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Start listening together</h1>
-        <p className="mt-1 text-sm text-white/55">Create a room, share the link, and everyone hears the same song live.</p>
       </div>
 
-      <button
-        onClick={createRoom}
-        disabled={busy}
-        className="mt-8 w-full flex items-center justify-center gap-2 bg-accent text-black font-bold text-lg rounded-full py-4 active:scale-[0.98] transition disabled:opacity-60"
-      >
-        <Add size={26} />
-        {busy ? 'Creating…' : 'Create Room'}
-      </button>
+      {/* SECTION 1: HOW IT WORKS */}
+      <section id="how-it-works" className="mt-16 scroll-mt-6">
+        <div className="text-center">
+          <p className="text-[11px] font-bold text-green-400 uppercase tracking-widest">HOW IT WORKS</p>
+          <h2 className="mt-1 text-2xl font-extrabold text-white tracking-tight">Three taps to a shared playlist</h2>
+        </div>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-white/35">
-        <div className="h-px flex-1 bg-white/10" />
-        OR JOIN A ROOM
-        <div className="h-px flex-1 bg-white/10" />
-      </div>
+        <div className="mt-6 space-y-3">
+          {/* Step 1 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4 flex gap-3.5 items-start">
+            <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 font-extrabold text-sm flex items-center justify-center shrink-0 border border-green-500/30">
+              1
+            </span>
+            <div>
+              <h3 className="font-bold text-base text-white">Create a room</h3>
+              <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+                Start a room in one tap. You&apos;re the host and control what plays.
+              </p>
+            </div>
+          </div>
 
-      <form onSubmit={join} className="flex gap-2">
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Paste room link or code"
-          className="flex-1 min-w-0 bg-panel rounded-full px-5 py-3.5 text-sm outline-none focus:ring-2 focus:ring-accent placeholder:text-white/35"
-        />
-        <button className="px-6 rounded-full bg-panel2 font-semibold text-sm active:scale-95 transition">Join</button>
-      </form>
+          {/* Step 2 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4 flex gap-3.5 items-start">
+            <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 font-extrabold text-sm flex items-center justify-center shrink-0 border border-green-500/30">
+              2
+            </span>
+            <div>
+              <h3 className="font-bold text-base text-white">Share the link</h3>
+              <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+                Send it on WhatsApp or anywhere else. Friends join straight from the browser.
+              </p>
+            </div>
+          </div>
 
-      {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
+          {/* Step 3 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4 flex gap-3.5 items-start">
+            <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 font-extrabold text-sm flex items-center justify-center shrink-0 border border-green-500/30">
+              3
+            </span>
+            <div>
+              <h3 className="font-bold text-base text-white">Add songs, press play</h3>
+              <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+                Paste any YouTube song or search by title. Everyone hears it at the same moment.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2: WHY TUNETOGETHER */}
+      <section className="mt-16">
+        <div className="text-center">
+          <p className="text-[11px] font-bold text-green-400 uppercase tracking-widest">WHY TUNETOGETHER</p>
+          <h2 className="mt-1 text-2xl font-extrabold text-white tracking-tight">Built for listening with friends</h2>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {/* Feature 1 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4">
+            <span className="text-lg">🔄</span>
+            <h3 className="font-bold text-base text-white mt-1.5">Always in sync</h3>
+            <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+              Play, pause, and skip stay matched for everyone in the room with sub-second accuracy.
+            </p>
+          </div>
+
+          {/* Feature 2 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4">
+            <span className="text-lg">🎵</span>
+            <h3 className="font-bold text-base text-white mt-1.5">Shared queue</h3>
+            <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+              Everyone adds songs, so the playlist reflects the whole group.
+            </p>
+          </div>
+
+          {/* Feature 3 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4">
+            <span className="text-lg">📱</span>
+            <h3 className="font-bold text-base text-white mt-1.5">Any device</h3>
+            <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+              Phone, laptop, or tablet. No app to install, just open the link in any browser.
+            </p>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="bg-panel border border-white/10 rounded-2xl p-4">
+            <span className="text-lg">🛡️</span>
+            <h3 className="font-bold text-base text-white mt-1.5">Host controls</h3>
+            <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+              The host keeps the room tidy and decides who can add or change songs.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: BOTTOM CALL TO ACTION */}
+      <section className="mt-16 rounded-[28px] bg-gradient-to-b from-[#0b1f13] to-panel border border-green-500/30 p-6 text-center shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+        <h2 className="text-2xl font-extrabold text-white tracking-tight leading-tight">
+          Your next listening party starts here
+        </h2>
+        <p className="text-xs text-white/60 mt-1.5">One room. One song. Everyone together.</p>
+        <button
+          onClick={createRoom}
+          disabled={busy}
+          className="mt-6 w-full py-3.5 rounded-full bg-green-500 text-black font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_22px_rgba(34,197,94,0.5)] hover:brightness-110 active:scale-95 transition"
+        >
+          <Add size={20} className="stroke-[3]" />
+          {busy ? 'Creating…' : 'Create a room'}
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-16 text-center border-t border-white/5 pt-6 flex flex-col items-center">
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="" className="w-5 h-5 rounded-full" />
+          <span className="font-bold text-sm tracking-tight">
+            Tune<span className="text-green-400">Together</span>
+          </span>
+        </div>
+        <p className="text-[11px] text-white/40 mt-1.5">© 2026 TuneTogether. One Beat, One Connection.</p>
+      </footer>
     </div>
   );
 }

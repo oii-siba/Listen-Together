@@ -4,11 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#0c0908',
-        panel: '#161210',
-        panel2: '#221b17',
-        accent: '#ff5500',
-        'accent-glow': '#ff7722',
+        ink: '#050806',
+        panel: '#0d1510',
+        panel2: '#132018',
+        accent: '#22c55e',
+        'accent-glow': '#4ade80',
+        spotify: '#1ed760',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],

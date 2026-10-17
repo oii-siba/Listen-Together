@@ -289,19 +289,24 @@ export default function Room() {
       <header className="flex items-center gap-3 mb-4">
         <button
           onClick={leave}
-          className="w-10 h-10 rounded-full bg-panel grid place-items-center active:scale-90 transition"
+          className="w-10 h-10 rounded-full bg-panel border border-white/10 grid place-items-center active:scale-90 transition text-white/80 hover:text-white"
           aria-label="Leave room"
         >
-          <Back size={22} />
+          <Back size={20} />
         </button>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold leading-tight">Room · {roomId}</p>
-          <p className="text-xs text-white/50 truncate">
-            {isHost ? "You're the host" : hostName ? `Hosted by ${hostName}` : 'Listening together'}
-          </p>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <img src="/logo.png" alt="" className="w-7 h-7 rounded-full border border-green-400 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-extrabold text-sm text-white leading-tight truncate">
+              Tune<span className="text-green-400">Together</span> · <span className="font-mono text-white/70">{roomId}</span>
+            </p>
+            <p className="text-[11px] text-white/50 truncate">
+              {isHost ? "👑 You're the host" : hostName ? `Hosted by ${hostName}` : 'Listening in sync'}
+            </p>
+          </div>
         </div>
-        <span className="flex items-center gap-1.5 text-xs text-white/60 bg-panel rounded-full px-3 py-1.5">
-          <span className={`w-2 h-2 rounded-full ${online ? 'bg-accent' : 'bg-red-500'}`} />
+        <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-3 py-1.5 shrink-0">
+          <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
           {people.length} live
         </span>
       </header>
