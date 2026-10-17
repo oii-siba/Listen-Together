@@ -1,39 +1,96 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import NotificationCenter from './NotificationCenter';
+import FriendsModal from './FriendsModal';
+import ProfileModal from './ProfileModal';
 
-export default function BrandHeader({ user, onSignOut, showNav = true }) {
+export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateUser }) {
+  const [showFriends, setShowFriends] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
   return (
-    <header className="flex items-center justify-between py-4 px-2">
-      {/* Brand Logo & Name */}
-      <Link to="/" className="flex items-center gap-2.5 group">
-        <div className="relative w-9 h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition">
-          <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
-        </div>
-        <div className="font-extrabold text-lg sm:text-xl tracking-tight leading-none">
-          <span className="text-white">Tune</span>
-          <span className="text-green-400 ml-0.5">Together</span>
-        </div>
-      </Link>
+    <>
+      <header className="flex items-center justify-between py-4 px-2">
+        {/* Brand Logo & Name */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition">
+            <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
+          </div>
+          <div className="font-extrabold text-lg sm:text-xl tracking-tight leading-none">
+            <span className="text-white">Tune</span>
+            <span className="text-green-400 ml-0.5">Together</span>
+          </div>
+        </Link>
 
-      {/* Right Action */}
-      {showNav && (
-        <div className="flex items-center gap-2">
-          <a
-            href="#how-it-works"
-            className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-panel2/80 text-white/80 hover:text-white border border-green-500/20 active:scale-95 transition"
-          >
-            How it works
-          </a>
-          {user && (
-            <button
-              onClick={onSignOut}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition"
-              title="Sign Out"
-            >
-              Sign out
-            </button>
-          )}
-        </div>
+        {/* Right Actions */}
+        {showNav && (
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                {/* Notification Center */}
+                <NotificationCenter user={user} />
+
+                {/* Friends Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFriends(true)}
+                  className="w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+                  title="Friends"
+                >
+                  <span className="text-base">👥</span>
+                </button>
+
+                {/* Profile Avatar / Customization */}
+                <button
+                  type="button"
+                  onClick={() => setShowProfile(true)}
+                  className="relative w-10 h-10 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] active:scale-95 transition"
+                  title="Customize Profile"
+                >
+                  <img
+                    src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
+                    alt={user.displayName || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+
+                {/* Sign Out */}
+                <button
+                  onClick={onSignOut}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition hidden sm:inline-block"
+                  title="Sign Out"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <a
+                href="#how-it-works"
+                className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-panel2/80 text-white/80 hover:text-white border border-green-500/20 active:scale-95 transition"
+              >
+                How it works
+              </a>
+            )}
+          </div>
+        )}
+      </header>
+
+      {/* Friends Modal */}
+      {showFriends && (
+        <FriendsModal
+          user={user}
+          onClose={() => setShowFriends(false)}
+        />
       )}
-    </header>
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <ProfileModal
+          user={user}
+          onClose={() => setShowProfile(false)}
+          onUpdateUser={onUpdateUser}
+        />
+      )}
+    </>
   );
 }

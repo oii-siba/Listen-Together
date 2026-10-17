@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { fmtTime } from '../lib/utils';
 import { Next, Pause, Play, Volume } from './Icons';
+import AudioVisualizer from './AudioVisualizer';
+import { isSongFavorite, toggleFavoriteSong, logSongHistory } from '../lib/userData';
 
 function PrevIcon({ size = 20, className = '' }) {
   return (
@@ -10,11 +12,12 @@ function PrevIcon({ size = 20, className = '' }) {
   );
 }
 
-export default function NowPlaying({ playback, playerRef, isHost, onToggle, onNext, onSeek }) {
+export default function NowPlaying({ playback, playerRef, isHost, user, onToggle, onNext, onSeek }) {
   const [cur, setCur] = useState(0);
   const [dur, setDur] = useState(0);
   const [scrub, setScrub] = useState(null);
   const [vol, setVol] = useState(100);
+  const [isFav, setIsFav] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -25,6 +28,28 @@ export default function NowPlaying({ playback, playerRef, isHost, onToggle, onNe
     }, 250);
     return () => clearInterval(id);
   }, [playerRef]);
+
+  // Sync favorite state and log history on song change
+  useEffect(() => {
+    if (!user?.uid || !playback?.videoId) return;
+    setIsFav(isSongFavorite(user.uid, playback.videoId));
+    logSongHistory(user.uid, {
+      videoId: playback.videoId,
+      title: playback.title || 'YouTube Song',
+      thumb: playback.thumb,
+    });
+  }, [playback?.videoId, user?.uid, playback?.title, playback?.thumb]);
+
+  const handleToggleFav = async () => {
+    if (!user?.uid || !playback?.videoId) return;
+    const nowFav = await toggleFavoriteSong(user.uid, {
+      videoId: playback.videoId,
+      title: playback.title,
+      thumb: playback.thumb,
+    });
+    setIsFav(nowFav);
+  };
+
 
   const has = !!playback?.videoId;
   const isPlaying = !!playback?.isPlaying;
@@ -102,10 +127,29 @@ export default function NowPlaying({ playback, playerRef, isHost, onToggle, onNe
                     : 'Demo Artist'}
                 </p>
               </div>
+
+              {/* Favorite Song Heart Toggle */}
+              {has && (
+                <button
+                  type="button"
+                  onClick={handleToggleFav}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center active:scale-125 transition text-base shrink-0"
+                  title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <span className={isFav ? 'text-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]' : 'text-white/40'}>
+                    {isFav ? '❤️' : '🤍'}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Audio Visualizer Equalizer Waves */}
+            <div className="mt-2.5 -mb-1">
+              <AudioVisualizer isPlaying={isPlaying} barCount={26} />
             </div>
 
             {/* Middle Row: Progress Slider with Left & Right Timestamps */}
-            <div className="mt-3.5 px-0.5">
+            <div className="mt-2 px-0.5">
               <input
                 type="range"
                 min={0}
@@ -179,6 +223,7 @@ export default function NowPlaying({ playback, playerRef, isHost, onToggle, onNe
             </div>
           </div>
         </div>
+
 
         {/* Volume & Status Bar at bottom of card */}
         <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center justify-between bg-black/70 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 text-xs">

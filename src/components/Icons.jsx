@@ -39,3 +39,5 @@ export const Volume = make(
 );
 export const Back = make('M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z');
 export const Check = make('M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
+export const ChatIcon = make('M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z');
+

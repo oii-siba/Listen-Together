@@ -69,3 +69,53 @@ input[type='range'] {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(34, 197, 94, 0.6);
 }
+
+/* Animations */
+@keyframes floatReaction {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.6) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-50px) scale(1.2) rotate(-8deg);
+  }
+  70% {
+    transform: translateY(-130px) scale(1.1) rotate(6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-220px) scale(0.8) rotate(-4deg);
+  }
+}
+
+.animate-float-reaction {
+  animation: floatReaction 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes eqBarPulse {
+  0%, 100% {
+    height: 15%;
+  }
+  50% {
+    height: 95%;
+  }
+}
+
+.animate-eq-bar {
+  animation: eqBarPulse 0.9s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(34, 197, 94, 0.9));
+  }
+}
+
+.animate-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+

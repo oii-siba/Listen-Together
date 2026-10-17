@@ -12,7 +12,13 @@ import AddSong from '../components/AddSong';
 import Participants from '../components/Participants';
 import ShareBar from '../components/ShareBar';
 import Splash from '../components/Splash';
-import { Back, People, Play, QueueIcon } from '../components/Icons';
+import Chat from '../components/Chat';
+import EmojiReactions from '../components/EmojiReactions';
+import NotificationCenter from '../components/NotificationCenter';
+import FriendsModal from '../components/FriendsModal';
+import ProfileModal from '../components/ProfileModal';
+import { Back, People, Play, QueueIcon, ChatIcon } from '../components/Icons';
+
 
 const toQueue = (q) =>
   Object.entries(q || {})
@@ -44,6 +50,9 @@ export default function Room() {
   const [tab, setTab] = useState('queue');
   const [toast, setToast] = useState('');
   const [showVideo, setShowVideo] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
 
   const exists = !!room;
   const isHost = exists && room.hostId === user.uid;
@@ -305,10 +314,33 @@ export default function Room() {
             </p>
           </div>
         </div>
-        <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-3 py-1.5 shrink-0">
-          <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
-          {people.length} live
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <NotificationCenter user={user} />
+          <button
+            type="button"
+            onClick={() => setShowFriends(true)}
+            className="w-9 h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+            title="Friends"
+          >
+            <span className="text-sm">👥</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowProfile(true)}
+            className="w-9 h-9 rounded-full overflow-hidden border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.4)] active:scale-95 transition"
+            title="Profile"
+          >
+            <img
+              src={user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid}`}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </button>
+          <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2.5 py-1.5 shrink-0">
+            <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
+            {people.length} live
+          </span>
+        </div>
       </header>
 
       {!online && (
@@ -341,10 +373,14 @@ export default function Room() {
         playback={playback}
         playerRef={playerRef}
         isHost={isHost}
+        user={user}
         onToggle={togglePlay}
         onNext={() => playNext().catch(() => {})}
         onSeek={seekTo}
       />
+
+      {/* Live Floating Emoji Reactions Bar */}
+      <EmojiReactions roomId={roomId} user={user} className="my-2" />
 
       {/* Optional Video Toggle */}
       {hasVideo && (
@@ -361,30 +397,36 @@ export default function Room() {
 
       <ShareBar roomId={roomId} />
 
-      <div className="mt-6 flex gap-1 bg-panel rounded-full p-1">
+      {/* Room Tabs: Queue, Live Chat, Listeners */}
+      <div className="mt-5 flex gap-1 bg-panel rounded-full p-1">
         {[
           ['queue', QueueIcon, `Queue · ${queue.length}`],
+          ['chat', ChatIcon, 'Live Chat'],
           ['people', People, `Listeners · ${people.length}`],
         ].map(([id, Icon, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition ${
-              tab === id ? 'bg-panel2 text-white' : 'text-white/50'
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-semibold transition ${
+              tab === id ? 'bg-panel2 text-white shadow' : 'text-white/50 hover:text-white/80'
             }`}
           >
-            <Icon size={18} /> {label}
+            <Icon size={16} /> {label}
           </button>
         ))}
       </div>
 
       <div className="mt-4">
-        {tab === 'queue' ? (
+        {tab === 'queue' && (
           <div className="space-y-4">
-            <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} />
+            <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} user={user} />
             <Queue items={queue} isHost={isHost} uid={user.uid} onRemove={removeFromQueue} onPlayNow={playItem} />
           </div>
-        ) : (
+        )}
+        {tab === 'chat' && (
+          <Chat roomId={roomId} user={user} />
+        )}
+        {tab === 'people' && (
           <Participants people={people} hostId={room.hostId} myUid={user.uid} />
         )}
       </div>
@@ -405,6 +447,7 @@ export default function Room() {
           </button>
         </div>
       )}
+
 
       <p className="mt-6 text-xs text-white/35 text-center px-4">
         Keep this tab open and the screen on — mobile browsers stop YouTube audio when the screen locks.
@@ -436,6 +479,24 @@ export default function Room() {
           </div>
         </div>
       )}
+
+      {/* Friends Modal */}
+      {showFriends && (
+        <FriendsModal
+          user={user}
+          currentRoomId={roomId}
+          onClose={() => setShowFriends(false)}
+        />
+      )}
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <ProfileModal
+          user={user}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </div>
   );
 }
+
