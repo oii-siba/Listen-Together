@@ -17,6 +17,7 @@ import EmojiReactions from '../components/EmojiReactions';
 import NotificationCenter from '../components/NotificationCenter';
 import FriendsModal from '../components/FriendsModal';
 import ProfileModal from '../components/ProfileModal';
+import MenuBar from '../components/MenuBar';
 import { logRoomActivity } from '../lib/userData';
 import { Back, People, Play, QueueIcon, ChatIcon } from '../components/Icons';
 
@@ -353,18 +354,7 @@ export default function Room() {
           >
             <span className="text-sm">👥</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowProfile(true)}
-            className="w-9 h-9 rounded-full overflow-hidden border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.4)] active:scale-95 transition"
-            title="Profile"
-          >
-            <img
-              src={user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid}`}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </button>
+          <MenuBar user={user} roomId={roomId} onPlaySong={addSong} />
           <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2.5 py-1.5 shrink-0">
             <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
             {people.length} live

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import NotificationCenter from './NotificationCenter';
 import FriendsModal from './FriendsModal';
 import ProfileModal from './ProfileModal';
+import MenuBar from './MenuBar';
 
 export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateUser }) {
   const [showFriends, setShowFriends] = useState(false);
@@ -44,7 +45,7 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                 <button
                   type="button"
                   onClick={() => setShowProfile(true)}
-                  className="relative w-10 h-10 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] active:scale-95 transition"
+                  className="relative w-10 h-10 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] active:scale-95 transition hidden sm:inline-block"
                   title="Customize Profile"
                 >
                   <img
@@ -54,14 +55,8 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                   />
                 </button>
 
-                {/* Sign Out */}
-                <button
-                  onClick={onSignOut}
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition hidden sm:inline-block"
-                  title="Sign Out"
-                >
-                  Sign out
-                </button>
+                {/* Navigation Menu Bar Drawer Button */}
+                <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
               </>
             ) : (
               <a
