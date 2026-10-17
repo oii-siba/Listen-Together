@@ -113,7 +113,11 @@ export default {
       }
     }
 
-    // 3. For all other routes, serve static SPA assets
-    return env.ASSETS.fetch(request);
+    // 3. For all other routes, serve static SPA assets safely
+    if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      return env.ASSETS.fetch(request);
+    }
+
+    return new Response('Loading assets...', { status: 200 });
   },
 };
