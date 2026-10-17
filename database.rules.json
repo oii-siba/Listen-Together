@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() === auth.uid) || data.child('hostId').val() === auth.uid)",
+
+        "hostId": {
+          ".validate": "newData.isString()",
+          ".write": "auth != null && data.exists() && newData.val() === auth.uid && !root.child('rooms/' + $roomId + '/presence/' + data.val()).exists()"
+        },
+
+        "allowGuestAdd": {
+          ".validate": "newData.isBoolean()"
+        },
+
+        "queue": {
+          "$qid": {
+            ".validate": "newData.hasChildren(['videoId', 'addedBy', 'title']) && newData.child('addedBy').val() === auth.uid && newData.child('title').isString() && newData.child('title').val().length < 300",
+            ".write": "auth != null && (root.child('rooms/' + $roomId + '/hostId').val() === auth.uid || (root.child('rooms/' + $roomId + '/allowGuestAdd').val() === true && (!data.exists() || data.child('addedBy').val() === auth.uid)))"
+          }
+        },
+
+        "presence": {
+          "$uid": {
+            ".validate": "newData.hasChildren(['name', 'joinedAt'])",
+            ".write": "auth != null && auth.uid === $uid && root.child('rooms/' + $roomId + '/hostId').exists()"
+          }
+        }
+      }
+    }
+  }
+}
