@@ -368,3 +368,110 @@ export async function markNotificationsRead(uid) {
   return updated;
 }
 
+// ---------------- AUDIO CHIME ----------------
+export function playNotificationChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    const now = ctx.currentTime;
+    // Harmonic pleasant two-tone chime (587Hz -> 880Hz)
+    osc.frequency.setValueAtTime(587.33, now);
+    osc.frequency.setValueAtTime(880, now + 0.12);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  } catch {}
+}
+
+// ---------------- ROOM ACTIVITY ----------------
+export async function logRoomActivity(roomId, activity) {
+  if (!roomId || !activity) return;
+  const entry = {
+    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: activity.type || 'activity',
+    title: activity.title || 'Room Activity',
+    body: activity.body || '',
+    userName: activity.userName || 'Someone',
+    timestamp: Date.now(),
+  };
+
+  // Local storage cache
+  const localKey = `TT_ROOM_ACTIVITY_${roomId}`;
+  const localList = getLocal(localKey, []);
+  setLocal(localKey, [entry, ...localList].slice(0, 40));
+
+  if (isFirebaseConfigured) {
+    try {
+      await push(ref(db, `rooms/${roomId}/activity`), {
+        ...entry,
+        timestamp: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('Could not log room activity to Firebase:', e);
+    }
+  }
+
+  // Cross-tab broadcast
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('listen-together-sync');
+      bc.postMessage({ type: 'ROOM_ACTIVITY', roomId, activity: entry });
+    } catch {}
+  }
+}
+
+export function subscribeToRoomActivity(roomId, callback) {
+  if (!roomId) return () => {};
+
+  const localKey = `TT_ROOM_ACTIVITY_${roomId}`;
+  // Initial local emit
+  callback(getLocal(localKey, []));
+
+  let fbUnsub = () => {};
+  if (isFirebaseConfigured) {
+    const actRef = ref(db, `rooms/${roomId}/activity`);
+    fbUnsub = onValue(actRef, (snap) => {
+      const data = snap.val();
+      if (!data) {
+        callback(getLocal(localKey, []));
+        return;
+      }
+      const list = Object.entries(data)
+        .map(([key, val]) => ({
+          id: key,
+          ...val,
+        }))
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      callback(list.slice(0, 40));
+    });
+  }
+
+  let bc = null;
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      bc = new BroadcastChannel('listen-together-sync');
+      bc.onmessage = (e) => {
+        if (e.data?.type === 'ROOM_ACTIVITY' && e.data?.roomId === roomId) {
+          callback(getLocal(localKey, []));
+        }
+      };
+    } catch {}
+  }
+
+  return () => {
+    fbUnsub();
+    if (bc) bc.close();
+  };
+}
+
+

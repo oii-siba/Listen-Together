@@ -1,28 +1,61 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { subscribeToNotifications, markNotificationsRead } from '../lib/userData';
+import {
+  subscribeToNotifications,
+  markNotificationsRead,
+  subscribeToRoomActivity,
+  playNotificationChime,
+} from '../lib/userData';
 
-export default function NotificationCenter({ user }) {
+export default function NotificationCenter({ user, roomId }) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(roomId ? 'activity' : 'invites');
   const [notifications, setNotifications] = useState([]);
+  const [roomActivities, setRoomActivities] = useState([]);
   const [activeToast, setActiveToast] = useState(null);
   const prevCountRef = useRef(0);
+  const toastTimerRef = useRef(null);
   const panelRef = useRef(null);
   const nav = useNavigate();
 
+  // Switch default tab if roomId changes
+  useEffect(() => {
+    if (roomId) {
+      setActiveTab('activity');
+    }
+  }, [roomId]);
+
+  // Subscribe to personal notifications (friend invites, etc.)
   useEffect(() => {
     if (!user?.uid) return;
     const unsub = subscribeToNotifications(user.uid, (list) => {
       setNotifications(list);
       const unreadList = list.filter((n) => n.unread);
-      // If a new unread invite arrived, trigger instant toast alert!
+      // If a new unread invite arrived, trigger audio chime & instant toast alert!
       if (unreadList.length > prevCountRef.current && unreadList[0]?.roomId) {
         setActiveToast(unreadList[0]);
+        playNotificationChime();
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => {
+          setActiveToast(null);
+        }, 8000);
       }
       prevCountRef.current = unreadList.length;
     });
     return unsub;
   }, [user?.uid]);
+
+  // Subscribe to live room activity when roomId is available
+  useEffect(() => {
+    if (!roomId) {
+      setRoomActivities([]);
+      return;
+    }
+    const unsub = subscribeToRoomActivity(roomId, (activities) => {
+      setRoomActivities(activities);
+    });
+    return unsub;
+  }, [roomId]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -49,21 +82,38 @@ export default function NotificationCenter({ user }) {
     setNotifications(updated);
   };
 
-  const handleJoin = (roomId) => {
+  const handleJoin = (targetRoomId) => {
     setOpen(false);
     setActiveToast(null);
-    nav(`/room/${roomId}`);
+    nav(`/room/${targetRoomId}`);
+  };
+
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'join':
+        return '🎧';
+      case 'leave':
+        return '👋';
+      case 'song_added':
+        return '🎵';
+      case 'now_playing':
+        return '▶️';
+      case 'reaction':
+        return '❤️';
+      default:
+        return '⚡';
+    }
   };
 
   return (
     <>
       {/* Instant Floating Banner Toast when an invite arrives */}
       {activeToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[92vw] bg-black/90 border-2 border-green-400 rounded-2xl p-3 shadow-[0_0_28px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] max-w-sm w-[92vw] bg-black/95 border-2 border-green-400 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
           <img
             src={activeToast.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${activeToast.senderUid}`}
             alt=""
-            className="w-10 h-10 rounded-full border border-green-400/80 shrink-0 object-cover"
+            className="w-10 h-10 rounded-full border-2 border-green-400 shrink-0 object-cover"
           />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-extrabold text-white truncate">
@@ -99,7 +149,7 @@ export default function NotificationCenter({ user }) {
           type="button"
           onClick={() => setOpen((prev) => !prev)}
           className="relative w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
-          title="Notifications"
+          title="Notifications & Activity"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -112,69 +162,173 @@ export default function NotificationCenter({ user }) {
           )}
         </button>
 
-
-      {/* Dropdown Panel */}
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-88 bg-panel border border-white/10 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-white">Notifications</span>
-              {unreadCount > 0 && (
-                <span className="text-[10px] font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">
-                  {unreadCount} new
-                </span>
-              )}
-            </div>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkRead}
-                className="text-[11px] text-green-400 hover:underline"
-              >
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1">
-            {notifications.length === 0 ? (
-              <p className="text-center text-xs text-white/40 py-6">No notifications yet.</p>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-3 rounded-xl border text-xs transition ${
-                    n.unread
-                      ? 'bg-green-500/10 border-green-500/30 text-white'
-                      : 'bg-panel2/60 border-white/5 text-white/70'
+        {/* Dropdown Panel */}
+        {open && (
+          <div className="absolute right-0 top-full mt-2 w-80 sm:w-92 bg-panel/95 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+            {/* Header with Tabs */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+              <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('invites')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                    activeTab === 'invites'
+                      ? 'bg-green-500 text-black shadow'
+                      : 'text-white/60 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-bold text-white text-[12px]">{n.title}</p>
-                    <span className="text-[9px] text-white/40 shrink-0">
-                      {n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    </span>
-                  </div>
-                  <p className="text-white/60 mt-0.5 leading-relaxed">{n.body}</p>
-
-                  {n.roomId && (
-                    <button
-                      type="button"
-                      onClick={() => handleJoin(n.roomId)}
-                      className="mt-2.5 w-full py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5 shadow"
+                  <span>Invites</span>
+                  {unreadCount > 0 && (
+                    <span
+                      className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                        activeTab === 'invites'
+                          ? 'bg-black text-green-400'
+                          : 'bg-green-500/20 text-green-400'
+                      }`}
                     >
-                      <span>Join Room ({n.roomId})</span>
-                    </button>
+                      {unreadCount}
+                    </span>
                   )}
-                </div>
-              ))
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('activity')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                    activeTab === 'activity'
+                      ? 'bg-green-500 text-black shadow'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <span>Room Activity</span>
+                  {roomId && (
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  )}
+                </button>
+              </div>
+
+              {activeTab === 'invites' && unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkRead}
+                  className="text-[11px] text-green-400 hover:underline shrink-0"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            {/* Tab 1: Invites & Personal Notifications */}
+            {activeTab === 'invites' && (
+              <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-2xl mb-1">📬</p>
+                    <p className="text-xs text-white/50 font-medium">No new invites or alerts.</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">When friends invite you, they'll appear here.</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-3 rounded-xl border text-xs transition ${
+                        n.unread
+                          ? 'bg-green-500/10 border-green-500/30 text-white'
+                          : 'bg-panel2/60 border-white/5 text-white/70'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {n.senderPhoto && (
+                            <img
+                              src={n.senderPhoto}
+                              alt=""
+                              className="w-5 h-5 rounded-full border border-green-400/50 shrink-0"
+                            />
+                          )}
+                          <p className="font-bold text-white text-[12px] truncate">{n.title}</p>
+                        </div>
+                        <span className="text-[9px] text-white/40 shrink-0">
+                          {n.timestamp
+                            ? new Date(n.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : ''}
+                        </span>
+                      </div>
+                      <p className="text-white/70 mt-1 leading-relaxed text-[11px]">{n.body}</p>
+
+                      {n.roomId && (
+                        <button
+                          type="button"
+                          onClick={() => handleJoin(n.roomId)}
+                          className="mt-2.5 w-full py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5 shadow"
+                        >
+                          <span>Join Room ({n.roomId})</span>
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Live Room Activity */}
+            {activeTab === 'activity' && (
+              <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                {!roomId ? (
+                  <div className="text-center py-8">
+                    <p className="text-2xl mb-1">🎧</p>
+                    <p className="text-xs text-white/50 font-medium">Not currently in a room.</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">
+                      Join or create a room to see real-time listener joins, songs added, and playback events!
+                    </p>
+                  </div>
+                ) : roomActivities.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-2xl mb-1">🎶</p>
+                    <p className="text-xs text-white/50 font-medium">No room activity yet.</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">
+                      Add a song to the queue or send a reaction to get things rolling!
+                    </p>
+                  </div>
+                ) : (
+                  roomActivities.map((act) => (
+                    <div
+                      key={act.id || act.timestamp}
+                      className="p-2.5 rounded-xl bg-panel2/50 border border-white/5 hover:border-green-500/30 transition flex items-start gap-2.5 text-xs"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-sm">
+                        {getActivityIcon(act.type)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="font-semibold text-white text-[11px] truncate">
+                            {act.title || 'Room Update'}
+                          </p>
+                          <span className="text-[9px] text-white/40 shrink-0">
+                            {act.timestamp
+                              ? new Date(act.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : ''}
+                          </span>
+                        </div>
+                        <p className="text-white/60 text-[10px] leading-relaxed mt-0.5">
+                          {act.body}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             )}
           </div>
-        </div>
-      )}
-    </div>
-  </>
-);
+        )}
+      </div>
+    </>
+  );
 }
 
 

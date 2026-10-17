@@ -17,6 +17,7 @@ import EmojiReactions from '../components/EmojiReactions';
 import NotificationCenter from '../components/NotificationCenter';
 import FriendsModal from '../components/FriendsModal';
 import ProfileModal from '../components/ProfileModal';
+import { logRoomActivity } from '../lib/userData';
 import { Back, People, Play, QueueIcon, ChatIcon } from '../components/Icons';
 
 
@@ -42,6 +43,7 @@ export default function Room() {
   const startingRef = useRef(false);
   const lastAdvanceRef = useRef(0);
   const toastTimer = useRef(null);
+  const hasLoggedJoinRef = useRef(false);
 
   const [room, setRoom] = useState(undefined); // undefined = loading, null = missing / no access
   const [joined, setJoined] = useState(false);
@@ -93,6 +95,15 @@ export default function Room() {
       const on = snap.val() === true;
       setOnline(on);
       if (on) {
+        if (!hasLoggedJoinRef.current) {
+          hasLoggedJoinRef.current = true;
+          logRoomActivity(roomId, {
+            type: 'join',
+            title: 'Listener Joined',
+            body: `${user.displayName || 'Someone'} joined the room 🎧`,
+            userName: user.displayName || 'Someone',
+          });
+        }
         onDisconnect(pRef)
           .remove()
           .then(() =>
@@ -152,8 +163,14 @@ export default function Room() {
         },
         ...(item.key ? { [`queue/${item.key}`]: null } : {}),
       });
+      logRoomActivity(roomId, {
+        type: 'now_playing',
+        title: 'Now Playing',
+        body: `Now playing "${item.title || 'a track'}" 🎶`,
+        userName: item.addedByName || user.displayName || 'Host',
+      });
     },
-    [roomId]
+    [roomId, user.displayName]
   );
 
   const playNext = useCallback(async () => {
@@ -227,6 +244,12 @@ export default function Room() {
       await playItem(item);
     } else {
       await push(ref(db, `rooms/${roomId}/queue`), item);
+      logRoomActivity(roomId, {
+        type: 'song_added',
+        title: 'Song Added',
+        body: `${user.displayName || 'Someone'} added "${song.title || 'a track'}" to queue 🎵`,
+        userName: user.displayName || 'Someone',
+      });
     }
   }
 
@@ -248,6 +271,12 @@ export default function Room() {
   /* ---------- leave / end ---------- */
   async function leave() {
     try {
+      logRoomActivity(roomId, {
+        type: 'leave',
+        title: 'Listener Left',
+        body: `${user.displayName || 'Someone'} left the room 👋`,
+        userName: user.displayName || 'Someone',
+      });
       if (isHost) {
         const others = people.filter((p) => p.uid !== user.uid);
         if (others.length) await set(ref(db, `rooms/${roomId}/hostId`), others[0].uid); // pass the crown
@@ -315,7 +344,7 @@ export default function Room() {
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <NotificationCenter user={user} />
+          <NotificationCenter user={user} roomId={roomId} />
           <button
             type="button"
             onClick={() => setShowFriends(true)}

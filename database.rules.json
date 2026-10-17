@@ -57,6 +57,13 @@
           }
         },
 
+        "activity": {
+          "$aid": {
+            ".write": "auth != null"
+          }
+        },
+
+
         "presence": {
           "$uid": {
             ".validate": "newData.hasChildren(['name', 'joinedAt'])",
