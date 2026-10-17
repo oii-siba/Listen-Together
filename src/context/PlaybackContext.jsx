@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { ref, set, update, remove, onValue, onDisconnect, serverTimestamp } from '../lib/db';
 import { serverNow } from '../lib/serverTime';
 import { thumbFor } from '../lib/utils';
 import { logRoomActivity } from '../lib/userData';
 import Player from '../components/Player';
+import ExitConfirmModal from '../components/ExitConfirmModal';
 
 const PlaybackContext = createContext(null);
 
@@ -31,6 +33,8 @@ export function PlaybackProvider({ user, children }) {
   const [online, setOnline] = useState(true);
   const [blocked, setBlocked] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const navigate = useNavigate();
 
   const playerRef = useRef(null);
   const roomRef = useRef(null);
@@ -376,6 +380,52 @@ export function PlaybackProvider({ user, children }) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [activeRoomId, playback?.isPlaying]);
 
+  // Unlock audio anchor on first user interaction anywhere in the app
+  useEffect(() => {
+    const unlockOnGesture = () => {
+      audioAnchorRef.current?.play()?.catch(() => {});
+      try {
+        playerRef.current?.resync();
+      } catch {}
+      window.removeEventListener('click', unlockOnGesture);
+      window.removeEventListener('touchstart', unlockOnGesture);
+    };
+
+    window.addEventListener('click', unlockOnGesture, { once: true });
+    window.addEventListener('touchstart', unlockOnGesture, { once: true });
+
+    return () => {
+      window.removeEventListener('click', unlockOnGesture);
+      window.removeEventListener('touchstart', unlockOnGesture);
+    };
+  }, []);
+
+  // Back button guard: Intercept browser back button so it doesn't exit website while song is playing
+  useEffect(() => {
+    if (!activeRoomId || !playback?.isPlaying) return;
+
+    // Push dummy history entry so back button can be intercepted
+    window.history.pushState({ app: 'tunetogether' }, '', window.location.href);
+
+    const onPopState = () => {
+      if (!activeRoomId || !playback?.isPlaying) return;
+
+      // If user was inside Room page, back button navigates to Home (/) with Mini Player
+      if (window.location.pathname.startsWith('/room/')) {
+        navigate('/');
+        window.history.pushState({ app: 'tunetogether' }, '', '/');
+        return;
+      }
+
+      // If already on Home page (/), trap the back button and show ExitConfirmModal
+      window.history.pushState({ app: 'tunetogether' }, '', '/');
+      setShowExitConfirm(true);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [activeRoomId, playback?.isPlaying, navigate]);
+
   const unlockAudio = useCallback(() => {
     try {
       audioAnchorRef.current?.play()?.catch(() => {});
@@ -438,6 +488,9 @@ export function PlaybackProvider({ user, children }) {
           onBlocked={setBlocked}
         />
       )}
+
+      {/* Modal explaining how to keep playing in background if user presses browser back button */}
+      <ExitConfirmModal isOpen={showExitConfirm} onClose={() => setShowExitConfirm(false)} />
     </PlaybackContext.Provider>
   );
 }
