@@ -23,7 +23,10 @@ export function expectedPosition(pb) {
   return base + Math.max(0, (serverNow() - updated) / 1000);
 }
 
-const Player = forwardRef(function Player({ playback, enabled, onEnded, onError, onBlocked, children }, ref) {
+const Player = forwardRef(function Player(
+  { playback, enabled, showVideo = false, onEnded, onError, onBlocked, children },
+  ref
+) {
   const wrapRef = useRef(null);
   const ytRef = useRef(null);
   const readyRef = useRef(false);
@@ -256,14 +259,20 @@ const Player = forwardRef(function Player({ playback, enabled, onEnded, onError,
   );
 
   return (
-    <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg shadow-black/40">
-      <div ref={wrapRef} className="absolute inset-0 pointer-events-none [&_iframe]:w-full [&_iframe]:h-full" />
-      {!playback?.videoId && (
+    <div
+      className={
+        showVideo
+          ? 'relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg border border-orange-500/30 my-3'
+          : 'fixed -bottom-96 -left-96 w-48 h-28 opacity-[0.001] pointer-events-none'
+      }
+    >
+      <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />
+      {showVideo && !playback?.videoId && (
         <div className="absolute inset-0 grid place-items-center bg-panel text-white/50 text-sm text-center px-6">
           Nothing playing yet — search or add a YouTube song below 🎵
         </div>
       )}
-      {children}
+      {showVideo && children}
     </div>
   );
 });

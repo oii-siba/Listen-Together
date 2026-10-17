@@ -13,7 +13,7 @@ body,
 }
 
 body {
-  @apply bg-ink text-white antialiased font-sans;
+  @apply bg-[#0b0807] text-white antialiased font-sans;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
@@ -23,7 +23,20 @@ button {
 }
 
 input[type='range'] {
-  accent-color: #1ed760;
+  accent-color: #ff5500;
+}
+
+.neon-orange-box {
+  border: 2px solid rgba(255, 120, 20, 0.95);
+  box-shadow: 0 0 25px rgba(255, 85, 0, 0.8), 0 0 50px rgba(255, 60, 0, 0.35), inset 0 0 16px rgba(255, 120, 30, 0.45);
+}
+
+.neon-glow-btn {
+  box-shadow: 0 0 20px rgba(255, 85, 0, 0.6);
+}
+
+.neon-text-glow {
+  text-shadow: 0 0 12px rgba(255, 100, 20, 0.7);
 }
 
 .line-clamp-2 {

@@ -43,6 +43,7 @@ export default function Room() {
   const [online, setOnline] = useState(true);
   const [tab, setTab] = useState('queue');
   const [toast, setToast] = useState('');
+  const [showVideo, setShowVideo] = useState(false);
 
   const exists = !!room;
   const isHost = exists && room.hostId === user.uid;
@@ -315,6 +316,7 @@ export default function Room() {
         ref={playerRef}
         playback={playback}
         enabled={joined}
+        showVideo={showVideo}
         onEnded={handleEnded}
         onError={handleError}
         onBlocked={setBlocked}
@@ -329,6 +331,7 @@ export default function Room() {
         </button>
       )}
 
+      {/* Hero Glowing AirPods Player matching user reference */}
       <NowPlaying
         playback={playback}
         playerRef={playerRef}
@@ -337,6 +340,19 @@ export default function Room() {
         onNext={() => playNext().catch(() => {})}
         onSeek={seekTo}
       />
+
+      {/* Optional Video Toggle */}
+      {hasVideo && (
+        <div className="flex items-center justify-end px-2 -mt-1 mb-3">
+          <button
+            type="button"
+            onClick={() => setShowVideo((v) => !v)}
+            className="text-xs text-white/55 hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-panel2/70 border border-white/10 active:scale-95 transition"
+          >
+            <span>{showVideo ? '✕ Hide Video' : '📹 Watch Video Clip'}</span>
+          </button>
+        </div>
+      )}
 
       <ShareBar roomId={roomId} />
 
