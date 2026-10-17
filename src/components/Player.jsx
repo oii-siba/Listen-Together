@@ -214,6 +214,17 @@ const Player = forwardRef(function Player(
               setRate(ytRef.current, 1.0);
               onBlockedRef.current?.(false);
             }
+            // If browser or mobile OS paused player while room is playing, auto-resume
+            if (e.data === PAUSED) {
+              const pb = stateRef.current;
+              if (pb?.isPlaying && enabledRef.current) {
+                setTimeout(() => {
+                  try {
+                    ytRef.current?.playVideo();
+                  } catch {}
+                }, 150);
+              }
+            }
           },
           onAutoplayBlocked: () => onBlockedRef.current?.(true),
           onError: (e) => onErrorRef.current?.(e.data),
@@ -266,6 +277,35 @@ const Player = forwardRef(function Player(
     return () => clearInterval(id);
   }, [syncPlayback]);
 
+  // Ensure audio stays alive when tab is minimized or switched to another app
+  useEffect(() => {
+    const handleVis = () => {
+      const yt = ytRef.current;
+      const pb = stateRef.current;
+      if (!yt || !pb || !pb.videoId || !pb.isPlaying) return;
+
+      try {
+        const st = yt.getPlayerState();
+        if (st !== PLAYING && st !== BUFFERING) {
+          yt.playVideo();
+        }
+      } catch {}
+
+      if (!document.hidden) {
+        syncPlayback(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVis);
+    window.addEventListener('blur', handleVis);
+    window.addEventListener('focus', handleVis);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVis);
+      window.removeEventListener('blur', handleVis);
+      window.removeEventListener('focus', handleVis);
+    };
+  }, [syncPlayback]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -294,7 +334,7 @@ const Player = forwardRef(function Player(
       className={
         showVideo
           ? 'fixed bottom-24 right-3 sm:right-6 w-72 sm:w-84 max-w-[calc(100vw-1.5rem)] aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.85)] border border-green-500/50 z-50 animate-in fade-in zoom-in-95 group'
-          : 'fixed -bottom-96 -left-96 w-48 h-28 opacity-[0.001] pointer-events-none'
+          : 'fixed bottom-0 right-0 w-2 h-2 opacity-[0.01] pointer-events-none z-[1]'
       }
     >
       <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />

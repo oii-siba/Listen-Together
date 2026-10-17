@@ -39,6 +39,7 @@ export function PlaybackProvider({ user, children }) {
   const startingRef = useRef(false);
   const lastAdvanceRef = useRef(0);
   const hasLoggedJoinRef = useRef(false);
+  const audioAnchorRef = useRef(null);
 
   const exists = !!room;
   const isHost = exists && room.hostId === user?.uid;
@@ -300,8 +301,84 @@ export function PlaybackProvider({ user, children }) {
     }, 8000);
     return () => clearTimeout(t);
   }, [exists, isHost, hostPresent, oldestUid, user?.uid, activeRoomId]);
+  // Silent audio loop to maintain background audio priority on mobile and desktop
+  useEffect(() => {
+    const el = audioAnchorRef.current;
+    if (!el) return;
+    if (activeRoomId && playback?.isPlaying) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [activeRoomId, playback?.isPlaying]);
+
+  // Media Session API for Lock Screen & Notification Center background controls
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !activeRoomId) return;
+
+    if (playback?.videoId && playback?.title) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: playback.title,
+          artist: playback.addedByName ? `Queued by ${playback.addedByName}` : 'TuneTogether',
+          album: `Room #${activeRoomId}`,
+          artwork: [
+            {
+              src: playback.thumb || `https://i.ytimg.com/vi/${playback.videoId}/hqdefault.jpg`,
+              sizes: '512x512',
+              type: 'image/jpeg',
+            },
+          ],
+        });
+        navigator.mediaSession.playbackState = playback.isPlaying ? 'playing' : 'paused';
+      } catch {}
+    } else {
+      try {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.playbackState = 'none';
+      } catch {}
+    }
+  }, [activeRoomId, playback?.videoId, playback?.title, playback?.addedByName, playback?.thumb, playback?.isPlaying]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !activeRoomId) return;
+
+    try {
+      navigator.mediaSession.setActionHandler('play', () => togglePlay());
+      navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        if (hostRef.current) playNext();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime != null) seekTo(details.seekTime);
+      });
+    } catch {}
+
+    return () => {
+      try {
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+        navigator.mediaSession.setActionHandler('seekto', null);
+      } catch {}
+    };
+  }, [activeRoomId, togglePlay, playNext, seekTo]);
+
+  // Prompt before accidentally closing tab or leaving site while audio is active
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (activeRoomId && playback?.isPlaying) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [activeRoomId, playback?.isPlaying]);
+
   const unlockAudio = useCallback(() => {
     try {
+      audioAnchorRef.current?.play()?.catch(() => {});
       playerRef.current?.resync();
     } catch {}
     setBlocked(false);
@@ -337,6 +414,16 @@ export function PlaybackProvider({ user, children }) {
   return (
     <PlaybackContext.Provider value={value}>
       {children}
+
+      {/* Hidden background audio pipeline anchor for mobile & desktop lock screen continuity */}
+      <audio
+        ref={audioAnchorRef}
+        src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/w=="
+        loop
+        preload="auto"
+        playsInline
+        style={{ position: 'fixed', bottom: 0, right: 0, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
+      />
 
       {/* Single, Persistent Global YouTube Player mounted forever across route changes */}
       {activeRoomId && (
