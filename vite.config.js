@@ -93,4 +93,13 @@ function youtubeSearchPlugin() {
 
 export default defineConfig({
   plugins: [react(), youtubeSearchPlugin()],
+  build: {
+    sourcemap: false,
+    minify: 'esbuild',
+    target: 'esnext',
+  },
+  esbuild: {
+    drop: ['debugger'],
+    pure: ['console.log'],
+  },
 });
