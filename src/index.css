@@ -73,25 +73,28 @@ input[type='range'] {
 /* Animations */
 @keyframes floatReaction {
   0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.4) rotate(0deg);
+  }
+  15% {
     opacity: 1;
-    transform: translateY(0) scale(0.6) rotate(0deg);
+    transform: translateY(-50px) scale(1.35) rotate(-8deg);
   }
-  30% {
-    transform: translateY(-50px) scale(1.2) rotate(-8deg);
-  }
-  70% {
-    transform: translateY(-130px) scale(1.1) rotate(6deg);
+  65% {
+    opacity: 0.95;
+    transform: translateY(-220px) scale(1.15) rotate(6deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(-220px) scale(0.8) rotate(-4deg);
+    transform: translateY(-420px) scale(0.7) rotate(-4deg);
   }
 }
 
 .animate-float-reaction {
-  animation: floatReaction 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: floatReaction 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   pointer-events: none;
 }
+
 
 @keyframes eqBarPulse {
   0%, 100% {
