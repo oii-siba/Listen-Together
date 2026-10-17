@@ -25,7 +25,7 @@ export function expectedPosition(pb) {
 }
 
 const Player = forwardRef(function Player(
-  { playback, enabled, showVideo = false, onEnded, onError, onBlocked, children },
+  { playback, enabled, showVideo = false, onCloseVideo, onEnded, onError, onBlocked, children },
   ref
 ) {
   const wrapRef = useRef(null);
@@ -293,11 +293,22 @@ const Player = forwardRef(function Player(
     <div
       className={
         showVideo
-          ? 'relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg border border-orange-500/30 my-3'
+          ? 'fixed bottom-24 right-3 sm:right-6 w-72 sm:w-84 max-w-[calc(100vw-1.5rem)] aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.85)] border border-green-500/50 z-50 animate-in fade-in zoom-in-95 group'
           : 'fixed -bottom-96 -left-96 w-48 h-28 opacity-[0.001] pointer-events-none'
       }
     >
       <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />
+      {showVideo && (
+        <button
+          type="button"
+          onClick={onCloseVideo}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/80 hover:bg-black text-white/80 hover:text-white flex items-center justify-center text-xs z-10 border border-white/20 transition shadow"
+          title="Hide Video Clip"
+          aria-label="Hide Video Clip"
+        >
+          ✕
+        </button>
+      )}
       {showVideo && !playback?.videoId && (
         <div className="absolute inset-0 grid place-items-center bg-panel text-white/50 text-sm text-center px-6">
           Nothing playing yet — search or add a YouTube song below 🎵

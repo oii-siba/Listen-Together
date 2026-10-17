@@ -4,6 +4,8 @@ import Splash from './components/Splash';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Room from './pages/Room';
+import { PlaybackProvider } from './context/PlaybackContext';
+import MiniPlayer from './components/MiniPlayer';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -15,10 +17,13 @@ export default function App() {
   if (!user) return <Login />;
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/room/:roomId" element={<Room />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <PlaybackProvider user={user}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/room/:roomId" element={<Room />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <MiniPlayer />
+    </PlaybackProvider>
   );
 }
