@@ -144,19 +144,41 @@ export async function registerUserDirectory(user) {
   return entry;
 }
 
-export async function lookupUserByCodeOrId(searchTerm) {
+export async function lookupUserByCodeOrId(searchTerm, peopleInRoom = []) {
   if (!searchTerm || typeof searchTerm !== 'string') return null;
   const raw = searchTerm.trim().toUpperCase();
   const withPrefix = raw.startsWith('TT-') ? raw : `TT-${raw}`;
   const rawTrimmed = searchTerm.trim();
 
-  // 1. Try local storage directory
+  // 1. Try people currently present in the room
+  if (Array.isArray(peopleInRoom)) {
+    const match = peopleInRoom.find((p) => {
+      const pCode = getFriendCode(p.uid);
+      return (
+        pCode === withPrefix ||
+        p.uid?.toUpperCase() === raw ||
+        p.uid === rawTrimmed ||
+        (p.name && p.name.toLowerCase() === rawTrimmed.toLowerCase())
+      );
+    });
+    if (match) {
+      return {
+        uid: match.uid,
+        friendCode: getFriendCode(match.uid),
+        name: match.name || 'Friend',
+        photo: match.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${match.uid}`,
+        email: match.email || '',
+      };
+    }
+  }
+
+  // 2. Try local storage directory
   const localDir = getLocal('TT_USER_DIRECTORY', {});
   if (localDir[withPrefix]) return localDir[withPrefix];
   if (localDir[raw]) return localDir[raw];
   if (localDir[rawTrimmed]) return localDir[rawTrimmed];
 
-  // 2. Try Firebase friend_directory
+  // 3. Try Firebase friend_directory
   if (isFirebaseConfigured) {
     try {
       const snapCode = await get(ref(db, `friend_directory/${withPrefix}`));
@@ -178,11 +200,18 @@ export async function lookupUserByCodeOrId(searchTerm) {
       }
     } catch (e) {
       console.warn('Firebase lookup error:', e);
+      if (
+        e?.message?.toLowerCase().includes('permission') ||
+        e?.code === 'PERMISSION_DENIED'
+      ) {
+        throw new Error('FIREBASE_PERMISSION_DENIED');
+      }
     }
   }
 
   return null;
 }
+
 
 // ---------------- FRIENDS SYSTEM ----------------
 export function getFriendsList(uid) {

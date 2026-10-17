@@ -1,5 +1,23 @@
 {
   "rules": {
+    "friend_directory": {
+      ".read": "auth != null",
+      "$code": {
+        ".write": "auth != null"
+      }
+    },
+    "friend_directory_uids": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
     "rooms": {
       "$roomId": {
         ".read": "auth != null",
@@ -18,6 +36,18 @@
           "$qid": {
             ".validate": "newData.hasChildren(['videoId', 'addedBy', 'title']) && newData.child('addedBy').val() === auth.uid && newData.child('title').isString() && newData.child('title').val().length < 300",
             ".write": "auth != null && (root.child('rooms/' + $roomId + '/hostId').val() === auth.uid || (root.child('rooms/' + $roomId + '/allowGuestAdd').val() === true && (!data.exists() || data.child('addedBy').val() === auth.uid)))"
+          }
+        },
+
+        "chat": {
+          "$mid": {
+            ".write": "auth != null"
+          }
+        },
+
+        "reactions": {
+          "$rid": {
+            ".write": "auth != null"
           }
         },
 

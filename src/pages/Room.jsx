@@ -485,9 +485,11 @@ export default function Room() {
         <FriendsModal
           user={user}
           currentRoomId={roomId}
+          people={people}
           onClose={() => setShowFriends(false)}
         />
       )}
+
 
       {/* Profile Modal */}
       {showProfile && (

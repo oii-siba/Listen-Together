@@ -8,7 +8,7 @@ import {
   getFriendCode,
 } from '../lib/userData';
 
-export default function FriendsModal({ user, currentRoomId, onClose }) {
+export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
   const [friends, setFriends] = useState([]);
   const [friendCodeInput, setFriendCodeInput] = useState('');
   const [copied, setCopied] = useState(false);
@@ -54,7 +54,7 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
     setMsg('Searching user directory…');
 
     try {
-      const found = await lookupUserByCodeOrId(raw);
+      const found = await lookupUserByCodeOrId(raw, people);
       if (!found || !found.uid) {
         setIsError(true);
         setMsg(`❌ User not found! No user exists with code "${raw}". Please check the Friend Code.`);
@@ -91,13 +91,18 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
       setIsError(false);
       setMsg(`Added ${newFriend.name} to your friends list! 🎉`);
       setTimeout(() => setMsg(''), 4000);
-    } catch {
+    } catch (err) {
       setIsError(true);
-      setMsg('Failed to find user. Please check the code.');
+      if (err?.message === 'FIREBASE_PERMISSION_DENIED') {
+        setMsg('⚠️ Firebase Database rules need to be updated in Firebase Console to allow friend search. Please update database.rules.json in Firebase Console.');
+      } else {
+        setMsg('Failed to find user. Please check the code.');
+      }
     } finally {
       setSearching(false);
     }
   };
+
 
   const handleRemoveFriend = (friendUid) => {
     const updated = removeFriend(user.uid, friendUid);
