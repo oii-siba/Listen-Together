@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFriendsList, addFriend, addNotification } from '../lib/userData';
+import { getFriendsList, addFriend, removeFriend, addNotification } from '../lib/userData';
 
 export default function FriendsModal({ user, currentRoomId, onClose }) {
   const [friends, setFriends] = useState([]);
@@ -50,12 +50,18 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
     setTimeout(() => setMsg(''), 3000);
   };
 
+  const handleRemoveFriend = (friendUid) => {
+    const updated = removeFriend(user.uid, friendUid);
+    setFriends(updated);
+  };
+
   const inviteFriend = (friend) => {
     if (!currentRoomId) return;
     // Send simulated in-app notification to that friend / record
     setMsg(`Room invite sent to ${friend.name}! 🚀`);
     setTimeout(() => setMsg(''), 3000);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -151,16 +157,27 @@ export default function FriendsModal({ user, currentRoomId, onClose }) {
                     </div>
                   </div>
 
-                  {currentRoomId && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {currentRoomId && (
+                      <button
+                        type="button"
+                        onClick={() => inviteFriend(f)}
+                        className="px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/40 text-green-300 font-bold text-[11px] hover:bg-green-500 hover:text-black active:scale-95 transition"
+                      >
+                        Invite
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => inviteFriend(f)}
-                      className="px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/40 text-green-300 font-bold text-[11px] hover:bg-green-500 hover:text-black active:scale-95 transition shrink-0"
+                      onClick={() => handleRemoveFriend(f.uid)}
+                      className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition"
+                      title="Remove Friend"
                     >
-                      Invite
+                      ✕
                     </button>
-                  )}
+                  </div>
                 </div>
+
               ))
             )}
           </div>

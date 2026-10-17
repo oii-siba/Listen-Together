@@ -111,22 +111,8 @@ export async function saveUserProfile(uid, profileData) {
 
 // ---------------- FRIENDS SYSTEM ----------------
 export function getFriendsList(uid) {
-  return getLocal(`${FRIENDS_KEY}_${uid}`, [
-    {
-      uid: 'bot-siba',
-      name: 'Rohan (DJ)',
-      photo: 'https://api.dicebear.com/7.x/bottts/svg?seed=rohan',
-      status: 'online',
-      listeningTo: 'Kesariya',
-    },
-    {
-      uid: 'bot-priya',
-      name: 'Priya',
-      photo: 'https://api.dicebear.com/7.x/bottts/svg?seed=priya',
-      status: 'online',
-      listeningTo: 'Midnight Drive',
-    },
-  ]);
+  const raw = getLocal(`${FRIENDS_KEY}_${uid}`, []);
+  return raw.filter((f) => !f.uid?.startsWith('bot-'));
 }
 
 export function addFriend(uid, friend) {
@@ -140,28 +126,22 @@ export function addFriend(uid, friend) {
   return true;
 }
 
+export function removeFriend(uid, friendUid) {
+  const list = getFriendsList(uid);
+  const updated = list.filter((f) => f.uid !== friendUid);
+  setLocal(`${FRIENDS_KEY}_${uid}`, updated);
+  if (isFirebaseConfigured) {
+    remove(ref(db, `users/${uid}/friends/${friendUid}`)).catch(() => {});
+  }
+  return updated;
+}
+
 // ---------------- NOTIFICATIONS ----------------
 export function getNotifications(uid) {
-  return getLocal(`${NOTIFICATIONS_KEY}_${uid}`, [
-    {
-      id: 'notif-1',
-      type: 'invite',
-      title: 'Room Invite',
-      body: 'Priya invited you to join "Lo-Fi Beats" room',
-      roomId: 'kb23s9sh',
-      timestamp: Date.now() - 1000 * 60 * 12,
-      unread: true,
-    },
-    {
-      id: 'notif-2',
-      type: 'activity',
-      title: 'Welcome to TuneTogether!',
-      body: 'Listen to music in sync with friends across any device.',
-      timestamp: Date.now() - 1000 * 60 * 60 * 2,
-      unread: false,
-    },
-  ]);
+  const raw = getLocal(`${NOTIFICATIONS_KEY}_${uid}`, []);
+  return raw.filter((n) => !n.id?.startsWith('notif-'));
 }
+
 
 export function addNotification(uid, notif) {
   const list = getNotifications(uid);
