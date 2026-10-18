@@ -292,17 +292,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION: GOOGLE SEO & FAQ (সচরাচর জিজ্ঞাসিত প্রশ্নাবলী) */}
+      {/* SECTION: GOOGLE SEO & FAQ (Frequently Asked Questions) */}
       <section className="mt-16">
         <div className="text-center">
           <p className="text-[11px] font-bold text-green-400 uppercase tracking-widest">
             FREQUENTLY ASKED QUESTIONS
           </p>
           <h2 className="mt-1 text-2xl font-extrabold text-white tracking-tight">
-            একসাথে গান শোনার সহজ উপায়
+            The Easiest Way to Listen Together
           </h2>
           <p className="mt-2 text-xs text-white/60 max-w-sm mx-auto">
-            সব ডিভাইসে কোনো ব্লুটুথ বা এক্সট্রা অ্যাপ ছাড়াই একই সাথে ইউটিউব গান শুনুন।
+            Listen to YouTube music in perfect real-time sync across multiple devices — no Bluetooth or extra apps required.
           </p>
         </div>
 
@@ -310,30 +310,30 @@ export default function Home() {
           {/* FAQ 1 */}
           <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span className="text-green-400 font-extrabold">Q.</span> আলাদা আলাদা ডিভাইসে একই সাথে গান চালাবো কীভাবে?
+              <span className="text-green-400 font-extrabold">Q.</span> How do I play the same song on multiple devices at the same time?
             </h3>
             <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              TuneTogether-এ <strong>"Create a room"</strong> বাটনে ক্লিক করে একটি রুম তৈরি করুন। এরপর রুমের লিংক বা QR কোড বন্ধুদের সাথে শেয়ার করুন। কোনো ব্লুটুথ ছাড়াই সব ফোনে একই সেকেন্ডে একই গান একসাথে বাজবে (Zero Time Delay)।
+              Click <strong>"Create a room"</strong> on TuneTogether to start your room. Share your room link or QR code with friends. The same song will play across all connected phones and computers at the exact same millisecond with zero delay.
             </p>
           </div>
 
           {/* FAQ 2 */}
           <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span className="text-green-400 font-extrabold">Q.</span> হোস্ট অফ করলে কি সব ডিভাইসে বন্ধ এবং অন করলে চালু হবে?
+              <span className="text-green-400 font-extrabold">Q.</span> If the host pauses or plays, does it sync for everyone?
             </h3>
             <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              হ্যাঁ! হোস্ট ফোন থেকে গান Pause (Off) করলে সাথে সাথে সব ডিভাইসে গান থেমে যাবে, এবং হোস্ট Play (On) করলে সব ডিভাইসে একই সাথে আবার চলা শুরু করবে।
+              Yes! Whenever the host pauses (turns off) the song, playback stops instantly across all devices. When the host plays or seeks, every device resumes in perfect sync automatically.
             </p>
           </div>
 
           {/* FAQ 3 */}
           <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span className="text-green-400 font-extrabold">Q.</span> QR কোড স্ক্যান করে কীভাবে গান শুনবো?
+              <span className="text-green-400 font-extrabold">Q.</span> How do I join and listen by scanning a QR code?
             </h3>
             <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              হোম স্ক্রিনের <strong>"Scan Room QR Code"</strong> অপশনে গিয়ে ক্যামেরা দিয়ে হোস্টের QR কোড স্ক্যান করলেই সরাসরি কোনো টাইপিং ছাড়াই রুমে ঢুকে লাইভ গান শোনা যাবে।
+              Tap <strong>"Scan Room QR Code"</strong> on the home screen and point your camera at the host's QR code. You'll jump straight into the room without typing room codes or links.
             </p>
           </div>
         </div>
