@@ -306,27 +306,31 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
               <div className="flex items-center gap-1 ml-1 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">
                 <button
                   type="button"
-                  onClick={() => handleNudge(-50)}
-                  title="Nudge backward 50ms (Bluetooth / acoustic fine-tune)"
+                  onClick={() => handleNudge(-25)}
+                  title="Nudge backward 25ms (Fine-tune audio sync)"
                   className="px-1 text-[10px] text-white/60 hover:text-white font-bold transition cursor-pointer"
                 >
-                  -50
+                  -25
                 </button>
                 <button
                   type="button"
-                  onClick={() => playerRef.current?.resync()}
-                  title="Snap audio to exact host time"
+                  onClick={() => {
+                    setSyncNudge(0);
+                    setNudgeState(0);
+                    playerRef.current?.resync();
+                  }}
+                  title="Snap audio to exact host clock (Reset nudge)"
                   className="px-1.5 text-[10px] text-green-400 font-extrabold hover:text-green-300 transition cursor-pointer"
                 >
                   ⚡ {nudge !== 0 ? `${nudge > 0 ? '+' : ''}${nudge}ms` : 'Sync'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleNudge(50)}
-                  title="Nudge forward 50ms (Bluetooth / acoustic fine-tune)"
+                  onClick={() => handleNudge(25)}
+                  title="Nudge forward 25ms (Fine-tune audio sync)"
                   className="px-1 text-[10px] text-white/60 hover:text-white font-bold transition cursor-pointer"
                 >
-                  +50
+                  +25
                 </button>
               </div>
             )}

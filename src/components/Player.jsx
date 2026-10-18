@@ -3,7 +3,7 @@ import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
 // High-precision, continuous synchronization settings
-const SYNC_HEARTBEAT_MS = 400; // Check every 400ms for tight, real-time lock
+const SYNC_HEARTBEAT_MS = 250; // Check every 250ms for tight, real-time acoustic lock
 
 const UNSTARTED = -1;
 const ENDED = 0;
@@ -132,21 +132,22 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Audible real drift (> 0.22s): snap immediately to expected position
-        // 3000ms cooldown ensures it settles cleanly without looping or getting stuck
-        if (absDiff > 0.22 && (force || timeSinceLastSeek > 3000)) {
+        // 1. Audible phase drift (> 0.12s): snap immediately to expected position
+        // 1500ms cooldown ensures it settles cleanly without looping
+        if (absDiff > 0.12 && (force || timeSinceLastSeek > 1500)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Seamless micro-sync for minor acoustic differences:
-        if (diff > 0.08) {
-          setRate(yt, 1.25);
-        } else if (diff < -0.08) {
-          setRate(yt, 0.75);
-        } else if (absDiff <= 0.03) {
-          setRate(yt, 1);
+        // 2. Continuous ultra-precise acoustic alignment (zero-echo lock):
+        // Micro-adjust speed to seamlessly close differences between 25ms and 120ms
+        if (diff > 0.03) {
+          setRate(yt, 1.05); // Gently speed up
+        } else if (diff < -0.03) {
+          setRate(yt, 0.95); // Gently slow down
+        } else if (absDiff <= 0.02) {
+          setRate(yt, 1); // Exact acoustic lock
         }
       }
     } else {
@@ -259,11 +260,11 @@ const Player = forwardRef(function Player(
               }
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
-              // Guest initial buffer alignment: ONLY once when song starts playing!
+              // Guest initial buffer alignment: lock in to exact host position on first play!
               if (!isHostRef.current && initialBufferDone.current !== loadedId.current) {
                 initialBufferDone.current = loadedId.current;
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.12) {
+                if (Math.abs(want - cur) > 0.03) {
                   seek(ytRef.current, want);
                 }
               }
@@ -307,12 +308,23 @@ const Player = forwardRef(function Player(
     };
   }, [apply]);
 
-  // React immediately to room state changes from WebSocket/Firebase (only track change or play/pause)
+  // React immediately to room state changes from WebSocket/Firebase (track change, play/pause, or host sync pulse)
   useEffect(() => {
     stateRef.current = playback;
     enabledRef.current = enabled;
     apply();
-  }, [playback?.videoId, playback?.isPlaying, enabled, apply]);
+    if (!isHostRef.current && playback?.isPlaying) {
+      syncPlayback(true);
+    }
+  }, [
+    playback?.videoId,
+    playback?.isPlaying,
+    playback?.hostTime,
+    playback?.position,
+    enabled,
+    apply,
+    syncPlayback,
+  ]);
 
   // Stable sync heartbeat
   useEffect(() => {

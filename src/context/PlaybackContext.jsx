@@ -412,11 +412,11 @@ export function PlaybackProvider({ user, children }) {
       const pb = r?.playback;
       if (!pb || !pb.isPlaying || !pb.videoId) return;
 
-      // Only calibrate once per track at the start (under 4s)
-      if (lastCalibratedSongId.current === pb.videoId || currentTime > 4.0) return;
+      // Calibrate once per track when host actually starts hearing audio
+      if (lastCalibratedSongId.current === pb.videoId) return;
       lastCalibratedSongId.current = pb.videoId;
 
-      // Always anchor the room timestamp to the EXACT position when host actually starts hearing audio
+      // Anchor the room timestamp to the EXACT position when host starts hearing audio
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         position: currentTime,
         hostTime: serverNow(),
@@ -425,6 +425,26 @@ export function PlaybackProvider({ user, children }) {
     },
     [activeRoomId]
   );
+
+  // Periodic Host Sync Pulse: periodically anchors the playback clock to eliminate multi-device drift
+  useEffect(() => {
+    if (!isHost || !activeRoomId || !playback?.isPlaying || !playback?.videoId) return;
+
+    const interval = setInterval(() => {
+      const p = playerRef.current;
+      if (!p) return;
+      const curTime = p.getCurrentTime?.();
+      if (typeof curTime === 'number' && curTime > 0.5) {
+        update(ref(db, `rooms/${activeRoomId}/playback`), {
+          position: curTime,
+          hostTime: serverNow(),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+    }, 5000); // Pulse every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [isHost, activeRoomId, playback?.isPlaying, playback?.videoId, playerRef]);
 
 
 
