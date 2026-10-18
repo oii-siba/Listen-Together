@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://listen-together.pages.dev/sitemap.xml
+Sitemap: https://listen-together.maitysibsankar56.workers.dev/sitemap.xml
