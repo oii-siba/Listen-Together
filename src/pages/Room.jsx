@@ -16,6 +16,7 @@ import NotificationCenter from '../components/NotificationCenter';
 import FriendsModal from '../components/FriendsModal';
 import ProfileModal from '../components/ProfileModal';
 import MenuBar from '../components/MenuBar';
+import RoomQrModal from '../components/RoomQrModal';
 import { Back, People, Play, QueueIcon, ChatIcon } from '../components/Icons';
 import { isInstalled, triggerDirectInstall } from '../lib/pwa';
 
@@ -53,6 +54,7 @@ export default function Room() {
   const [toast, setToast] = useState('');
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [installed, setInstalled] = useState(false);
   const toastTimer = useRef(null);
 
@@ -144,6 +146,14 @@ export default function Room() {
             title="Friends"
           >
             <span className="text-sm">👥</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowQr(true)}
+            className="w-9 h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+            title="Show Room QR Code Invite"
+          >
+            <span className="text-sm">📷</span>
           </button>
           {/* Front Direct Install App Button */}
           {!installed && (
@@ -295,6 +305,14 @@ export default function Room() {
         <ProfileModal
           user={user}
           onClose={() => setShowProfile(false)}
+        />
+      )}
+
+      {/* Room QR Code Modal */}
+      {showQr && (
+        <RoomQrModal
+          roomId={roomId}
+          onClose={() => setShowQr(false)}
         />
       )}
     </div>

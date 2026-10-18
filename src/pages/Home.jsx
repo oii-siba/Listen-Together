@@ -6,6 +6,7 @@ import { useAuth } from '../AuthContext';
 import { parseRoomId, randomRoomId } from '../lib/utils';
 import BrandHeader from '../components/BrandHeader';
 import { Add } from '../components/Icons';
+import QrScannerModal from '../components/QrScannerModal';
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -13,6 +14,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   async function createRoom() {
     setBusy(true);
@@ -116,6 +118,16 @@ export default function Home() {
             Join
           </button>
         </form>
+
+        {/* Scan Room QR Code Button */}
+        <button
+          type="button"
+          onClick={() => setShowScanner(true)}
+          className="mt-3 w-full py-3 rounded-full bg-gradient-to-r from-green-500/15 via-emerald-500/15 to-green-500/10 border border-green-500/30 text-green-400 font-extrabold text-xs flex items-center justify-center gap-2 hover:bg-green-500/25 active:scale-[0.98] transition shadow-[0_0_15px_rgba(34,197,94,0.15)]"
+        >
+          <span className="text-base">📷</span>
+          <span>Scan Room QR Code to Join Instantly</span>
+        </button>
 
         {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
       </div>
@@ -306,6 +318,17 @@ export default function Home() {
         </div>
         <p className="text-[11px] text-white/40 mt-1.5">© 2026 TuneTogether. One Beat, One Connection.</p>
       </footer>
+
+      {/* QR Code Camera Scanner Modal */}
+      {showScanner && (
+        <QrScannerModal
+          onClose={() => setShowScanner(false)}
+          onScanSuccess={(scannedRoomId) => {
+            setShowScanner(false);
+            nav(`/room/${scannedRoomId}`);
+          }}
+        />
+      )}
     </div>
   );
 }

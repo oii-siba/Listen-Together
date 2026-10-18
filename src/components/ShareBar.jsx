@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Check, Copy, Share } from './Icons';
+import RoomQrModal from './RoomQrModal';
 
 export default function ShareBar({ roomId }) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const link = `${window.location.origin}/room/${roomId}`;
   const text = `Join my room on TuneTogether! 🎧\nRoom Code: ${roomId}\nLink: ${link}`;
 
@@ -77,27 +79,40 @@ export default function ShareBar({ roomId }) {
         </button>
       </div>
 
-      {/* Share Actions */}
+      {/* Share Actions with QR Code */}
       <div className="pt-1 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setShowQr(true)}
+          className="flex-1 text-center rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/40 text-green-300 font-extrabold text-xs py-3 active:scale-95 transition hover:bg-green-500/30 shadow flex items-center justify-center gap-1.5"
+        >
+          <span>📷</span>
+          <span>QR Code Invite</span>
+        </button>
+
         <a
           href={`https://wa.me/?text=${encodeURIComponent(text)}`}
           target="_blank"
           rel="noreferrer"
           className="flex-1 text-center rounded-full bg-[#25D366] text-black font-extrabold text-xs py-3 active:scale-95 transition hover:brightness-105 shadow flex items-center justify-center gap-1.5"
         >
-          <span>Share on WhatsApp</span>
+          <span>WhatsApp</span>
         </a>
+
         {typeof navigator !== 'undefined' && navigator.share && (
           <button
             type="button"
             onClick={nativeShare}
-            className="w-12 rounded-full bg-panel2 border border-white/10 grid place-items-center active:scale-95 transition text-white hover:bg-white/10"
+            className="w-12 rounded-full bg-panel2 border border-white/10 grid place-items-center active:scale-95 transition text-white hover:bg-white/10 shrink-0"
             aria-label="Share"
           >
             <Share size={18} />
           </button>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {showQr && <RoomQrModal roomId={roomId} onClose={() => setShowQr(false)} />}
     </div>
   );
 }
