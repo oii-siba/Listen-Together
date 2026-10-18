@@ -57,6 +57,7 @@ const Player = forwardRef(function Player(
   const lastSeekAt = useRef(0);
   const notPlaying = useRef(0);
   const resumeTimer = useRef(null);
+  const initialBufferDone = useRef(null);
 
   isHostRef.current = isHost;
   const onEndedRef = useRef(onEnded);
@@ -123,20 +124,20 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Audible acoustic drift (> 0.12s): snap immediately to expected position
-        // 2500ms cooldown ensures it settles cleanly without looping
-        if (absDiff > 0.12 && (force || timeSinceLastSeek > 2500)) {
+        // 1. Audible real drift (> 0.55s): snap immediately to expected position
+        // 4000ms cooldown ensures it settles cleanly without looping or getting stuck
+        if (absDiff > 0.55 && (force || timeSinceLastSeek > 4000)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Seamless micro-sync for minor acoustic differences (0.04s - 0.12s):
-        if (diff > 0.04) {
+        // 2. Seamless micro-sync for minor differences:
+        if (diff > 0.15) {
           setRate(yt, 1.25);
-        } else if (diff < -0.04) {
+        } else if (diff < -0.15) {
           setRate(yt, 0.75);
-        } else if (absDiff <= 0.02) {
+        } else if (absDiff <= 0.05) {
           setRate(yt, 1);
         }
       }
@@ -187,24 +188,14 @@ const Player = forwardRef(function Player(
       return;
     }
 
-    // Same song: update play / pause status smoothly
+    // Same song: update play / pause status smoothly without seeking
     if (pb.isPlaying) {
       if (enabledRef.current) {
         const st = yt.getPlayerState?.();
         if (st !== PLAYING && st !== BUFFERING) {
-          const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(want - cur) > 2.0) {
-            seek(yt, want);
-          }
           try {
             yt.playVideo();
           } catch {}
-        } else {
-          // If already playing, check if host made a scrub/jump
-          const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(want - cur) > 0.4) {
-            seek(yt, want);
-          }
         }
       }
     } else {
@@ -245,10 +236,11 @@ const Player = forwardRef(function Player(
             if (e.data === PLAYING) {
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
-              // Guest initial buffer alignment: snap if initial buffering caused delay (> 0.06s)
-              if (!isHostRef.current) {
+              // Guest initial buffer alignment: ONLY once when song starts playing!
+              if (!isHostRef.current && initialBufferDone.current !== loadedId.current) {
+                initialBufferDone.current = loadedId.current;
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.06) {
+                if (Math.abs(want - cur) > 0.25) {
                   seek(ytRef.current, want);
                 }
               }
@@ -292,12 +284,12 @@ const Player = forwardRef(function Player(
     };
   }, [apply]);
 
-  // React immediately to room state changes from WebSocket/Firebase
+  // React immediately to room state changes from WebSocket/Firebase (only track change or play/pause)
   useEffect(() => {
     stateRef.current = playback;
     enabledRef.current = enabled;
     apply();
-  }, [playback?.videoId, playback?.isPlaying, playback?.position, playback?.updatedAt, enabled, apply]);
+  }, [playback?.videoId, playback?.isPlaying, enabled, apply]);
 
   // Stable sync heartbeat (every 1000ms instead of aggressive 250ms)
   useEffect(() => {
