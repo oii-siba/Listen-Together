@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import Splash from './components/Splash';
@@ -7,9 +8,16 @@ import Room from './pages/Room';
 import { PlaybackProvider } from './context/PlaybackContext';
 import MiniPlayer from './components/MiniPlayer';
 import InstallPrompt from './components/InstallPrompt';
+import { isInstalled, logAppInstall } from './lib/pwa';
 
 export default function App() {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (isInstalled()) {
+      logAppInstall(user);
+    }
+  }, [user]);
 
   if (loading) return <Splash />;
 

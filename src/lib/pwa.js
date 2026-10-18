@@ -8,13 +8,6 @@ let isAppInstalled = false;
 export async function logAppInstall(user = null) {
   if (typeof window === 'undefined') return;
 
-  // Prevent duplicate install counts for the same device
-  try {
-    const alreadyLogged = localStorage.getItem('TT_PWA_INSTALLED_LOGGED');
-    if (alreadyLogged) return;
-    localStorage.setItem('TT_PWA_INSTALLED_LOGGED', 'true');
-  } catch {}
-
   const deviceId = (() => {
     try {
       let id = localStorage.getItem('TT_DEVICE_ID');
@@ -41,25 +34,32 @@ export async function logAppInstall(user = null) {
 
   if (isFirebaseConfigured) {
     try {
-      // 1. Record device install details
+      // 1. Check if this device is already recorded in Firebase
       const installEntryRef = ref(db, `app_installs/${deviceId}`);
+      const existingSnap = await get(installEntryRef);
+      const isAlreadyRecorded = existingSnap.exists();
+
+      // 2. Record or update device install details
       await set(installEntryRef, {
         deviceId,
         uid: user?.uid || null,
         userName: user?.displayName || user?.email || 'Guest Listener',
         platform,
         userAgent: window.navigator.userAgent.slice(0, 150),
-        installedAt: serverTimestamp(),
+        installedAt: isAlreadyRecorded && existingSnap.val()?.installedAt ? existingSnap.val().installedAt : serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
         timestamp: Date.now(),
       });
 
-      // 2. Increment global total install count
-      const statsRef = ref(db, 'app_stats/installCount');
-      const snap = await get(statsRef);
-      const currentCount = snap.exists() ? Number(snap.val()) || 0 : 0;
-      await set(statsRef, currentCount + 1);
+      // 3. Increment global total install count ONLY if this device was never counted before
+      if (!isAlreadyRecorded) {
+        const statsRef = ref(db, 'app_stats/installCount');
+        const snap = await get(statsRef);
+        const currentCount = snap.exists() ? Number(snap.val()) || 0 : 0;
+        await set(statsRef, currentCount + 1);
+      }
 
-      // 3. Update user profile if logged in
+      // 4. Update user profile if logged in
       if (user?.uid) {
         await update(ref(db, `users/${user.uid}/profile`), {
           hasInstalledApp: true,

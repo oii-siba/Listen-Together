@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tunetogether-pwa-v1';
+const CACHE_NAME = 'tunetogether-pwa-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
