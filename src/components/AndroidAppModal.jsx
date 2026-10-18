@@ -26,8 +26,8 @@ export default function AndroidAppModal({ onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-green-500 to-emerald-400 text-black flex items-center justify-center text-xl shadow-[0_0_15px_rgba(34,197,94,0.5)]">
-              🤖
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden p-0.5 border border-green-400/80 shadow-[0_0_15px_rgba(34,197,94,0.5)] bg-black shrink-0">
+              <img src="/logo.png" alt="TuneTogether" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white leading-tight">Android App &amp; TWA</h2>

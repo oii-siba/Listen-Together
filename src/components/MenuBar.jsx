@@ -375,9 +375,9 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                   className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
-                      🤖
-                    </span>
+                    <div className="relative w-8 h-8 rounded-xl overflow-hidden p-0.5 border border-green-400/60 shadow-sm bg-black shrink-0 group-hover:scale-110 transition-transform">
+                      <img src="/logo.png" alt="TuneTogether" className="w-full h-full object-cover rounded-lg" />
+                    </div>
                     <div className="text-left">
                       <p className="font-extrabold text-white text-xs">Android App &amp; TWA</p>
                       <p className="text-[10px] text-white/40 font-medium">Native APK &amp; TWA guide</p>
