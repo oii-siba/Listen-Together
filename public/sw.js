@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tunetogether-pwa-v2';
+const CACHE_NAME = 'tunetogether-pwa-v2.1';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -34,12 +34,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Listen for skip waiting message from app update trigger
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Fetch: Network-first for dynamic content & HTML; Cache-first for static assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Bypass service worker for Firebase Realtime DB, YouTube APIs, and WebSockets
+  // Bypass service worker for version.json, Firebase, YouTube, and WebSockets
   if (
+    url.pathname.includes('version.json') ||
     url.hostname.includes('firebaseio.com') ||
     url.hostname.includes('firebasedatabase.app') ||
     url.hostname.includes('googleapis.com') ||

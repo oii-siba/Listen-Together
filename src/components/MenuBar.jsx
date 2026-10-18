@@ -7,6 +7,7 @@ import FavoritesModal from './FavoritesModal';
 import PrivacyModal from './PrivacyModal';
 import AndroidAppModal from './AndroidAppModal';
 import { triggerDirectInstall, isInstalled } from '../lib/pwa';
+import { checkRemoteVersion, CURRENT_APP_VERSION } from '../lib/appUpdate';
 
 export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong, onOpenPrivacy, onOpenAndroid }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
   const [favInitialTab, setFavInitialTab] = useState('favorites');
   const [copied, setCopied] = useState(false);
   const [appInstalled, setAppInstalled] = useState(false);
+  const [updateToast, setUpdateToast] = useState('');
 
   const nav = useNavigate();
   const location = useLocation();
@@ -72,6 +74,18 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
     setIsOpen(false);
     setFavInitialTab(tab);
     setShowFavorites(true);
+  };
+
+  const handleCheckUpdate = async () => {
+    setUpdateToast('আপডেট চেক করা হচ্ছে... ⏳');
+    const hasUpdate = await checkRemoteVersion();
+    if (!hasUpdate) {
+      setUpdateToast(`✓ আপনি লেটেস্ট ভার্সনে আছেন (v${CURRENT_APP_VERSION})`);
+      setTimeout(() => setUpdateToast(''), 3500);
+    } else {
+      setIsOpen(false);
+      setUpdateToast('');
+    }
   };
 
   return (
@@ -433,6 +447,31 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                       Free App
                     </span>
                   </button>
+                )}
+
+                {/* Check for App Updates Button */}
+                <button
+                  type="button"
+                  onClick={handleCheckUpdate}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-green-500/40 transition-all duration-200 active:scale-98 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 flex items-center justify-center text-sm shadow-sm group-hover:scale-110 transition-transform">
+                      🔄
+                    </span>
+                    <div className="text-left">
+                      <p className="font-bold text-white text-xs">Check for App Updates</p>
+                      <p className="text-[10px] text-white/50">Version v{CURRENT_APP_VERSION}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                    Check
+                  </span>
+                </button>
+                {updateToast && (
+                  <p className="text-[11px] text-green-400 font-semibold text-center mt-1 animate-in fade-in duration-200">
+                    {updateToast}
+                  </p>
                 )}
               </div>
             </div>

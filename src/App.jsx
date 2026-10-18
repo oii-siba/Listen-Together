@@ -9,6 +9,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import { PlaybackProvider } from './context/PlaybackContext';
 import MiniPlayer from './components/MiniPlayer';
 import InstallPrompt from './components/InstallPrompt';
+import AppUpdateModal from './components/AppUpdateModal';
 import { isInstalled, logAppInstall } from './lib/pwa';
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
       </Routes>
       <MiniPlayer />
       <InstallPrompt />
+      <AppUpdateModal />
     </PlaybackProvider>
   );
 }
