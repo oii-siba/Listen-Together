@@ -35,6 +35,7 @@ const Player = forwardRef(function Player(
   const loadedId = useRef(null);
   const lastSeekAt = useRef(0);
   const notPlaying = useRef(0);
+  const resumeTimer = useRef(null);
 
   const onEndedRef = useRef(onEnded);
   const onErrorRef = useRef(onError);
@@ -192,15 +193,18 @@ const Player = forwardRef(function Player(
               }
               onPlayingStartRef.current?.(cur);
             }
-            // If browser or mobile OS paused player while room is playing, auto-resume
+            // If browser or mobile OS paused player while room is playing, auto-resume cleanly
             if (e.data === PAUSED) {
               const pb = stateRef.current;
               if (pb?.isPlaying && enabledRef.current) {
-                setTimeout(() => {
-                  try {
-                    ytRef.current?.playVideo();
-                  } catch {}
-                }, 150);
+                if (!resumeTimer.current) {
+                  resumeTimer.current = setTimeout(() => {
+                    resumeTimer.current = null;
+                    try {
+                      ytRef.current?.playVideo();
+                    } catch {}
+                  }, 400);
+                }
               }
             }
           },
@@ -315,7 +319,7 @@ const Player = forwardRef(function Player(
       className={
         showVideo
           ? 'fixed bottom-24 right-3 sm:right-6 w-72 sm:w-84 max-w-[calc(100vw-1.5rem)] aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.85)] border border-green-500/50 z-50 animate-in fade-in zoom-in-95 group'
-          : 'fixed bottom-0 right-0 w-2 h-2 opacity-[0.01] pointer-events-none z-[1]'
+          : 'fixed -bottom-[400px] -right-[400px] w-[240px] h-[240px] opacity-[0.01] pointer-events-none z-[1]'
       }
     >
       <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />

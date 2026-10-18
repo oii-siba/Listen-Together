@@ -382,7 +382,13 @@ export function PlaybackProvider({ user, children }) {
 
     try {
       navigator.mediaSession.setActionHandler('play', () => {
-        if (!hostRef.current) return;
+        if (!hostRef.current) {
+          try {
+            audioAnchorRef.current?.play()?.catch(() => {});
+            playerRef.current?.resync();
+          } catch {}
+          return;
+        }
         const pb = roomRef.current?.playback;
         if (!pb?.isPlaying) {
           togglePlay();
@@ -430,25 +436,44 @@ export function PlaybackProvider({ user, children }) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [activeRoomId, playback?.isPlaying]);
 
-  // Unlock audio anchor on first user interaction anywhere in the app
+  // Auto-skip unplayable videos if embedding is restricted (error 100, 101, 150, 2)
+  const handlePlayerError = useCallback(
+    (errCode) => {
+      console.warn('YouTube Player error code:', errCode);
+      if (!hostRef.current || !activeRoomId) return;
+      if (errCode === 100 || errCode === 101 || errCode === 150 || errCode === 2) {
+        logRoomActivity(activeRoomId, {
+          type: 'error',
+          title: 'Track Skipped',
+          body: 'This video cannot be played in embedded players. Moving to next track...',
+          userName: 'System',
+        });
+        setTimeout(() => {
+          if (hostRef.current) playNext();
+        }, 1500);
+      }
+    },
+    [activeRoomId, playNext]
+  );
+
+  // Unlock audio anchor on user interaction anywhere in the app
   useEffect(() => {
     const unlockOnGesture = () => {
       audioAnchorRef.current?.play()?.catch(() => {});
       try {
         playerRef.current?.resync();
       } catch {}
-      window.removeEventListener('click', unlockOnGesture);
-      window.removeEventListener('touchstart', unlockOnGesture);
+      if (blocked) setBlocked(false);
     };
 
-    window.addEventListener('click', unlockOnGesture, { once: true });
-    window.addEventListener('touchstart', unlockOnGesture, { once: true });
+    window.addEventListener('click', unlockOnGesture);
+    window.addEventListener('touchstart', unlockOnGesture);
 
     return () => {
       window.removeEventListener('click', unlockOnGesture);
       window.removeEventListener('touchstart', unlockOnGesture);
     };
-  }, []);
+  }, [blocked]);
 
   // Back button guard: Intercept browser back button so it doesn't exit website while song is playing
   useEffect(() => {
@@ -534,7 +559,7 @@ export function PlaybackProvider({ user, children }) {
           showVideo={showVideo}
           onCloseVideo={() => setShowVideo(false)}
           onEnded={isHost ? playNext : undefined}
-          onError={() => {}}
+          onError={handlePlayerError}
           onBlocked={setBlocked}
           onPlayingStart={handleHostPlayingStart}
         />
