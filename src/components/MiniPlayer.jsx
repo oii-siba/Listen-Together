@@ -115,7 +115,9 @@ export default function MiniPlayer() {
     }
   };
 
-  const progressPct = dur > 0 ? Math.min(100, Math.max(0, (cur / dur) * 100)) : 0;
+  const isPlaying = !!playback?.isPlaying;
+  const effectiveCur = !isPlaying && typeof playback?.position === 'number' ? playback.position : cur;
+  const progressPct = dur > 0 ? Math.min(100, Math.max(0, (effectiveCur / dur) * 100)) : 0;
 
   return (
     <aside

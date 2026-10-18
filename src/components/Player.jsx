@@ -205,6 +205,12 @@ const Player = forwardRef(function Player(
     } else {
       try {
         yt.pauseVideo();
+        if (typeof pb.position === 'number') {
+          const cur = yt.getCurrentTime?.() || 0;
+          if (Math.abs(cur - pb.position) > 0.15) {
+            seek(yt, pb.position);
+          }
+        }
       } catch {}
     }
   }, []);
@@ -238,6 +244,13 @@ const Player = forwardRef(function Player(
             if (e.data === ENDED) onEndedRef.current?.();
             // Transitioning to PLAYING:
             if (e.data === PLAYING) {
+              const pb = stateRef.current;
+              if (!pb?.isPlaying) {
+                try {
+                  ytRef.current?.pauseVideo();
+                } catch {}
+                return;
+              }
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
               // Guest initial buffer alignment: ONLY once when song starts playing!
@@ -373,6 +386,16 @@ const Player = forwardRef(function Player(
       isMuted: () => ytRef.current?.isMuted?.() || false,
       mute: () => ytRef.current?.mute?.(),
       unMute: () => ytRef.current?.unMute?.(),
+      pause: () => {
+        try {
+          ytRef.current?.pauseVideo?.();
+        } catch {}
+      },
+      play: () => {
+        try {
+          ytRef.current?.playVideo?.();
+        } catch {}
+      },
     }),
     [syncPlayback]
   );

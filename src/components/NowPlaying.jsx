@@ -62,7 +62,8 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
 
   const has = !!playback?.videoId;
   const isPlaying = !!playback?.isPlaying;
-  const shown = scrub ?? cur;
+  // When paused, use the authoritative room position from Firebase so all devices display the exact same second
+  const shown = scrub ?? (!isPlaying && typeof playback?.position === 'number' ? playback.position : cur);
   const max = dur > 0 ? dur : 1;
   const remaining = Math.max(0, dur - shown);
 

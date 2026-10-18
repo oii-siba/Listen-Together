@@ -195,6 +195,11 @@ export function PlaybackProvider({ user, children }) {
     const r = roomRef.current;
     if (!activeRoomId || !hasVideo || !isHost || !r || r.hostId !== user?.uid) return;
     const cur = playerRef.current?.getCurrentTime() ?? playback.position ?? 0;
+    if (playback.isPlaying) {
+      try {
+        playerRef.current?.pause();
+      } catch {}
+    }
     update(ref(db, `rooms/${activeRoomId}/playback`), {
       isPlaying: !playback.isPlaying,
       position: cur,
