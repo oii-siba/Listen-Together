@@ -23,7 +23,7 @@ const toPeople = (p) =>
 export function PlaybackProvider({ user, children }) {
   const [activeRoomId, setActiveRoomId] = useState(() => {
     try {
-      return sessionStorage.getItem('TT_ACTIVE_ROOM') || null;
+      return localStorage.getItem('TT_ACTIVE_ROOM') || sessionStorage.getItem('TT_ACTIVE_ROOM') || null;
     } catch {
       return null;
     }
@@ -58,12 +58,14 @@ export function PlaybackProvider({ user, children }) {
   roomRef.current = room;
   hostRef.current = isHost;
 
-  // Persist activeRoomId to sessionStorage
+  // Persist activeRoomId to localStorage and sessionStorage
   useEffect(() => {
     try {
       if (activeRoomId) {
+        localStorage.setItem('TT_ACTIVE_ROOM', activeRoomId);
         sessionStorage.setItem('TT_ACTIVE_ROOM', activeRoomId);
       } else {
+        localStorage.removeItem('TT_ACTIVE_ROOM');
         sessionStorage.removeItem('TT_ACTIVE_ROOM');
       }
     } catch {}
@@ -79,7 +81,19 @@ export function PlaybackProvider({ user, children }) {
     hasLoggedJoinRef.current = false;
     const unsub = onValue(
       ref(db, `rooms/${activeRoomId}`),
-      (snap) => setRoom(snap.val()),
+      (snap) => {
+        const val = snap.val();
+        if (val === null) {
+          try {
+            localStorage.removeItem('TT_ACTIVE_ROOM');
+            sessionStorage.removeItem('TT_ACTIVE_ROOM');
+          } catch {}
+          setActiveRoomId(null);
+          setRoom(null);
+        } else {
+          setRoom(val);
+        }
+      },
       () => setRoom(null)
     );
     return unsub;
@@ -345,6 +359,10 @@ export function PlaybackProvider({ user, children }) {
         }
       }
       await remove(ref(db, `rooms/${activeRoomId}/presence/${user?.uid}`));
+    } catch {}
+    try {
+      localStorage.removeItem('TT_ACTIVE_ROOM');
+      sessionStorage.removeItem('TT_ACTIVE_ROOM');
     } catch {}
     setActiveRoomId(null);
     setRoom(null);

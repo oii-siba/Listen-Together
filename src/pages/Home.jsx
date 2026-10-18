@@ -13,7 +13,7 @@ import { usePlayback } from '../context/PlaybackContext';
 
 export default function Home() {
   const { user, signOut } = useAuth();
-  const { online, reconnectToast, retryConnection } = usePlayback() || {};
+  const { online, reconnectToast, retryConnection, activeRoomId, playback, blocked, unlockAudio } = usePlayback() || {};
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +103,49 @@ export default function Home() {
           <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
           <span>{reconnectToast}</span>
         </div>
+      )}
+
+      {/* Persistent Active Room Recovery Card */}
+      {activeRoomId && playback?.videoId && (
+        <div className="mt-4 p-3.5 rounded-3xl bg-gradient-to-r from-[#0d2315] via-[#09170e] to-[#0d2315] border-2 border-green-500/60 shadow-[0_0_30px_rgba(34,197,94,0.3)] flex items-center justify-between gap-3 animate-in fade-in duration-300 ring-1 ring-white/10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-black shrink-0 border border-green-400 shadow-md">
+              <img src={playback.thumb || '/logo.png'} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-green-400">
+                  Room · {activeRoomId}
+                </span>
+              </div>
+              <h4 className="text-xs font-bold text-white truncate leading-tight mt-0.5">{playback.title || 'Music Playing'}</h4>
+              <p className="text-[10px] text-white/50 truncate">Tap to re-enter listening session</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              unlockAudio?.();
+              nav(`/room/${activeRoomId}`);
+            }}
+            className="px-3.5 py-2 rounded-full bg-green-500 text-black font-extrabold text-xs shrink-0 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition"
+          >
+            Open Room ▶
+          </button>
+        </div>
+      )}
+
+      {/* Autoplay Audio Unlock Banner if browser suspended playback */}
+      {blocked && activeRoomId && (
+        <button
+          type="button"
+          onClick={unlockAudio}
+          className="mt-3 w-full py-3.5 px-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(34,197,94,0.6)] animate-bounce active:scale-95 transition"
+        >
+          <span className="text-sm">▶</span>
+          <span>Tap to resume playing music in sync!</span>
+        </button>
       )}
 
       {/* Hero Section */}
