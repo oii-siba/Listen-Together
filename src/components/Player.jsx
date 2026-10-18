@@ -144,15 +144,12 @@ const Player = forwardRef(function Player(
         }
       }
     } else {
-      // Room is paused
+      // Room is paused: ensure player is paused, NEVER seek while paused (avoids auto-waking on mobile)
       setRate(yt, 1);
       if (st === PLAYING || st === BUFFERING) {
         try {
           yt.pauseVideo();
         } catch {}
-      }
-      if (st !== CUED && st !== UNSTARTED && absDiff > 0.5) {
-        seek(yt, pb.position || 0);
       }
     }
   }, []);
@@ -190,11 +187,16 @@ const Player = forwardRef(function Player(
       return;
     }
 
-    // Same song: update play / pause status smoothly without seeking
+    // Same song: update play / pause status smoothly
     if (pb.isPlaying) {
       if (enabledRef.current) {
         const st = yt.getPlayerState?.();
         if (st !== PLAYING && st !== BUFFERING) {
+          // If resuming from pause, align to expected position first
+          const cur = yt.getCurrentTime?.() || 0;
+          if (Math.abs(want - cur) > 0.25) {
+            seek(yt, want);
+          }
           try {
             yt.playVideo();
           } catch {}
