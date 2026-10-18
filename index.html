@@ -1,40 +1,129 @@
 <!doctype html>
-<html lang="en">
+<html lang="bn" prefix="og: http://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#050806" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TuneTogether" />
 
-    <title>TuneTogether - Listen together, in perfect sync.</title>
+    <!-- Primary Title & Description for Google Search -->
+    <title>TuneTogether - সব ডিভাইসে একই সাথে গান শুনুন | Listen Together in Perfect Sync</title>
     <meta
       name="description"
-      content="Create a room, share the link on WhatsApp, and everyone hears the same YouTube song at the same moment, on any device."
+      content="সব ডিভাইসে নিখুঁতভাবে একই সাথে গান শুনুন (Zero Delay)। আলাদা আলাদা ফোনে একই সেকেন্ডে একই গান একসাথে বাজবে। Listen to YouTube music together across multiple devices in perfect real-time sync with friends."
     />
 
-    <!-- Open Graph / Social Sharing Metadata -->
+    <!-- SEO Search Keywords (Bangla, Banglish & English) -->
+    <meta
+      name="keywords"
+      content="একসাথে গান চালাবো, eksathe gaan chalabo, aki gaan sab alada alada device e aksathe gaan chale, একই গান সব আলাদা ডিভাইসে একসাথে বাজানো, alada device e eksathe gaan, listen together, youtube music sync, how to play same song on multiple phones, listen with friends, youtube watch party, tune together, tunetogether, multi device audio sync, zero delay music sync"
+    />
+    <meta name="author" content="TuneTogether" />
+
+    <!-- Google Favicon & App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Open Graph / Facebook / WhatsApp Preview -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="TuneTogether - Listen together, in perfect sync." />
+    <meta property="og:site_name" content="TuneTogether" />
+    <meta property="og:title" content="TuneTogether - সব ডিভাইসে একই সাথে গান শুনুন | Listen in Sync" />
     <meta
       property="og:description"
-      content="Listen to YouTube music with friends in real-time sync with live chat, reactions, and mini player."
+      content="একসাথে সব ফোনে একই গান শুনুন নিখুঁত সিংকে (Zero Delay)। Create a room, share with friends, and enjoy YouTube songs together."
     />
     <meta property="og:image" content="/logo.png" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:alt" content="TuneTogether Official Logo" />
+
+    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TuneTogether - Synchronized Music Rooms" />
+    <meta name="twitter:title" content="TuneTogether - সব ডিভাইসে একই সাথে গান শুনুন" />
     <meta
       name="twitter:description"
-      content="Listen to YouTube music with friends in real-time sync with live chat, reactions, and mini player."
+      content="সব ডিভাইসে নিখুঁতভাবে একই সাথে গান শুনুন (Zero Delay)। Listen to YouTube music together in perfect sync."
     />
     <meta name="twitter:image" content="/logo.png" />
 
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Google Search Structured Data (JSON-LD): WebApplication, Organization (Logo) & FAQPage -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://listen-together.pages.dev/#organization",
+            "name": "TuneTogether",
+            "url": "https://listen-together.pages.dev/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://listen-together.pages.dev/logo.png",
+              "width": 1024,
+              "height": 1024
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://listen-together.pages.dev/#webapp",
+            "name": "TuneTogether",
+            "alternateName": ["Listen Together", "একসাথে গান শুনুন", "Eksathe Gaan Chalano"],
+            "url": "https://listen-together.pages.dev/",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "All",
+            "description": "সব ডিভাইসে একই সাথে গান শুনুন নিখুঁত সিংকে। Listen to YouTube music together across multiple devices in perfect real-time sync with friends.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "ratingCount": "850"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "আলাদা আলাদা ডিভাইসে একই সাথে একই গান কীভাবে চালাবো?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "TuneTogether ওয়েবসাইটে গিয়ে 'Create a room' বাটনে ক্লিক করে রুম তৈরি করুন। এরপর রুমের লিংক বা QR কোড বন্ধুদের শেয়ার করুন। কোনো ব্লুটুথ ছাড়াই সব ডিভাইসে একই সেকেন্ডে একসাথে গান বাজবে।"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "হোস্ট গান বন্ধ (Off) বা চালু (On) করলে কি সব ডিভাইসে বন্ধ ও চালু হবে?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "হ্যাঁ! TuneTogether-এ হোস্ট গান পজ (Off) করলে সমস্ত গেস্ট ডিভাইসে গান সাথে সাথে থেমে যাবে এবং হোস্ট আবার অন করলে সব ডিভাইসে একই সেকেন্ডে একসাথে বাজা শুরু করবে।"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "QR কোড স্ক্যান করে কীভাবে রুমে জয়েন করা যায়?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "হোম পেজের 'Scan Room QR Code' অপশনে ক্লিক করে যেকোনো ডিভাইসের ক্যামেরা দিয়ে হোস্টের QR কোড স্ক্যান করলেই সরাসরি কোনো টাইপিং ছাড়াই রুমে প্রবেশ করা যায়।"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />

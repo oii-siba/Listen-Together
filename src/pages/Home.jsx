@@ -292,6 +292,53 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SECTION: GOOGLE SEO & FAQ (সচরাচর জিজ্ঞাসিত প্রশ্নাবলী) */}
+      <section className="mt-16">
+        <div className="text-center">
+          <p className="text-[11px] font-bold text-green-400 uppercase tracking-widest">
+            FREQUENTLY ASKED QUESTIONS
+          </p>
+          <h2 className="mt-1 text-2xl font-extrabold text-white tracking-tight">
+            একসাথে গান শোনার সহজ উপায়
+          </h2>
+          <p className="mt-2 text-xs text-white/60 max-w-sm mx-auto">
+            সব ডিভাইসে কোনো ব্লুটুথ বা এক্সট্রা অ্যাপ ছাড়াই একই সাথে ইউটিউব গান শুনুন।
+          </p>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {/* FAQ 1 */}
+          <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <span className="text-green-400 font-extrabold">Q.</span> আলাদা আলাদা ডিভাইসে একই সাথে গান চালাবো কীভাবে?
+            </h3>
+            <p className="text-xs text-white/65 mt-2 leading-relaxed">
+              TuneTogether-এ <strong>"Create a room"</strong> বাটনে ক্লিক করে একটি রুম তৈরি করুন। এরপর রুমের লিংক বা QR কোড বন্ধুদের সাথে শেয়ার করুন। কোনো ব্লুটুথ ছাড়াই সব ফোনে একই সেকেন্ডে একই গান একসাথে বাজবে (Zero Time Delay)।
+            </p>
+          </div>
+
+          {/* FAQ 2 */}
+          <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <span className="text-green-400 font-extrabold">Q.</span> হোস্ট অফ করলে কি সব ডিভাইসে বন্ধ এবং অন করলে চালু হবে?
+            </h3>
+            <p className="text-xs text-white/65 mt-2 leading-relaxed">
+              হ্যাঁ! হোস্ট ফোন থেকে গান Pause (Off) করলে সাথে সাথে সব ডিভাইসে গান থেমে যাবে, এবং হোস্ট Play (On) করলে সব ডিভাইসে একই সাথে আবার চলা শুরু করবে।
+            </p>
+          </div>
+
+          {/* FAQ 3 */}
+          <div className="bg-panel/80 border border-white/10 rounded-2xl p-4">
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <span className="text-green-400 font-extrabold">Q.</span> QR কোড স্ক্যান করে কীভাবে গান শুনবো?
+            </h3>
+            <p className="text-xs text-white/65 mt-2 leading-relaxed">
+              হোম স্ক্রিনের <strong>"Scan Room QR Code"</strong> অপশনে গিয়ে ক্যামেরা দিয়ে হোস্টের QR কোড স্ক্যান করলেই সরাসরি কোনো টাইপিং ছাড়াই রুমে ঢুকে লাইভ গান শোনা যাবে।
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* SECTION 3: BOTTOM CALL TO ACTION */}
       <section className="mt-16 rounded-[28px] bg-gradient-to-b from-[#0b1f13] to-panel border border-green-500/30 p-6 text-center shadow-[0_0_30px_rgba(34,197,94,0.2)]">
         <h2 className="text-2xl font-extrabold text-white tracking-tight leading-tight">

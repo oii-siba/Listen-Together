@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://listen-together.pages.dev/sitemap.xml
