@@ -66,12 +66,27 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const signInDemo = useCallback((name = 'Alex (Host)', uid = 'demo-host') => {
+  const signInDemo = useCallback((name = null, uid = null) => {
+    let savedUid = uid;
+    if (!savedUid) {
+      try {
+        const existing = localStorage.getItem('LT_DEMO_UID');
+        if (existing) {
+          savedUid = existing;
+        } else {
+          savedUid = 'user-' + Math.random().toString(36).substring(2, 9);
+          localStorage.setItem('LT_DEMO_UID', savedUid);
+        }
+      } catch {
+        savedUid = 'user-' + Math.random().toString(36).substring(2, 9);
+      }
+    }
+    const demoName = name || `Guest-${savedUid.slice(-4)}`;
     const demoUser = {
-      uid,
-      displayName: name,
-      email: `${uid}@demo.local`,
-      photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`,
+      uid: savedUid,
+      displayName: demoName,
+      email: `${savedUid}@demo.local`,
+      photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${savedUid}`,
       isDemo: true,
     };
     try {

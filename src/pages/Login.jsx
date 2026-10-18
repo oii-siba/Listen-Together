@@ -77,7 +77,7 @@ export default function Login() {
       {/* Instant Demo Switch */}
       <div className="mt-4 text-center">
         <button
-          onClick={() => signInDemo('Alex (Host)', 'demo-host')}
+          onClick={() => signInDemo()}
           className="text-xs text-green-400/80 hover:text-green-300 transition underline font-medium"
         >
           Or continue with instant demo account

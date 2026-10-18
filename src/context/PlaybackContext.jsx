@@ -174,9 +174,8 @@ export function PlaybackProvider({ user, children }) {
   );
 
   const playNext = useCallback(async () => {
-    if (!activeRoomId || !isHost) return;
     const r = roomRef.current;
-    if (!r) return;
+    if (!activeRoomId || !isHost || !r || r.hostId !== user?.uid) return;
     const q = toQueue(r.queue);
     if (q.length) {
       await playItem(q[0]);
@@ -188,28 +187,30 @@ export function PlaybackProvider({ user, children }) {
         updatedAt: serverTimestamp(),
       });
     }
-  }, [activeRoomId, isHost, playItem]);
+  }, [activeRoomId, isHost, playItem, user?.uid]);
 
   const togglePlay = useCallback(() => {
-    if (!activeRoomId || !hasVideo || !isHost) return;
+    const r = roomRef.current;
+    if (!activeRoomId || !hasVideo || !isHost || !r || r.hostId !== user?.uid) return;
     const cur = playerRef.current?.getCurrentTime() ?? playback.position ?? 0;
     update(ref(db, `rooms/${activeRoomId}/playback`), {
       isPlaying: !playback.isPlaying,
       position: cur,
       updatedAt: serverTimestamp(),
     });
-  }, [activeRoomId, hasVideo, isHost, playback.isPlaying, playback.position]);
+  }, [activeRoomId, hasVideo, isHost, playback.isPlaying, playback.position, user?.uid]);
 
   const seekTo = useCallback(
     (t) => {
-      if (!activeRoomId || !hasVideo || !isHost) return;
+      const r = roomRef.current;
+      if (!activeRoomId || !hasVideo || !isHost || !r || r.hostId !== user?.uid) return;
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: !!playback.isPlaying,
         position: t,
         updatedAt: serverTimestamp(),
       });
     },
-    [activeRoomId, hasVideo, isHost, playback.isPlaying]
+    [activeRoomId, hasVideo, isHost, playback.isPlaying, user?.uid]
   );
 
   const addSong = useCallback(
@@ -297,14 +298,6 @@ export function PlaybackProvider({ user, children }) {
       });
   }, [isHost, hasVideo, queue.length, playItem]);
 
-  // Host pass on vanish
-  useEffect(() => {
-    if (!exists || isHost || hostPresent || oldestUid !== user?.uid || !activeRoomId) return undefined;
-    const t = setTimeout(() => {
-      set(ref(db, `rooms/${activeRoomId}/hostId`), user.uid).catch(() => {});
-    }, 8000);
-    return () => clearTimeout(t);
-  }, [exists, isHost, hostPresent, oldestUid, user?.uid, activeRoomId]);
 
   // Host playback start calibration: calibrates server time to exact moment audio plays on host device
   const handleHostPlayingStart = useCallback(

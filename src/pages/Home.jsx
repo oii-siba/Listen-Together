@@ -143,10 +143,10 @@ export default function Home() {
 
                 <div className="min-w-0 flex-1">
                   <span className="inline-block text-[10px] font-bold text-green-400 tracking-wider uppercase">
-                    ● LIVE · 1 LISTENING
+                    ● REAL-TIME SYNC
                   </span>
-                  <h3 className="font-extrabold text-white text-base leading-tight truncate">Midnight Drive</h3>
-                  <p className="text-xs text-white/50 truncate font-medium">Demo Artist</p>
+                  <h3 className="font-extrabold text-white text-base leading-tight truncate">TuneTogether Radio</h3>
+                  <p className="text-xs text-white/50 truncate font-medium">Listen in sync with friends</p>
                 </div>
               </div>
 

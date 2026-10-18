@@ -194,26 +194,22 @@ export default function MiniPlayer() {
             </button>
           )}
 
-          {/* Play / Pause Toggle Button */}
-          <button
-            type="button"
-            onClick={isHost ? togglePlay : undefined}
-            disabled={!isHost}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition shadow-[0_0_15px_rgba(34,197,94,0.5)] ${
-              isHost
-                ? 'bg-green-500 text-black hover:brightness-110 active:scale-90 cursor-pointer'
-                : 'bg-green-500/30 text-white/40 cursor-not-allowed opacity-50'
-            }`}
-            title={
-              !isHost
-                ? 'Only the host can pause or play the music'
-                : playback.isPlaying
-                ? 'Pause'
-                : 'Play'
-            }
-          >
-            {playback.isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
+          {/* Play / Pause Toggle Button (Host only) */}
+          {isHost ? (
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="w-10 h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)] cursor-pointer"
+              title={playback.isPlaying ? 'Pause' : 'Play'}
+            >
+              {playback.isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            </button>
+          ) : (
+            <div className="px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1.5 text-[10px] text-green-400 font-bold tracking-wider select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span>SYNC</span>
+            </div>
+          )}
 
           {/* Next Track Button (Host only) */}
           {isHost && (
