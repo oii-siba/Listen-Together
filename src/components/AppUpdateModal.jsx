@@ -24,7 +24,7 @@ export default function AppUpdateModal() {
 
   const handleUpdateClick = async () => {
     setIsUpdating(true);
-    await applyAppUpdate();
+    await applyAppUpdate(updateInfo.newVersion);
   };
 
   return (
@@ -44,9 +44,9 @@ export default function AppUpdateModal() {
           </div>
 
           <div className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-[11px] font-extrabold uppercase tracking-wider text-green-400">
-            <span>v{CURRENT_APP_VERSION}</span>
+            <span>v{updateInfo.currentVersion || CURRENT_APP_VERSION}</span>
             <span>➔</span>
-            <span className="text-white">v{updateInfo.newVersion || '1.0.1'}</span>
+            <span className="text-white">v{updateInfo.newVersion || '1.0.2'}</span>
           </div>
         </div>
 

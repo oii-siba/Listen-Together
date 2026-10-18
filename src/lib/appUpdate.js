@@ -5,7 +5,15 @@
 import { ref, onValue } from './db';
 import { db, isFirebaseConfigured } from '../firebase';
 
-export const CURRENT_APP_VERSION = '1.0.1';
+export const CURRENT_APP_VERSION = '1.0.2';
+
+export function getInstalledVersion() {
+  try {
+    return localStorage.getItem('TT_APPLIED_APP_VERSION') || CURRENT_APP_VERSION;
+  } catch {
+    return CURRENT_APP_VERSION;
+  }
+}
 
 let updateInfoState = {
   isAvailable: false,
@@ -61,10 +69,18 @@ function notifyUpdateAvailable(info) {
 }
 
 /**
- * Apply the update immediately: activates new Service Worker, purges stale caches, and reloads
+ * Apply the update immediately: activates new Service Worker, purges stale caches, saves version, and reloads
  */
-export async function applyAppUpdate() {
+export async function applyAppUpdate(targetVersion = null) {
   try {
+    const versionToSave = targetVersion || updateInfoState.newVersion || '1.0.2';
+    try {
+      localStorage.setItem('TT_APPLIED_APP_VERSION', versionToSave);
+      localStorage.setItem('TT_LAST_UPDATE_TIME', String(Date.now()));
+    } catch {}
+
+    updateInfoState.isAvailable = false;
+
     // 1. Tell waiting service worker to skip waiting and activate immediately
     if (waitingServiceWorker) {
       waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
@@ -99,12 +115,14 @@ export async function checkRemoteVersion() {
     const data = await res.json();
 
     if (data && data.version) {
-      const newer = isNewerVersion(data.version, CURRENT_APP_VERSION);
-      const mustForce = data.forceUpdate === true && data.version !== CURRENT_APP_VERSION;
+      const localVersion = getInstalledVersion();
+      const newer = isNewerVersion(data.version, localVersion);
+      const mustForce = data.forceUpdate === true && data.version !== localVersion;
 
       if (newer || mustForce) {
         notifyUpdateAvailable({
           newVersion: data.version,
+          currentVersion: localVersion,
           forceUpdate: mustForce,
           title: data.title || updateInfoState.title,
           message: data.message || updateInfoState.message,
@@ -197,11 +215,13 @@ export function initAppUpdateSystem() {
       onValue(ref(db, 'app_config/update'), (snap) => {
         const val = snap.val();
         if (val && val.version) {
-          const isNewer = isNewerVersion(val.version, CURRENT_APP_VERSION);
-          const force = val.forceUpdate === true && val.version !== CURRENT_APP_VERSION;
+          const localVer = getInstalledVersion();
+          const isNewer = isNewerVersion(val.version, localVer);
+          const force = val.forceUpdate === true && val.version !== localVer;
           if (isNewer || force) {
             notifyUpdateAvailable({
               newVersion: val.version,
+              currentVersion: localVer,
               forceUpdate: force,
               title: val.title || 'লাইভ আপডেট পাওয়া গেছে! 🚀',
               message: val.message || 'TuneTogether-এ জরুরি আপডেট এসেছে। অনুগ্রহ করে এখনই আপডেট করুন।',
