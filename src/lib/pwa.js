@@ -1,7 +1,76 @@
 // PWA Install helper and state management
+import { ref, set, get, update, serverTimestamp } from './db';
+import { db, isFirebaseConfigured } from '../firebase';
 
 let deferredInstallPrompt = null;
 let isAppInstalled = false;
+
+export async function logAppInstall(user = null) {
+  if (typeof window === 'undefined') return;
+
+  // Prevent duplicate install counts for the same device
+  try {
+    const alreadyLogged = localStorage.getItem('TT_PWA_INSTALLED_LOGGED');
+    if (alreadyLogged) return;
+    localStorage.setItem('TT_PWA_INSTALLED_LOGGED', 'true');
+  } catch {}
+
+  const deviceId = (() => {
+    try {
+      let id = localStorage.getItem('TT_DEVICE_ID');
+      if (!id) {
+        id = 'dev-' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('TT_DEVICE_ID', id);
+      }
+      return id;
+    } catch {
+      return 'dev-' + Date.now();
+    }
+  })();
+
+  const ua = window.navigator.userAgent.toLowerCase();
+  const platform = /iphone|ipad|ipod/.test(ua)
+    ? 'iOS Safari'
+    : /android/.test(ua)
+    ? 'Android'
+    : /windows/.test(ua)
+    ? 'Windows PC'
+    : /macintosh|mac os x/.test(ua)
+    ? 'Mac OS'
+    : 'Web Browser';
+
+  if (isFirebaseConfigured) {
+    try {
+      // 1. Record device install details
+      const installEntryRef = ref(db, `app_installs/${deviceId}`);
+      await set(installEntryRef, {
+        deviceId,
+        uid: user?.uid || null,
+        userName: user?.displayName || user?.email || 'Guest Listener',
+        platform,
+        userAgent: window.navigator.userAgent.slice(0, 150),
+        installedAt: serverTimestamp(),
+        timestamp: Date.now(),
+      });
+
+      // 2. Increment global total install count
+      const statsRef = ref(db, 'app_stats/installCount');
+      const snap = await get(statsRef);
+      const currentCount = snap.exists() ? Number(snap.val()) || 0 : 0;
+      await set(statsRef, currentCount + 1);
+
+      // 3. Update user profile if logged in
+      if (user?.uid) {
+        await update(ref(db, `users/${user.uid}/profile`), {
+          hasInstalledApp: true,
+          installedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('Failed to log app install:', err);
+    }
+  }
+}
 
 // Initialize as soon as script loads
 if (typeof window !== 'undefined') {
@@ -15,10 +84,15 @@ if (typeof window !== 'undefined') {
   };
 
   isAppInstalled = checkStandalone();
+  if (isAppInstalled) {
+    // If running installed standalone, ensure it is recorded
+    setTimeout(() => {
+      logAppInstall();
+    }, 1500);
+  }
 
   // Listen to beforeinstallprompt globally (Chromium, Edge, Samsung Browser, Chrome Android)
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the default mini-infobar so our custom direct UI triggers it
     e.preventDefault();
     deferredInstallPrompt = e;
     window.deferredInstallPrompt = e;
@@ -31,6 +105,7 @@ if (typeof window !== 'undefined') {
     window.deferredInstallPrompt = null;
     isAppInstalled = true;
     window.dispatchEvent(new CustomEvent('tt-installed'));
+    logAppInstall();
   });
 }
 
@@ -69,6 +144,7 @@ export async function triggerDirectInstall() {
         if (typeof window !== 'undefined') window.deferredInstallPrompt = null;
         isAppInstalled = true;
         window.dispatchEvent(new CustomEvent('tt-installed'));
+        logAppInstall();
         return { success: true, outcome: 'accepted' };
       }
       return { success: false, outcome: 'dismissed' };

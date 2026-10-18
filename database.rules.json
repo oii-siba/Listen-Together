@@ -1,5 +1,15 @@
 {
   "rules": {
+    "app_stats": {
+      ".read": true,
+      ".write": true
+    },
+    "app_installs": {
+      ".read": true,
+      "$installId": {
+        ".write": true
+      }
+    },
     "friend_directory": {
       ".read": true,
       "$code": {
