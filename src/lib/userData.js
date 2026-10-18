@@ -580,9 +580,10 @@ export function subscribeToNotifications(uid, callback) {
   if (!uid) return () => {};
 
   let currentFbData = null;
+  let initialFbLoaded = !isFirebaseConfigured;
 
   const emit = () => {
-    callback(mergeNotifications(currentFbData, uid));
+    callback(mergeNotifications(currentFbData, uid), initialFbLoaded);
   };
 
   // Initial trigger
@@ -595,11 +596,13 @@ export function subscribeToNotifications(uid, callback) {
     fbUnsub = onValue(
       notifRef,
       (snap) => {
+        initialFbLoaded = true;
         currentFbData = snap.val();
         emit();
       },
       (err) => {
         console.warn('Firebase notifications subscription error:', err);
+        initialFbLoaded = true;
         emit();
       }
     );
@@ -660,7 +663,7 @@ export function subscribeToNotifications(uid, callback) {
 
 export async function markNotificationsRead(uid) {
   const list = getNotifications(uid);
-  const updated = list.map((n) => ({ ...n, unread: false }));
+  const updated = list.map((n) => ({ ...n, unread: false, seen: true }));
   setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
 
   if (isFirebaseConfigured) {
@@ -671,11 +674,34 @@ export async function markNotificationsRead(uid) {
         const updates = {};
         Object.keys(data).forEach((k) => {
           updates[`${k}/unread`] = false;
+          updates[`${k}/seen`] = true;
         });
         await update(ref(db, `users/${uid}/notifications`), updates);
       }
     } catch (e) {
       console.warn('Could not mark notifications read in Firebase:', e);
+    }
+  }
+
+  return updated;
+}
+
+export async function markNotificationAsRead(uid, notifId) {
+  if (!uid || !notifId) return [];
+  const list = getNotifications(uid);
+  const updated = list.map((n) =>
+    n.id === notifId ? { ...n, unread: false, seen: true } : n
+  );
+  setLocal(`${NOTIFICATIONS_KEY}_${uid}`, updated);
+
+  if (isFirebaseConfigured) {
+    try {
+      await update(ref(db, `users/${uid}/notifications/${notifId}`), {
+        unread: false,
+        seen: true,
+      });
+    } catch (e) {
+      console.warn('Could not mark single notification read in Firebase:', e);
     }
   }
 

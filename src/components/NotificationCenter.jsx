@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   subscribeToNotifications,
   markNotificationsRead,
+  markNotificationAsRead,
   subscribeToRoomActivity,
   playNotificationChime,
   acceptFriendRequest,
@@ -20,6 +21,7 @@ export default function NotificationCenter({ user, roomId }) {
   const [activeToast, setActiveToast] = useState(null);
   const [permState, setPermState] = useState(() => getBrowserNotificationPermission());
   const knownIdsRef = useRef(null);
+  const isInitialSyncedRef = useRef(false);
   const toastTimerRef = useRef(null);
   const panelRef = useRef(null);
   const nav = useNavigate();
@@ -39,44 +41,60 @@ export default function NotificationCenter({ user, roomId }) {
   // Subscribe to personal notifications (friend invites, friend requests, etc.)
   useEffect(() => {
     if (!user?.uid) return;
-    const unsub = subscribeToNotifications(user.uid, (list) => {
+    const unsub = subscribeToNotifications(user.uid, (list, initialFbLoaded) => {
       setNotifications(list);
 
-      // On initial load, register known IDs; if any unread is from the last 60 seconds, show toast
-      if (knownIdsRef.current === null) {
-        knownIdsRef.current = new Set(list.map((n) => n.id));
-        const recentUnread = list.find(
-          (n) =>
-            n.unread &&
-            n.timestamp &&
-            Date.now() - n.timestamp < 60000 &&
-            (n.roomId || n.type === 'friend_request' || n.type === 'friend_accepted')
-        );
-        if (recentUnread) {
-          setActiveToast(recentUnread);
-          playNotificationChime();
-          clearTimeout(toastTimerRef.current);
-          toastTimerRef.current = setTimeout(() => {
-            setActiveToast(null);
-          }, 10000);
+      // On initial sync, register all existing notifications as known so they NEVER trigger repeated toasts on app open
+      if (!isInitialSyncedRef.current) {
+        if (initialFbLoaded) {
+          isInitialSyncedRef.current = true;
+          knownIdsRef.current = new Set(list.map((n) => n.id));
+
+          // Only show toast on app open if a notification arrived very recently (last 15 seconds) AND was never seen
+          const veryRecent = list.find(
+            (n) =>
+              n.unread &&
+              !n.seen &&
+              n.timestamp &&
+              Date.now() - n.timestamp < 15000 &&
+              (n.roomId || n.type === 'friend_request' || n.type === 'friend_accepted')
+          );
+          if (veryRecent) {
+            setActiveToast(veryRecent);
+            markNotificationAsRead(user.uid, veryRecent.id);
+            playNotificationChime();
+            clearTimeout(toastTimerRef.current);
+            toastTimerRef.current = setTimeout(() => {
+              setActiveToast(null);
+            }, 8000);
+          }
+        } else {
+          if (!knownIdsRef.current) knownIdsRef.current = new Set();
+          list.forEach((n) => knownIdsRef.current.add(n.id));
         }
         return;
       }
 
-      // Detect genuinely NEW unread notifications (room invites or friend requests)
+      // Detect genuinely NEW notifications arriving live while the app is actively running
       const newAlerts = list.filter(
         (n) =>
           n.unread &&
+          !n.seen &&
+          knownIdsRef.current &&
           !knownIdsRef.current.has(n.id) &&
           (n.roomId || n.type === 'friend_request' || n.type === 'friend_accepted')
       );
 
       // Update known IDs set
-      list.forEach((n) => knownIdsRef.current.add(n.id));
+      if (knownIdsRef.current) {
+        list.forEach((n) => knownIdsRef.current.add(n.id));
+      }
 
       if (newAlerts.length > 0) {
         const latest = newAlerts[0];
         setActiveToast(latest);
+        // Mark as seen and read immediately in Firebase so re-opening the app later NEVER triggers it again
+        markNotificationAsRead(user.uid, latest.id);
         playNotificationChime();
 
         // Native Browser Notification (OS / desktop level banner)
@@ -94,7 +112,7 @@ export default function NotificationCenter({ user, roomId }) {
           icon: latest.senderPhoto || '/logo.png',
           onClick: () => {
             if (latest.roomId) {
-              handleJoin(latest.roomId);
+              handleJoin(latest.roomId, latest.id);
             } else {
               setOpen(true);
               setActiveTab('invites');
@@ -148,17 +166,28 @@ export default function NotificationCenter({ user, roomId }) {
     setNotifications(updated);
   };
 
-  const handleJoin = (targetRoomId) => {
+  const handleJoin = (targetRoomId, notifId = null) => {
+    const id = notifId || activeToast?.id;
+    if (id && user?.uid) {
+      markNotificationAsRead(user.uid, id);
+    }
     setOpen(false);
     setActiveToast(null);
     nav(`/room/${targetRoomId}`);
+  };
+
+  const handleDismissToast = () => {
+    if (activeToast?.id && user?.uid) {
+      markNotificationAsRead(user.uid, activeToast.id);
+    }
+    setActiveToast(null);
   };
 
   const handleAccept = async (notif) => {
     if (!user) return;
     await acceptFriendRequest(user, notif);
     setNotifications((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, status: 'accepted', unread: false } : n))
+      prev.map((n) => (n.id === notif.id ? { ...n, status: 'accepted', unread: false, seen: true } : n))
     );
     if (activeToast?.id === notif.id) {
       setActiveToast((prev) => (prev ? { ...prev, accepted: true } : null));
@@ -170,7 +199,7 @@ export default function NotificationCenter({ user, roomId }) {
     if (!user) return;
     updateNotificationStatus(user.uid, notif.id, 'declined');
     setNotifications((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, status: 'declined', unread: false } : n))
+      prev.map((n) => (n.id === notif.id ? { ...n, status: 'declined', unread: false, seen: true } : n))
     );
     if (activeToast?.id === notif.id) {
       setActiveToast(null);
@@ -193,6 +222,7 @@ export default function NotificationCenter({ user, roomId }) {
       const next = !prev;
       if (next && unreadCount > 0) {
         setActiveTab('invites');
+        handleMarkRead();
       }
       return next;
     });
@@ -259,7 +289,7 @@ export default function NotificationCenter({ user, roomId }) {
             ) : activeToast.roomId ? (
               <button
                 type="button"
-                onClick={() => handleJoin(activeToast.roomId)}
+                onClick={() => handleJoin(activeToast.roomId, activeToast.id)}
                 className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
               >
                 Join Now
@@ -267,7 +297,7 @@ export default function NotificationCenter({ user, roomId }) {
             ) : null}
             <button
               type="button"
-              onClick={() => setActiveToast(null)}
+              onClick={handleDismissToast}
               className="text-white/40 hover:text-white p-1 text-xs"
               aria-label="Close"
             >
@@ -484,7 +514,7 @@ export default function NotificationCenter({ user, roomId }) {
                       ) : n.roomId ? (
                         <button
                           type="button"
-                          onClick={() => handleJoin(n.roomId)}
+                          onClick={() => handleJoin(n.roomId, n.id)}
                           className="mt-2.5 w-full py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5 shadow"
                         >
                           <span>Join Room ({n.roomId})</span>
