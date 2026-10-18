@@ -11,17 +11,83 @@ export default function RoomQrModal({ roomId, onClose }) {
 
   useEffect(() => {
     if (!roomId) return;
-    QRCode.toDataURL(roomLink, {
-      width: 400,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-      errorCorrectionLevel: 'H',
-    })
-      .then((url) => setQrUrl(url))
-      .catch((err) => console.error('QR code generation failed:', err));
+
+    const generateQrWithLogo = async () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 600; // High resolution
+        await QRCode.toCanvas(canvas, roomLink, {
+          width: size,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#ffffff',
+          },
+          errorCorrectionLevel: 'H',
+        });
+
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = '/logo.png';
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+
+        if (img.complete && img.naturalWidth !== 0) {
+          const logoSize = Math.floor(size * 0.22);
+          const logoX = (size - logoSize) / 2;
+          const logoY = (size - logoSize) / 2;
+          const padding = 8;
+          const badgeSize = logoSize + padding * 2;
+          const badgeX = (size - badgeSize) / 2;
+          const badgeY = (size - badgeSize) / 2;
+          const radius = 18;
+
+          // Background badge behind logo
+          ctx.save();
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(badgeX, badgeY, badgeSize, badgeSize, radius);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeSize, badgeSize);
+          }
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = '#22c55e';
+          ctx.stroke();
+          ctx.restore();
+
+          // Circular logo drawing
+          ctx.save();
+          ctx.beginPath();
+          const centerX = size / 2;
+          const centerY = size / 2;
+          const clipRadius = logoSize / 2;
+          ctx.arc(centerX, centerY, clipRadius, 0, Math.PI * 2, true);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
+          ctx.restore();
+
+          // Green accent border ring
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, clipRadius, 0, Math.PI * 2, true);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#22c55e';
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        setQrUrl(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error('QR code generation failed:', err);
+      }
+    };
+
+    generateQrWithLogo();
   }, [roomId, roomLink]);
 
   const copyLink = async () => {
@@ -66,17 +132,19 @@ export default function RoomQrModal({ roomId, onClose }) {
           Friends can scan this QR code with their camera to enter and listen together in perfect sync.
         </p>
 
-        {/* Glowing QR Card */}
+        {/* Glowing QR Card with Center TuneTogether Logo */}
         <div className="mt-5 p-4 bg-white rounded-2xl shadow-xl inline-block mx-auto border-4 border-green-400/40 relative group">
           {qrUrl ? (
-            <img
-              src={qrUrl}
-              alt={`QR Code for room ${roomId}`}
-              className="w-56 h-56 object-contain rounded-lg"
-            />
+            <div className="relative">
+              <img
+                src={qrUrl}
+                alt={`QR Code for room ${roomId}`}
+                className="w-56 h-56 object-contain rounded-lg"
+              />
+            </div>
           ) : (
             <div className="w-56 h-56 flex items-center justify-center text-black/50 text-xs font-bold animate-pulse">
-              Generating QR Code…
+              Generating TuneTogether QR Code…
             </div>
           )}
         </div>
