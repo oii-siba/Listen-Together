@@ -4,7 +4,6 @@ import { getFriendCode, getFriendsList, getFavoriteSongs, getListeningHistory, g
 import FriendsModal from './FriendsModal';
 import ProfileModal from './ProfileModal';
 import FavoritesModal from './FavoritesModal';
-import AppStatsModal from './AppStatsModal';
 import { triggerDirectInstall, isInstalled } from '../lib/pwa';
 
 export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong }) {
@@ -12,7 +11,6 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   const [favInitialTab, setFavInitialTab] = useState('favorites');
   const [copied, setCopied] = useState(false);
   const [appInstalled, setAppInstalled] = useState(false);
@@ -362,27 +360,6 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                   <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
                 </button>
 
-                {/* 6.5. App Analytics & Installs */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setShowStats(true);
-                  }}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
-                      📊
-                    </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">App Analytics &amp; Installs</p>
-                      <p className="text-[10px] text-white/40 font-medium">Installs &amp; user metrics</p>
-                    </div>
-                  </div>
-                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-                </button>
-
                 {/* 7. Install App on Device (VIP Highlight Card) */}
                 {!appInstalled && (
                   <button
@@ -469,12 +446,6 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
         />
       )}
 
-      {/* App Stats & Installs Analytics Modal */}
-      {showStats && (
-        <AppStatsModal
-          onClose={() => setShowStats(false)}
-        />
-      )}
     </>
   );
 }
