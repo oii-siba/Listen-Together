@@ -65,7 +65,77 @@ export function initClientSecurity() {
       e.preventDefault();
       return false;
     }
+
+    // 4. Disable Desktop Browser Zoom Shortcuts (Ctrl +, Ctrl -, Ctrl 0)
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      (e.key === '+' ||
+        e.key === '-' ||
+        e.key === '=' ||
+        e.key === '0' ||
+        e.keyCode === 187 ||
+        e.keyCode === 189 ||
+        e.keyCode === 48 ||
+        e.keyCode === 96)
+    ) {
+      e.preventDefault();
+      return false;
+    }
   });
+
+  // 5. Disable Pinch-to-Zoom & Multi-Touch Gestures (iOS Safari & Android Chrome)
+  document.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  document.addEventListener(
+    'touchmove',
+    (e) => {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  // iOS Safari native gesturezoom blocker
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('gesturechange', (e) => e.preventDefault());
+  document.addEventListener('gestureend', (e) => e.preventDefault());
+
+  // Prevent double-tap to zoom on mobile while preserving button clicks and text typing
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    'touchend',
+    (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        const tag = e.target?.tagName?.toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') {
+          e.preventDefault();
+        }
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
+
+  // 6. Disable Ctrl + Mousewheel Zoom on desktop
+  window.addEventListener(
+    'wheel',
+    (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
 }
 
 /**
