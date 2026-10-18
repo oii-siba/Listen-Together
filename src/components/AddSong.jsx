@@ -3,6 +3,7 @@ import { fetchMeta, parseYouTubeId, thumbFor } from '../lib/utils';
 import { getYouTubeSuggestions, searchYouTube } from '../lib/youtube';
 import { Search } from './Icons';
 import { getFavoriteSongs, toggleFavoriteSong, getListeningHistory, isSongFavorite } from '../lib/userData';
+import { checkRateLimit } from '../lib/security';
 
 const QUICK_TAGS = [
   'Arijit Singh',
@@ -126,6 +127,14 @@ export default function AddSong({ canAdd, onAdd, isHost, user }) {
           setMsg("This video cannot be played on other sites (embedding disabled). Try another version.");
           return;
         }
+        if (!isHost) {
+          const rateCheck = checkRateLimit('addSong', 2000, 4, 15000);
+          if (!rateCheck.allowed) {
+            setMsg(`🛡️ ${rateCheck.reason}`);
+            setBusy(false);
+            return;
+          }
+        }
         await onAdd({ videoId: directId, title: meta.title, author: meta.author, thumbnail: thumbFor(directId) });
         setQ('');
         setMsg('Added to queue ✓');
@@ -160,6 +169,13 @@ export default function AddSong({ canAdd, onAdd, isHost, user }) {
   }
 
   async function handlePick(song, playNow = false) {
+    if (!isHost) {
+      const rateCheck = checkRateLimit('addSong', 2000, 4, 15000);
+      if (!rateCheck.allowed) {
+        setMsg(`🛡️ ${rateCheck.reason}`);
+        return;
+      }
+    }
     setBusy(true);
     try {
       await onAdd(song, playNow);

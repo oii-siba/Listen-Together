@@ -67,3 +67,68 @@ export function initClientSecurity() {
     }
   });
 }
+
+/**
+ * In-memory client rate limiter for Spam Protection.
+ * Tracks timestamps of recent user actions (chat, reactions, song adds).
+ */
+const rateLimits = {
+  chat: [],
+  reactions: [],
+  addSong: [],
+};
+
+/**
+ * Check if an action is allowed under rate limits.
+ * @param {'chat'|'reactions'|'addSong'} actionType
+ * @param {number} minIntervalMs - Minimum time between consecutive actions
+ * @param {number} maxPerWindow - Max actions allowed in the window
+ * @param {number} windowMs - Window duration in ms
+ * @returns {{ allowed: boolean, waitSec?: number, reason?: string }}
+ */
+export function checkRateLimit(actionType, minIntervalMs = 1200, maxPerWindow = 6, windowMs = 10000) {
+  const now = Date.now();
+  const history = rateLimits[actionType] || [];
+
+  // Remove entries older than windowMs
+  const fresh = history.filter((t) => now - t < windowMs);
+  rateLimits[actionType] = fresh;
+
+  // 1. Min interval check between immediate actions
+  const lastAction = fresh[fresh.length - 1];
+  if (lastAction && now - lastAction < minIntervalMs) {
+    const waitSec = Math.ceil((minIntervalMs - (now - lastAction)) / 1000);
+    return {
+      allowed: false,
+      waitSec,
+      reason: `Please slow down. Wait ${waitSec}s before trying again.`,
+    };
+  }
+
+  // 2. Max actions in window check
+  if (fresh.length >= maxPerWindow) {
+    const oldest = fresh[0];
+    const waitSec = Math.ceil((windowMs - (now - oldest)) / 1000);
+    return {
+      allowed: false,
+      waitSec,
+      reason: `Too many actions. Please wait ${waitSec}s.`,
+    };
+  }
+
+  // Action permitted: record timestamp
+  fresh.push(now);
+  return { allowed: true };
+}
+
+/**
+ * Sanitize text input to prevent XSS injection.
+ */
+export function sanitizeInput(text, maxLength = 450) {
+  if (typeof text !== 'string') return '';
+  return text
+    .trim()
+    .replace(/<[^>]*>?/gm, '') // strip HTML tags
+    .slice(0, maxLength);
+}
+

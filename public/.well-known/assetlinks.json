@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.tunetogether.twa",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:6A:B9:49:AE:B2:AE:65:E6:BC:54:EB:F2:C9:F0:8A:1E:E7:8F:D6:C8:EB:5B:3C:90:5E:E9:89:D6",
+        "A1:B2:C3:D4:E5:F6:07:18:29:3A:4B:5C:6D:7E:8F:90:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC:DE:F0"
+      ]
+    }
+  }
+]

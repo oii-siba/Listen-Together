@@ -85,7 +85,49 @@ export function PlaybackProvider({ user, children }) {
     return unsub;
   }, [activeRoomId]);
 
-  // Presence & disconnect cleanup for active room
+  // Presence, disconnect cleanup & auto-reconnection resync
+  const wasOfflineRef = useRef(false);
+  const [reconnectToast, setReconnectToast] = useState('');
+
+  // Retry / force reconnect function
+  const retryConnection = useCallback(() => {
+    try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        setOnline(false);
+        return;
+      }
+      playerRef.current?.resync();
+    } catch {}
+  }, []);
+
+  // Global browser network online/offline listeners
+  useEffect(() => {
+    const handleBrowserOnline = () => {
+      setOnline(true);
+      if (wasOfflineRef.current) {
+        wasOfflineRef.current = false;
+        setReconnectToast('🟢 Connected! Re-syncing music…');
+        setTimeout(() => setReconnectToast(''), 3500);
+        setTimeout(() => {
+          playerRef.current?.resync();
+        }, 300);
+      }
+    };
+
+    const handleBrowserOffline = () => {
+      setOnline(false);
+      wasOfflineRef.current = true;
+    };
+
+    window.addEventListener('online', handleBrowserOnline);
+    window.addEventListener('offline', handleBrowserOffline);
+
+    return () => {
+      window.removeEventListener('online', handleBrowserOnline);
+      window.removeEventListener('offline', handleBrowserOffline);
+    };
+  }, []);
+
   useEffect(() => {
     if (!activeRoomId || !exists || !user?.uid) return undefined;
     const pRef = ref(db, `rooms/${activeRoomId}/presence/${user.uid}`);
@@ -95,6 +137,16 @@ export function PlaybackProvider({ user, children }) {
       const on = snap.val() === true;
       setOnline(on);
       if (on) {
+        // If we were offline, trigger immediate resync of music playback
+        if (wasOfflineRef.current) {
+          wasOfflineRef.current = false;
+          setReconnectToast('🟢 Reconnected! Re-syncing music…');
+          setTimeout(() => setReconnectToast(''), 3500);
+          setTimeout(() => {
+            playerRef.current?.resync();
+          }, 300);
+        }
+
         if (!hasLoggedJoinRef.current) {
           hasLoggedJoinRef.current = true;
           logRoomActivity(activeRoomId, {
@@ -114,6 +166,8 @@ export function PlaybackProvider({ user, children }) {
             })
           )
           .catch(() => {});
+      } else {
+        wasOfflineRef.current = true;
       }
     });
 
@@ -515,6 +569,8 @@ export function PlaybackProvider({ user, children }) {
     people,
     hostName,
     online,
+    reconnectToast,
+    retryConnection,
     blocked,
     setBlocked,
     unlockAudio,

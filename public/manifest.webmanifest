@@ -2,13 +2,16 @@
   "name": "TuneTogether - Sync Music",
   "short_name": "TuneTogether",
   "description": "Listen to YouTube music with friends in real-time sync with live chat, reactions, and mini player.",
-  "start_url": "/",
-  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "https://tunetogether.web.app/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#050806",
   "theme_color": "#050806",
   "orientation": "portrait-primary",
   "categories": ["music", "social", "entertainment"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/logo.png",
@@ -31,9 +34,22 @@
   ],
   "shortcuts": [
     {
-      "name": "Home & Discover",
-      "short_name": "Home",
-      "url": "/",
+      "name": "Create a Room",
+      "short_name": "Create",
+      "description": "Start a new listening sync room instantly",
+      "url": "/?action=create",
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Scan Room QR",
+      "short_name": "Scan QR",
+      "description": "Scan friend's room QR code with camera",
+      "url": "/?action=scan",
       "icons": [
         {
           "src": "/logo.png",

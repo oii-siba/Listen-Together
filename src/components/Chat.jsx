@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { ref, push, onValue, serverTimestamp } from '../lib/db';
+import { checkRateLimit, sanitizeInput } from '../lib/security';
 
-export default function Chat({ roomId, user }) {
+export default function Chat({ roomId, user, isHost = false, allowGuestChat = true }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [spamNotice, setSpamNotice] = useState('');
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -31,8 +33,23 @@ export default function Chat({ roomId, user }) {
 
   const sendMessage = async (e) => {
     e?.preventDefault();
-    const clean = text.trim().slice(0, 450);
+    const clean = sanitizeInput(text, 450);
     if (!clean || sending) return;
+
+    if (!isHost && allowGuestChat === false) {
+      setSpamNotice('The host has paused live chat for guests.');
+      setTimeout(() => setSpamNotice(''), 3000);
+      return;
+    }
+
+    // Spam Protection check
+    const rateCheck = checkRateLimit('chat', 1200, 5, 10000);
+    if (!rateCheck.allowed) {
+      setSpamNotice(`🛡️ ${rateCheck.reason}`);
+      setTimeout(() => setSpamNotice(''), 3500);
+      return;
+    }
+
     setSending(true);
 
     const msg = {
@@ -46,6 +63,7 @@ export default function Chat({ roomId, user }) {
     try {
       await push(ref(db, `rooms/${roomId}/chat`), msg);
       setText('');
+      setSpamNotice('');
     } catch (err) {
       console.error('Failed to send message:', err);
     } finally {
@@ -128,23 +146,36 @@ export default function Chat({ roomId, user }) {
         ))}
       </div>
 
+      {/* Spam & Security Warning Banner */}
+      {spamNotice && (
+        <div className="px-3 py-1.5 bg-amber-500/15 border-t border-amber-500/30 text-amber-300 text-[11px] font-semibold text-center animate-pulse">
+          {spamNotice}
+        </div>
+      )}
+
       {/* Message Input Form */}
-      <form onSubmit={sendMessage} className="p-2.5 bg-panel2 border-t border-white/10 flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={450}
-          placeholder="Send a message to everyone…"
-          className="flex-1 bg-panel border border-white/10 rounded-full px-4 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
-        />
-        <button
-          type="submit"
-          disabled={!text.trim() || sending}
-          className="px-4 py-2 rounded-full bg-green-500 text-black font-bold text-xs active:scale-95 transition disabled:opacity-40 hover:brightness-110 shadow-md"
-        >
-          Send
-        </button>
-      </form>
+      {!isHost && allowGuestChat === false ? (
+        <div className="p-3 bg-panel2/80 border-t border-white/10 text-center text-xs text-white/50">
+          🔒 The host has paused live chat for listeners.
+        </div>
+      ) : (
+        <form onSubmit={sendMessage} className="p-2.5 bg-panel2 border-t border-white/10 flex gap-2">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={450}
+            placeholder="Send a message to everyone…"
+            className="flex-1 bg-panel border border-white/10 rounded-full px-4 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
+          />
+          <button
+            type="submit"
+            disabled={!text.trim() || sending}
+            className="px-4 py-2 rounded-full bg-green-500 text-black font-bold text-xs active:scale-95 transition disabled:opacity-40 hover:brightness-110 shadow-md"
+          >
+            Send
+          </button>
+        </form>
+      )}
     </div>
   );
 }

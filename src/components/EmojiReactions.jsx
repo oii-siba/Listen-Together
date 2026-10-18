@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { ref, push, onValue } from '../lib/db';
+import { checkRateLimit } from '../lib/security';
 
 const EMOJIS = ['❤️', '🔥', '🎶', '😂', '👏', '🚀'];
 
-export default function EmojiReactions({ roomId, user, className = '' }) {
+export default function EmojiReactions({ roomId, user, className = '', isHost = false, allowGuestReactions = true }) {
   const [activeReactions, setActiveReactions] = useState([]);
 
   // Listen for new reactions from Firebase / local sync
@@ -50,6 +51,12 @@ export default function EmojiReactions({ roomId, user, className = '' }) {
 
   const sendReaction = async (emoji) => {
     if (!roomId) return;
+    if (!isHost && allowGuestReactions === false) return;
+
+    // Spam Protection
+    const rateCheck = checkRateLimit('reactions', 700, 8, 10000);
+    if (!rateCheck.allowed) return;
+
     const offset = Math.floor(Math.random() * 70) + 15; // random x %
     const reaction = {
       emoji,
@@ -97,24 +104,30 @@ export default function EmojiReactions({ roomId, user, className = '' }) {
 
       {/* Emoji Picker Bar */}
       <div className={`relative ${className}`}>
-        <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-panel/90 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-green-400 pl-1 shrink-0 flex items-center gap-1">
-            <span>✨</span> React
-          </span>
-          <div className="flex items-center gap-1 sm:gap-2">
-            {EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => sendReaction(emoji)}
-                type="button"
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 active:scale-125 hover:scale-110 transition-all flex items-center justify-center text-base"
-                title={`React with ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
+        {!isHost && allowGuestReactions === false ? (
+          <div className="flex items-center justify-center gap-1.5 px-3 py-2 bg-panel/70 rounded-full border border-white/5 text-[11px] text-white/40">
+            <span>🔒</span> Host paused emoji reactions
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-panel/90 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-green-400 pl-1 shrink-0 flex items-center gap-1">
+              <span>✨</span> React
+            </span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => sendReaction(emoji)}
+                  type="button"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 active:scale-125 hover:scale-110 transition-all flex items-center justify-center text-base"
+                  title={`React with ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

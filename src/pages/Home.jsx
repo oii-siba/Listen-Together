@@ -7,14 +7,20 @@ import { parseRoomId, randomRoomId } from '../lib/utils';
 import BrandHeader from '../components/BrandHeader';
 import { Add } from '../components/Icons';
 import QrScannerModal from '../components/QrScannerModal';
+import PrivacyModal from '../components/PrivacyModal';
+import AndroidAppModal from '../components/AndroidAppModal';
+import { usePlayback } from '../context/PlaybackContext';
 
 export default function Home() {
   const { user, signOut } = useAuth();
+  const { online, reconnectToast, retryConnection } = usePlayback() || {};
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showAndroid, setShowAndroid] = useState(false);
 
   async function createRoom() {
     setBusy(true);
@@ -72,6 +78,32 @@ export default function Home() {
     <div className="min-h-[100dvh] max-w-md mx-auto px-5 pt-2 pb-28 text-white font-sans">
       {/* Brand Header */}
       <BrandHeader user={user} onSignOut={signOut} showNav={true} />
+
+      {/* Auto Reconnection Status Banner on Home */}
+      {online === false && (
+        <div className="mt-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs p-3 flex items-center justify-between gap-3 shadow-lg animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            <span>Connection lost. Reconnecting…</span>
+          </div>
+          {retryConnection && (
+            <button
+              onClick={retryConnection}
+              className="px-2.5 py-1 rounded-full bg-red-500/30 hover:bg-red-500/50 text-white font-bold text-[10px] transition active:scale-95"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Reconnected confirmation */}
+      {reconnectToast && (
+        <div className="mt-3 rounded-2xl bg-green-500/20 border border-green-500/40 text-green-300 text-xs p-2.5 flex items-center gap-2 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-in fade-in duration-300">
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
+          <span>{reconnectToast}</span>
+        </div>
+      )}
 
       {/* Hero Section */}
       <div className="mt-8 text-center flex flex-col items-center">
@@ -364,6 +396,25 @@ export default function Home() {
           </span>
         </div>
         <p className="text-[11px] text-white/40 mt-1.5">© 2026 TuneTogether. One Beat, One Connection.</p>
+
+        {/* Footer Quick Action Links */}
+        <div className="mt-3 flex items-center justify-center gap-3 text-xs text-white/45">
+          <button
+            type="button"
+            onClick={() => setShowPrivacy(true)}
+            className="hover:text-green-400 transition"
+          >
+            🔒 Privacy Policy
+          </button>
+          <span>·</span>
+          <button
+            type="button"
+            onClick={() => setShowAndroid(true)}
+            className="hover:text-green-400 transition"
+          >
+            📲 Android App &amp; TWA
+          </button>
+        </div>
       </footer>
 
       {/* QR Code Camera Scanner Modal */}
@@ -375,6 +426,16 @@ export default function Home() {
             nav(`/room/${scannedRoomId}`);
           }}
         />
+      )}
+
+      {/* Privacy Policy Modal */}
+      {showPrivacy && (
+        <PrivacyModal onClose={() => setShowPrivacy(false)} />
+      )}
+
+      {/* Android App & TWA Modal */}
+      {showAndroid && (
+        <AndroidAppModal onClose={() => setShowAndroid(false)} />
       )}
     </div>
   );
