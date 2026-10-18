@@ -3,6 +3,7 @@ import { fmtTime } from '../lib/utils';
 import { Next, Pause, Play, Volume } from './Icons';
 import AudioVisualizer from './AudioVisualizer';
 import { isSongFavorite, toggleFavoriteSong, logSongHistory } from '../lib/userData';
+import { getSyncNudge, setSyncNudge } from './Player';
 
 function PrevIcon({ size = 20, className = '' }) {
   return (
@@ -18,6 +19,14 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
   const [scrub, setScrub] = useState(null);
   const [vol, setVol] = useState(100);
   const [isFav, setIsFav] = useState(false);
+  const [nudge, setNudgeState] = useState(() => getSyncNudge());
+
+  const handleNudge = (delta) => {
+    const next = Math.max(-800, Math.min(800, nudge + delta));
+    setSyncNudge(next);
+    setNudgeState(next);
+    playerRef.current?.resync();
+  };
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -288,11 +297,41 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
               }`}
             />
             <span className="text-white/70 font-medium">
-              {has ? (isHost ? 'You are Host' : 'Listening in Sync') : 'Room Idle'}
+              {has ? (isHost ? 'You are Host' : 'In Sync') : 'Room Idle'}
             </span>
+
+            {/* Quick Resync & Fine-tune for Guests */}
+            {has && !isHost && (
+              <div className="flex items-center gap-1 ml-1 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleNudge(-50)}
+                  title="Nudge backward 50ms (Bluetooth / acoustic fine-tune)"
+                  className="px-1 text-[10px] text-white/60 hover:text-white font-bold transition cursor-pointer"
+                >
+                  -50
+                </button>
+                <button
+                  type="button"
+                  onClick={() => playerRef.current?.resync()}
+                  title="Snap audio to exact host time"
+                  className="px-1.5 text-[10px] text-green-400 font-extrabold hover:text-green-300 transition cursor-pointer"
+                >
+                  ⚡ {nudge !== 0 ? `${nudge > 0 ? '+' : ''}${nudge}ms` : 'Sync'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNudge(50)}
+                  title="Nudge forward 50ms (Bluetooth / acoustic fine-tune)"
+                  className="px-1 text-[10px] text-white/60 hover:text-white font-bold transition cursor-pointer"
+                >
+                  +50
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 w-28">
+          <div className="flex items-center gap-2 w-24">
             <Volume size={16} className="text-white/60 shrink-0" />
             <input
               type="range"

@@ -3,7 +3,7 @@ import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
 // High-precision, continuous synchronization settings
-const SYNC_HEARTBEAT_MS = 500; // Check every 500ms for continuous seamless alignment
+const SYNC_HEARTBEAT_MS = 400; // Check every 400ms for tight, real-time lock
 
 const UNSTARTED = -1;
 const ENDED = 0;
@@ -12,13 +12,30 @@ const PAUSED = 2;
 const BUFFERING = 3;
 const CUED = 5;
 
-// Where the song *should* be right now, based on the host's last write + global server clock.
+let localNudge = 0;
+try {
+  const saved = localStorage.getItem('LT_SYNC_NUDGE');
+  if (saved) localNudge = Number(saved) || 0;
+} catch {}
+
+export function getSyncNudge() {
+  return localNudge;
+}
+
+export function setSyncNudge(ms) {
+  localNudge = ms;
+  try {
+    localStorage.setItem('LT_SYNC_NUDGE', String(ms));
+  } catch {}
+}
+
+// Where the song *should* be right now, based on the host's last write + global server clock + local nudge.
 export function expectedPosition(pb) {
   if (!pb) return 0;
   const base = pb.position || 0;
   if (!pb.isPlaying) return base;
   const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
-  return base + Math.max(0, (serverNow() - updated) / 1000);
+  return base + Math.max(0, (serverNow() - updated) / 1000) + (localNudge / 1000);
 }
 
 const Player = forwardRef(function Player(
@@ -101,20 +118,20 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Definite audible drift (> 0.65s): snap immediately to expected position
+        // 1. Audible acoustic drift (> 0.28s): snap immediately to expected position
         // 3000ms cooldown prevents any stutter or seek loop
-        if (absDiff > 0.65 && (force || timeSinceLastSeek > 3000)) {
+        if (absDiff > 0.28 && (force || timeSinceLastSeek > 3000)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Seamless micro-sync for minor differences (0.18s - 0.65s):
-        if (diff > 0.18) {
+        // 2. Seamless micro-sync for minor acoustic differences (0.08s - 0.28s):
+        if (diff > 0.08) {
           setRate(yt, 1.25);
-        } else if (diff < -0.18) {
+        } else if (diff < -0.08) {
           setRate(yt, 0.75);
-        } else if (absDiff <= 0.10) {
+        } else if (absDiff <= 0.04) {
           setRate(yt, 1);
         }
       }
@@ -226,7 +243,7 @@ const Player = forwardRef(function Player(
               // Guest initial buffer alignment: snap if initial buffering caused delay
               if (!isHostRef.current) {
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.45) {
+                if (Math.abs(want - cur) > 0.12) {
                   seek(ytRef.current, want);
                 }
               }

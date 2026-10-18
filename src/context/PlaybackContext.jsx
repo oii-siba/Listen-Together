@@ -308,18 +308,15 @@ export function PlaybackProvider({ user, children }) {
       const pb = r?.playback;
       if (!pb || !pb.isPlaying || !pb.videoId) return;
 
-      // Only calibrate once per track at the start (under 3s)
-      if (lastCalibratedSongId.current === pb.videoId || currentTime > 3.0) return;
+      // Only calibrate once per track at the start (under 4s)
+      if (lastCalibratedSongId.current === pb.videoId || currentTime > 4.0) return;
       lastCalibratedSongId.current = pb.videoId;
 
-      const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
-      const expected = (pb.position || 0) + Math.max(0, (serverNow() - updated) / 1000);
-      if (Math.abs(expected - currentTime) > 0.35) {
-        update(ref(db, `rooms/${activeRoomId}/playback`), {
-          position: currentTime,
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-      }
+      // Always anchor the room timestamp to the EXACT position when host actually starts hearing audio
+      update(ref(db, `rooms/${activeRoomId}/playback`), {
+        position: currentTime,
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
     },
     [activeRoomId]
   );
