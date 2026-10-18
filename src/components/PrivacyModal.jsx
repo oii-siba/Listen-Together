@@ -59,7 +59,7 @@ export default function PrivacyModal({ onClose }) {
           <div className="bg-white/5 rounded-2xl p-3.5 border border-white/10">
             <h3 className="font-bold text-white text-xs mb-1">5. Contact &amp; Inquiries</h3>
             <p>
-              For privacy requests or data deletion questions, email us at <span className="text-green-400 font-bold">support@tunetogether.app</span>.
+              For privacy requests or data deletion questions, email us at <a href="mailto:tunetogether.support@gmail.com" className="text-green-400 font-bold hover:underline">tunetogether.support@gmail.com</a>.
             </p>
           </div>
         </div>

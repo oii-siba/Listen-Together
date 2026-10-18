@@ -168,8 +168,8 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               If you have any questions or feedback regarding this Privacy Policy, please contact our team at{' '}
-              <a href="mailto:support@tunetogether.app" className="text-green-400 font-bold hover:underline">
-                support@tunetogether.app
+              <a href="mailto:tunetogether.support@gmail.com" className="text-green-400 font-bold hover:underline">
+                tunetogether.support@gmail.com
               </a>.
             </p>
           </div>
