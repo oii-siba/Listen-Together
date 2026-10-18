@@ -85,10 +85,10 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
         {/* Top Tagline */}
         <div className="relative z-10 pt-6 px-6 text-center">
           <p className="text-white/95 text-base sm:text-lg font-bold tracking-tight drop-shadow-md">
-            {has ? 'Now playing in perfect sync' : 'Listen together,'}
+            {has ? 'Now playing in perfect sync' : 'Room is ready'}
           </p>
           <p className="text-green-400 text-xs sm:text-sm font-semibold tracking-tight mt-0.5 drop-shadow">
-            {has ? 'one beat · one connection' : 'in perfect sync.'}
+            {has ? 'one beat · one connection' : 'pick a song below to start listening together 🎵'}
           </p>
         </div>
 
@@ -101,30 +101,42 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                 <img
                   src={playback.thumb}
                   alt={playback.title}
-                  className="w-15 h-15 rounded-xl object-cover shadow-lg border border-green-500/40 shrink-0"
+                  className="w-14 h-14 rounded-xl object-cover shadow-lg border border-green-500/40 shrink-0"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white/90 shrink-0 border border-green-500/30 shadow-lg">
-                  <span className="text-2xl">🎵</span>
+                <div className="w-14 h-14 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white/40 shrink-0 shadow-inner">
+                  <span className="text-2xl opacity-70">🎧</span>
                 </div>
               )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[10px] font-bold text-green-400 tracking-wider uppercase">
-                    LIVE · {isHost ? 'HOST' : 'LISTENING'}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      has && isPlaying ? 'bg-green-400 animate-pulse' : 'bg-white/30'
+                    }`}
+                  />
+                  <span
+                    className={`text-[10px] font-bold tracking-wider uppercase ${
+                      has && isPlaying ? 'text-green-400' : 'text-white/40'
+                    }`}
+                  >
+                    {has
+                      ? `LIVE · ${isHost ? 'HOST' : 'LISTENING'}`
+                      : 'IDLE · NO SONG PLAYING'}
                   </span>
                 </div>
                 <h3 className="font-extrabold text-white text-base leading-tight line-clamp-1 drop-shadow mt-0.5">
-                  {has ? playback.title || 'YouTube Song' : 'Midnight Drive'}
+                  {has ? playback.title || 'YouTube Song' : 'No song playing right now'}
                 </h3>
-                <p className="text-xs text-white/60 truncate mt-0.5 font-medium">
+                <p className="text-xs text-white/50 truncate mt-0.5 font-medium">
                   {has
                     ? playback.addedByName
                       ? `Added by ${playback.addedByName}`
                       : 'Live in room'
-                    : 'Demo Artist'}
+                    : isHost
+                    ? 'Search or pick a song below to play 🎵'
+                    : 'Waiting for host to pick a song 🎧'}
                 </p>
               </div>
 
@@ -145,7 +157,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
 
             {/* Audio Visualizer Equalizer Waves */}
             <div className="mt-2.5 -mb-1">
-              <AudioVisualizer isPlaying={isPlaying} barCount={26} />
+              <AudioVisualizer isPlaying={has && isPlaying} barCount={26} />
             </div>
 
             {/* Middle Row: Progress Slider with Left & Right Timestamps */}
@@ -155,7 +167,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                 min={0}
                 max={max}
                 step={1}
-                value={Math.min(shown, max)}
+                value={has ? Math.min(shown, max) : 0}
                 disabled={!isHost || !has}
                 onChange={(e) => setScrub(Number(e.target.value))}
                 onPointerUp={commit}
@@ -164,9 +176,9 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                 className="w-full h-1.5 rounded-full cursor-pointer transition disabled:cursor-default"
                 aria-label="Seek"
               />
-              <div className="flex justify-between text-[11px] font-semibold text-white/70 mt-1 tabular-nums px-0.5">
-                <span>{fmtTime(shown)}</span>
-                <span>-{fmtTime(remaining)}</span>
+              <div className="flex justify-between text-[11px] font-semibold text-white/50 mt-1 tabular-nums px-0.5">
+                <span>{has ? fmtTime(shown) : '0:00'}</span>
+                <span>{has ? `-${fmtTime(remaining)}` : '0:00'}</span>
               </div>
             </div>
 
@@ -180,7 +192,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                   type="button"
                   onClick={handlePrev}
                   disabled={!isHost || !has}
-                  className="text-white/80 hover:text-white active:scale-90 transition disabled:opacity-30 p-1"
+                  className="text-white/40 hover:text-white active:scale-90 transition disabled:opacity-20 p-1 disabled:cursor-not-allowed"
                   aria-label="Previous"
                 >
                   <PrevIcon size={24} />
@@ -191,16 +203,24 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                   type="button"
                   onClick={onToggle}
                   disabled={!isHost || !has}
-                  className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-white/30 disabled:opacity-40"
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition shadow-lg ${
+                    has
+                      ? 'bg-white text-black hover:scale-105 active:scale-95 shadow-white/30 cursor-pointer'
+                      : 'bg-white/10 text-white/30 cursor-not-allowed shadow-none'
+                  }`}
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                 >
-                  {isPlaying ? (
+                  {has && isPlaying ? (
                     <div className="flex gap-1 items-center justify-center">
                       <div className="w-1.5 h-5 bg-black rounded-sm" />
                       <div className="w-1.5 h-5 bg-black rounded-sm" />
                     </div>
                   ) : (
-                    <div className="ml-1 w-0 h-0 border-y-[8px] border-y-transparent border-l-[14px] border-l-black" />
+                    <div
+                      className={`ml-1 w-0 h-0 border-y-[8px] border-y-transparent border-l-[14px] ${
+                        has ? 'border-l-black' : 'border-l-white/30'
+                      }`}
+                    />
                   )}
                 </button>
 
@@ -209,7 +229,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                   type="button"
                   onClick={onNext}
                   disabled={!isHost || !has}
-                  className="text-white/80 hover:text-white active:scale-90 transition disabled:opacity-30 p-1"
+                  className="text-white/40 hover:text-white active:scale-90 transition disabled:opacity-20 p-1 disabled:cursor-not-allowed"
                   aria-label="Next"
                 >
                   <Next size={24} />
@@ -230,11 +250,11 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
           <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${
-                isPlaying ? 'bg-green-400 animate-ping' : 'bg-white/40'
+                has && isPlaying ? 'bg-green-400 animate-ping' : 'bg-white/30'
               }`}
             />
-            <span className="text-white/80 font-medium">
-              {isHost ? 'You are Host' : 'Listening in Sync'}
+            <span className="text-white/70 font-medium">
+              {has ? (isHost ? 'You are Host' : 'Listening in Sync') : 'Room Idle'}
             </span>
           </div>
 
