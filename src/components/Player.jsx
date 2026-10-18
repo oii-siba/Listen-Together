@@ -55,6 +55,7 @@ const Player = forwardRef(function Player(
   const isHostRef = useRef(isHost);
   const loadedId = useRef(null);
   const lastSeekAt = useRef(0);
+  const lastPlayAttempt = useRef(0);
   const notPlaying = useRef(0);
   const resumeTimer = useRef(null);
   const initialBufferDone = useRef(null);
@@ -105,13 +106,18 @@ const Player = forwardRef(function Player(
       if (st === ENDED) return;
 
       // If player paused or stopped unexpectedly while room is playing:
+      // Give YouTube player time to transition and buffer cleanly without hammering seekTo
       if (st !== PLAYING && st !== BUFFERING) {
-        if (absDiff > 0.2) {
-          seek(yt, want);
+        const now = Date.now();
+        if (now - lastPlayAttempt.current > 1800) {
+          lastPlayAttempt.current = now;
+          if (absDiff > 1.2) {
+            seek(yt, want);
+          }
+          try {
+            yt.playVideo();
+          } catch {}
         }
-        try {
-          yt.playVideo();
-        } catch {}
         return;
       }
 
@@ -308,7 +314,7 @@ const Player = forwardRef(function Player(
     apply();
   }, [playback?.videoId, playback?.isPlaying, enabled, apply]);
 
-  // Stable sync heartbeat (every 1000ms instead of aggressive 250ms)
+  // Stable sync heartbeat
   useEffect(() => {
     const id = setInterval(() => {
       const yt = ytRef.current;
@@ -324,7 +330,8 @@ const Player = forwardRef(function Player(
           onBlockedRef.current?.(false);
         } else if (st === UNSTARTED || st === CUED || st === PAUSED) {
           notPlaying.current += 1;
-          if (notPlaying.current >= 2) onBlockedRef.current?.(true);
+          // Give ample time (10 ticks = 4000ms) before flagging autoplay blocked
+          if (notPlaying.current >= 10) onBlockedRef.current?.(true);
         }
       } else {
         notPlaying.current = 0;
@@ -342,30 +349,24 @@ const Player = forwardRef(function Player(
       const pb = stateRef.current;
       if (!yt || !pb || !pb.videoId || !pb.isPlaying) return;
 
-      try {
-        const st = yt.getPlayerState();
-        if (st !== PLAYING && st !== BUFFERING) {
-          yt.playVideo();
-        }
-      } catch {}
-
       if (!document.hidden) {
         try {
+          yt.unMute?.();
           const st = yt.getPlayerState?.();
           if (st !== PLAYING && st !== BUFFERING && pb.isPlaying) {
             yt.playVideo?.();
           }
         } catch {}
-        syncPlayback(true);
+        setTimeout(() => {
+          syncPlayback(true);
+        }, 300);
       }
     };
 
     document.addEventListener('visibilitychange', handleVis);
-    window.addEventListener('blur', handleVis);
     window.addEventListener('focus', handleVis);
     return () => {
       document.removeEventListener('visibilitychange', handleVis);
-      window.removeEventListener('blur', handleVis);
       window.removeEventListener('focus', handleVis);
     };
   }, [syncPlayback]);
@@ -375,14 +376,40 @@ const Player = forwardRef(function Player(
     () => ({
       resync() {
         enabledRef.current = true;
+        onBlockedRef.current?.(false);
+        notPlaying.current = 0;
+        const yt = ytRef.current;
+        const pb = stateRef.current;
+        if (!yt || !readyRef.current || !pb || !pb.videoId) return;
+
         try {
-          ytRef.current?.unMute?.();
-          const st = ytRef.current?.getPlayerState?.();
-          if (st !== PLAYING && st !== BUFFERING && stateRef.current?.isPlaying) {
-            ytRef.current?.playVideo?.();
-          }
+          yt.unMute?.();
         } catch {}
-        syncPlayback(true);
+
+        if (loadedId.current !== pb.videoId) {
+          apply();
+          return;
+        }
+
+        if (pb.isPlaying) {
+          try {
+            const st = yt.getPlayerState?.();
+            if (st !== PLAYING && st !== BUFFERING) {
+              const want = expectedPosition(pb);
+              const cur = yt.getCurrentTime?.() || 0;
+              if (Math.abs(want - cur) > 1.2) {
+                seek(yt, want);
+              }
+              yt.playVideo?.();
+            } else if (st === PLAYING) {
+              syncPlayback(true);
+            }
+          } catch {}
+        } else {
+          try {
+            yt.pauseVideo?.();
+          } catch {}
+        }
       },
       getCurrentTime: () => {
         const t = ytRef.current?.getCurrentTime?.();
@@ -407,7 +434,7 @@ const Player = forwardRef(function Player(
         } catch {}
       },
     }),
-    [syncPlayback]
+    [apply, syncPlayback]
   );
 
   return (
@@ -415,10 +442,10 @@ const Player = forwardRef(function Player(
       className={
         showVideo
           ? 'fixed bottom-24 right-3 sm:right-6 w-72 sm:w-84 max-w-[calc(100vw-1.5rem)] aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.85)] border border-green-500/50 z-50 animate-in fade-in zoom-in-95 group'
-          : 'fixed bottom-0 right-0 w-[160px] h-[160px] opacity-[0.001] pointer-events-none -z-50 overflow-hidden'
+          : 'fixed bottom-0 right-0 w-[180px] h-[180px] opacity-[0.01] pointer-events-none z-[1] overflow-hidden'
       }
     >
-      <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />
+      <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full pointer-events-none" />
       {showVideo && (
         <button
           type="button"

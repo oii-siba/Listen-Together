@@ -94,18 +94,22 @@ export default function Room() {
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
     if (roomId) {
+      unlockAudio?.();
       if (activeRoomId !== roomId) {
         joinRoom(roomId);
       } else {
+        try {
+          playerRef.current?.resync();
+        } catch {}
         const timer = setTimeout(() => {
           try {
             playerRef.current?.resync();
           } catch {}
-        }, 100);
+        }, 250);
         return () => clearTimeout(timer);
       }
     }
-  }, [roomId, activeRoomId, joinRoom, playerRef]);
+  }, [roomId, activeRoomId, joinRoom, playerRef, unlockAudio]);
 
   // Host Permission Controls
   const setAllowGuestAdd = (v) => set(ref(db, `rooms/${roomId}/allowGuestAdd`), v);

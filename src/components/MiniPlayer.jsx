@@ -79,6 +79,9 @@ export default function MiniPlayer() {
   if (isInsideRoom && !scrolledDown) return null;
 
   const handleOpenRoom = () => {
+    try {
+      playerRef.current?.resync();
+    } catch {}
     if (!isInsideRoom) {
       navigate(`/room/${activeRoomId}`);
     } else {

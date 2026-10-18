@@ -350,11 +350,16 @@ export function PlaybackProvider({ user, children }) {
   // immediately ensure YouTube player is active, alive, and in sync!
   useEffect(() => {
     if (activeRoomId && playback?.isPlaying) {
+      setBlocked(false);
+      try {
+        audioAnchorRef.current?.play()?.catch(() => {});
+        playerRef.current?.resync();
+      } catch {}
       const timer = setTimeout(() => {
         try {
           playerRef.current?.resync();
         } catch {}
-      }, 120);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [location.pathname, activeRoomId, playback?.isPlaying]);
@@ -548,43 +553,35 @@ export function PlaybackProvider({ user, children }) {
       try {
         playerRef.current?.resync();
       } catch {}
-      if (blocked) setBlocked(false);
+      setBlocked(false);
     };
 
-    window.addEventListener('click', unlockOnGesture);
-    window.addEventListener('touchstart', unlockOnGesture);
+    window.addEventListener('click', unlockOnGesture, { passive: true });
+    window.addEventListener('touchstart', unlockOnGesture, { passive: true });
+    window.addEventListener('pointerdown', unlockOnGesture, { passive: true });
 
     return () => {
       window.removeEventListener('click', unlockOnGesture);
       window.removeEventListener('touchstart', unlockOnGesture);
+      window.removeEventListener('pointerdown', unlockOnGesture);
     };
-  }, [blocked]);
+  }, []);
 
-  // Back button guard: Intercept browser back button so it doesn't exit website while song is playing
+  // Back button guard on Home page: Prevent accidental exit from website while song is playing
   useEffect(() => {
-    if (!activeRoomId || !playback?.isPlaying) return;
+    if (!activeRoomId || !playback?.isPlaying || location.pathname !== '/') return;
 
-    // Push dummy history entry so back button can be intercepted
-    window.history.pushState({ app: 'tunetogether' }, '', window.location.href);
+    window.history.pushState({ app: 'tunetogether-home' }, '', '/');
 
     const onPopState = () => {
       if (!activeRoomId || !playback?.isPlaying) return;
-
-      // If user was inside Room page, back button navigates to Home (/) with Mini Player
-      if (window.location.pathname.startsWith('/room/')) {
-        navigate('/');
-        window.history.pushState({ app: 'tunetogether' }, '', '/');
-        return;
-      }
-
-      // If already on Home page (/), trap the back button and show ExitConfirmModal
-      window.history.pushState({ app: 'tunetogether' }, '', '/');
+      window.history.pushState({ app: 'tunetogether-home' }, '', '/');
       setShowExitConfirm(true);
     };
 
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [activeRoomId, playback?.isPlaying, navigate]);
+  }, [activeRoomId, playback?.isPlaying, location.pathname]);
 
   const unlockAudio = useCallback(() => {
     try {
