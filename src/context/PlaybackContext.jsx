@@ -299,7 +299,8 @@ export function PlaybackProvider({ user, children }) {
   }, [isHost, hasVideo, queue.length, playItem]);
 
 
-  // Host playback start calibration: calibrates server time to exact moment audio plays on host device
+  // Host playback start calibration: calibrates server time to exact moment audio starts playing on host
+  const lastCalibratedSongId = useRef(null);
   const handleHostPlayingStart = useCallback(
     (currentTime) => {
       if (!hostRef.current || !activeRoomId) return;
@@ -307,9 +308,13 @@ export function PlaybackProvider({ user, children }) {
       const pb = r?.playback;
       if (!pb || !pb.isPlaying || !pb.videoId) return;
 
+      // Only calibrate once per track at the start (under 3s)
+      if (lastCalibratedSongId.current === pb.videoId || currentTime > 3.0) return;
+      lastCalibratedSongId.current = pb.videoId;
+
       const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
       const expected = (pb.position || 0) + Math.max(0, (serverNow() - updated) / 1000);
-      if (Math.abs(expected - currentTime) > 0.35) {
+      if (Math.abs(expected - currentTime) > 0.8) {
         update(ref(db, `rooms/${activeRoomId}/playback`), {
           position: currentTime,
           updatedAt: serverTimestamp(),
@@ -318,25 +323,6 @@ export function PlaybackProvider({ user, children }) {
     },
     [activeRoomId]
   );
-
-  // Host periodic sync heartbeat: every 6 seconds, sync actual YouTube position with server clock
-  useEffect(() => {
-    if (!isHost || !activeRoomId || !playback?.isPlaying || !hasVideo) return;
-
-    const interval = setInterval(() => {
-      const p = playerRef.current;
-      if (!p) return;
-      const cur = p.getCurrentTime();
-      if (typeof cur === 'number' && cur > 0) {
-        update(ref(db, `rooms/${activeRoomId}/playback`), {
-          position: cur,
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-      }
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [isHost, activeRoomId, playback?.isPlaying, hasVideo]);
 
   // Silent audio loop to maintain background audio priority on mobile and desktop
   useEffect(() => {
@@ -556,6 +542,7 @@ export function PlaybackProvider({ user, children }) {
           ref={playerRef}
           playback={playback}
           enabled={true}
+          isHost={isHost}
           showVideo={showVideo}
           onCloseVideo={() => setShowVideo(false)}
           onEnded={isHost ? playNext : undefined}

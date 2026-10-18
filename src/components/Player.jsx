@@ -2,10 +2,8 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
 import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
-// High-precision, real-time synchronization settings
-const DRIFT_THRESHOLD = 0.35; // 350ms: anything above 350ms is audibly noticeable delay between devices
-const MIN_SEEK_COOLDOWN_MS = 1800; // 1.8s cooldown between seeks to allow YouTube buffer to settle cleanly
-const SYNC_HEARTBEAT_MS = 600; // Check every 600ms for tight, real-time synchronization
+// High-precision, continuous synchronization settings
+const SYNC_HEARTBEAT_MS = 500; // Check every 500ms for continuous seamless alignment
 
 const UNSTARTED = -1;
 const ENDED = 0;
@@ -24,7 +22,7 @@ export function expectedPosition(pb) {
 }
 
 const Player = forwardRef(function Player(
-  { playback, enabled, showVideo = false, onCloseVideo, onEnded, onError, onBlocked, onPlayingStart, children },
+  { playback, enabled, isHost = false, showVideo = false, onCloseVideo, onEnded, onError, onBlocked, onPlayingStart, children },
   ref
 ) {
   const wrapRef = useRef(null);
@@ -32,11 +30,13 @@ const Player = forwardRef(function Player(
   const readyRef = useRef(false);
   const stateRef = useRef(playback);
   const enabledRef = useRef(enabled);
+  const isHostRef = useRef(isHost);
   const loadedId = useRef(null);
   const lastSeekAt = useRef(0);
   const notPlaying = useRef(0);
   const resumeTimer = useRef(null);
 
+  isHostRef.current = isHost;
   const onEndedRef = useRef(onEnded);
   const onErrorRef = useRef(onError);
   const onBlockedRef = useRef(onBlocked);
@@ -53,14 +53,24 @@ const Player = forwardRef(function Player(
     } catch {}
   };
 
-  // Synchronize local player with the exact expected position without stutter
+  // Adjust playback speed smoothly without pausing or cutting audio
+  const setRate = (yt, rate) => {
+    try {
+      const curRate = yt.getPlaybackRate?.() || 1;
+      if (curRate !== rate) {
+        yt.setPlaybackRate?.(rate);
+      }
+    } catch {}
+  };
+
+  // Seamless synchronization: eliminates "on/off" audio interruptions completely
   const syncPlayback = useCallback((force = false) => {
     const yt = ytRef.current;
     const pb = stateRef.current;
     if (!yt || !readyRef.current || !pb || !pb.videoId) return;
 
-    const st = yt.getPlayerState();
-    const cur = yt.getCurrentTime() || 0;
+    const st = yt.getPlayerState?.();
+    const cur = yt.getCurrentTime?.() || 0;
     const want = expectedPosition(pb);
     const diff = want - cur; // positive => we are behind; negative => we are ahead
     const absDiff = Math.abs(diff);
@@ -69,9 +79,9 @@ const Player = forwardRef(function Player(
       if (!enabledRef.current) return;
       if (st === ENDED) return;
 
-      // If player paused or stopped unexpectedly, resume playback
+      // If player paused or stopped unexpectedly while room is playing:
       if (st !== PLAYING && st !== BUFFERING) {
-        if (absDiff > DRIFT_THRESHOLD) {
+        if (absDiff > 2.5) {
           seek(yt, want);
         }
         try {
@@ -82,21 +92,43 @@ const Player = forwardRef(function Player(
 
       // If currently playing:
       if (st === PLAYING) {
+        // Host device is the reference clock: always plays at 1.0x uninterrupted
+        if (isHostRef.current) {
+          setRate(yt, 1);
+          return;
+        }
+
+        // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // If difference exceeds 350ms AND cooldown passed or forced: seek to exact position
-        if (absDiff > DRIFT_THRESHOLD && (force || timeSinceLastSeek > MIN_SEEK_COOLDOWN_MS)) {
+        // 1. Extreme drift (> 2.5s) after initial join, heavy lag or tab sleep: snap seek
+        if (absDiff > 2.5 && (force || timeSinceLastSeek > 5000)) {
           seek(yt, want);
+          setRate(yt, 1);
+          return;
+        }
+
+        // 2. Micro-Sync via playback rate (NO AUDIO CUTOUT / CONTINUOUS AUDIO):
+        // If guest is behind by > 0.35s: speed up to 1.25x smoothly until caught up
+        // If guest is ahead by > 0.35s: slow down to 0.75x smoothly until aligned
+        // Once within 0.15s: return to normal 1.0x speed
+        if (diff > 0.35) {
+          setRate(yt, 1.25);
+        } else if (diff < -0.35) {
+          setRate(yt, 0.75);
+        } else if (absDiff <= 0.15) {
+          setRate(yt, 1);
         }
       }
     } else {
-      // Paused state
+      // Room is paused
+      setRate(yt, 1);
       if (st === PLAYING || st === BUFFERING) {
         try {
           yt.pauseVideo();
         } catch {}
       }
-      if (st !== CUED && st !== UNSTARTED && absDiff > 0.3) {
+      if (st !== CUED && st !== UNSTARTED && absDiff > 0.5) {
         seek(yt, pb.position || 0);
       }
     }
@@ -138,15 +170,21 @@ const Player = forwardRef(function Player(
     // Same song: update play / pause status smoothly
     if (pb.isPlaying) {
       if (enabledRef.current) {
-        const st = yt.getPlayerState();
+        const st = yt.getPlayerState?.();
         if (st !== PLAYING && st !== BUFFERING) {
-          const cur = yt.getCurrentTime() || 0;
-          if (Math.abs(want - cur) > DRIFT_THRESHOLD) {
+          const cur = yt.getCurrentTime?.() || 0;
+          if (Math.abs(want - cur) > 2.0) {
             seek(yt, want);
           }
           try {
             yt.playVideo();
           } catch {}
+        } else {
+          // If already playing, check if host made a big jump (scrubbed)
+          const cur = yt.getCurrentTime?.() || 0;
+          if (Math.abs(want - cur) > 2.5) {
+            seek(yt, want);
+          }
         }
       }
     } else {
@@ -183,27 +221,29 @@ const Player = forwardRef(function Player(
           },
           onStateChange: (e) => {
             if (e.data === ENDED) onEndedRef.current?.();
-            // When transitioning to PLAYING, snap sync if buffering caused a drift
+            // Transitioning to PLAYING: notify without seeking
             if (e.data === PLAYING) {
               onBlockedRef.current?.(false);
-              const cur = ytRef.current?.getCurrentTime() || 0;
-              const want = expectedPosition(stateRef.current);
-              if (Math.abs(want - cur) > DRIFT_THRESHOLD) {
-                seek(ytRef.current, want);
-              }
+              const cur = ytRef.current?.getCurrentTime?.() || 0;
               onPlayingStartRef.current?.(cur);
             }
-            // If browser or mobile OS paused player while room is playing, auto-resume cleanly
+            // Auto-resume cleanly only if still paused after 1.2s
             if (e.data === PAUSED) {
               const pb = stateRef.current;
               if (pb?.isPlaying && enabledRef.current) {
                 if (!resumeTimer.current) {
                   resumeTimer.current = setTimeout(() => {
                     resumeTimer.current = null;
-                    try {
-                      ytRef.current?.playVideo();
-                    } catch {}
-                  }, 400);
+                    const yt = ytRef.current;
+                    if (yt && stateRef.current?.isPlaying && enabledRef.current) {
+                      const st = yt.getPlayerState?.();
+                      if (st === PAUSED) {
+                        try {
+                          yt.playVideo();
+                        } catch {}
+                      }
+                    }
+                  }, 1200);
                 }
               }
             }
