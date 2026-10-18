@@ -88,7 +88,7 @@ export default function MiniPlayer() {
 
   const handleScrub = (e) => {
     e.stopPropagation();
-    if (!scrubBarRef.current || dur <= 0) return;
+    if (!isHost || !scrubBarRef.current || dur <= 0) return;
     const rect = scrubBarRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const pct = Math.max(0, Math.min(1, clickX / rect.width));
@@ -97,6 +97,7 @@ export default function MiniPlayer() {
 
   const handleRewind10 = (e) => {
     e.stopPropagation();
+    if (!isHost) return;
     const nextTime = Math.max(0, cur - 10);
     seekTo(nextTime);
   };
@@ -124,15 +125,19 @@ export default function MiniPlayer() {
       {/* Top Edge Interactive Scrubber / Progress Bar */}
       <div
         ref={scrubBarRef}
-        onClick={handleScrub}
-        className="w-full h-1.5 bg-white/10 hover:h-2 transition-all cursor-pointer relative group"
-        title="Click to seek"
+        onClick={isHost ? handleScrub : undefined}
+        className={`w-full h-1.5 bg-white/10 transition-all relative group ${
+          isHost ? 'hover:h-2 cursor-pointer' : 'cursor-default'
+        }`}
+        title={isHost ? 'Click to seek' : 'Progress'}
       >
         <div
           className="h-full bg-gradient-to-r from-green-500 via-emerald-400 to-green-300 shadow-[0_0_10px_rgba(34,197,94,0.8)] relative"
           style={{ width: `${progressPct}%` }}
         >
-          <span className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover:opacity-100 shadow transition-opacity" />
+          {isHost && (
+            <span className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover:opacity-100 shadow transition-opacity" />
+          )}
         </div>
       </div>
 
@@ -177,35 +182,50 @@ export default function MiniPlayer() {
 
         {/* Global Music Controls */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Rewind 10 Seconds */}
-          <button
-            type="button"
-            onClick={handleRewind10}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center active:scale-95 transition"
-            title="Rewind 10s"
-          >
-            <Rewind10Icon size={16} />
-          </button>
+          {/* Rewind 10 Seconds (Host only) */}
+          {isHost && (
+            <button
+              type="button"
+              onClick={handleRewind10}
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center active:scale-95 transition"
+              title="Rewind 10s"
+            >
+              <Rewind10Icon size={16} />
+            </button>
+          )}
 
           {/* Play / Pause Toggle Button */}
           <button
             type="button"
-            onClick={togglePlay}
-            className="w-10 h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-            title={playback.isPlaying ? 'Pause' : 'Play'}
+            onClick={isHost ? togglePlay : undefined}
+            disabled={!isHost}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition shadow-[0_0_15px_rgba(34,197,94,0.5)] ${
+              isHost
+                ? 'bg-green-500 text-black hover:brightness-110 active:scale-90 cursor-pointer'
+                : 'bg-green-500/30 text-white/40 cursor-not-allowed opacity-50'
+            }`}
+            title={
+              !isHost
+                ? 'Only the host can pause or play the music'
+                : playback.isPlaying
+                ? 'Pause'
+                : 'Play'
+            }
           >
             {playback.isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </button>
 
-          {/* Next Track Button (Host or when queue is active) */}
-          <button
-            type="button"
-            onClick={playNext}
-            className="w-8 h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
-            title="Next Track"
-          >
-            <Next size={16} />
-          </button>
+          {/* Next Track Button (Host only) */}
+          {isHost && (
+            <button
+              type="button"
+              onClick={playNext}
+              className="w-8 h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
+              title="Next Track"
+            >
+              <Next size={16} />
+            </button>
+          )}
 
           {/* Mute / Unmute Button */}
           <button

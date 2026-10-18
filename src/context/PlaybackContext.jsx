@@ -174,7 +174,7 @@ export function PlaybackProvider({ user, children }) {
   );
 
   const playNext = useCallback(async () => {
-    if (!activeRoomId) return;
+    if (!activeRoomId || !isHost) return;
     const r = roomRef.current;
     if (!r) return;
     const q = toQueue(r.queue);
@@ -188,28 +188,28 @@ export function PlaybackProvider({ user, children }) {
         updatedAt: serverTimestamp(),
       });
     }
-  }, [activeRoomId, playItem]);
+  }, [activeRoomId, isHost, playItem]);
 
   const togglePlay = useCallback(() => {
-    if (!activeRoomId || !hasVideo) return;
+    if (!activeRoomId || !hasVideo || !isHost) return;
     const cur = playerRef.current?.getCurrentTime() ?? playback.position ?? 0;
     update(ref(db, `rooms/${activeRoomId}/playback`), {
       isPlaying: !playback.isPlaying,
       position: cur,
       updatedAt: serverTimestamp(),
     });
-  }, [activeRoomId, hasVideo, playback.isPlaying, playback.position]);
+  }, [activeRoomId, hasVideo, isHost, playback.isPlaying, playback.position]);
 
   const seekTo = useCallback(
     (t) => {
-      if (!activeRoomId || !hasVideo) return;
+      if (!activeRoomId || !hasVideo || !isHost) return;
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: !!playback.isPlaying,
         position: t,
         updatedAt: serverTimestamp(),
       });
     },
-    [activeRoomId, hasVideo, playback.isPlaying]
+    [activeRoomId, hasVideo, isHost, playback.isPlaying]
   );
 
   const addSong = useCallback(
@@ -305,6 +305,46 @@ export function PlaybackProvider({ user, children }) {
     }, 8000);
     return () => clearTimeout(t);
   }, [exists, isHost, hostPresent, oldestUid, user?.uid, activeRoomId]);
+
+  // Host playback start calibration: calibrates server time to exact moment audio plays on host device
+  const handleHostPlayingStart = useCallback(
+    (currentTime) => {
+      if (!hostRef.current || !activeRoomId) return;
+      const r = roomRef.current;
+      const pb = r?.playback;
+      if (!pb || !pb.isPlaying || !pb.videoId) return;
+
+      const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
+      const expected = (pb.position || 0) + Math.max(0, (serverNow() - updated) / 1000);
+      if (Math.abs(expected - currentTime) > 0.35) {
+        update(ref(db, `rooms/${activeRoomId}/playback`), {
+          position: currentTime,
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+    },
+    [activeRoomId]
+  );
+
+  // Host periodic sync heartbeat: every 6 seconds, sync actual YouTube position with server clock
+  useEffect(() => {
+    if (!isHost || !activeRoomId || !playback?.isPlaying || !hasVideo) return;
+
+    const interval = setInterval(() => {
+      const p = playerRef.current;
+      if (!p) return;
+      const cur = p.getCurrentTime();
+      if (typeof cur === 'number' && cur > 0) {
+        update(ref(db, `rooms/${activeRoomId}/playback`), {
+          position: cur,
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [isHost, activeRoomId, playback?.isPlaying, hasVideo]);
+
   // Silent audio loop to maintain background audio priority on mobile and desktop
   useEffect(() => {
     const el = audioAnchorRef.current;
@@ -349,6 +389,7 @@ export function PlaybackProvider({ user, children }) {
 
     try {
       navigator.mediaSession.setActionHandler('play', () => {
+        if (!hostRef.current) return;
         const pb = roomRef.current?.playback;
         if (!pb?.isPlaying) {
           togglePlay();
@@ -359,6 +400,7 @@ export function PlaybackProvider({ user, children }) {
         }
       });
       navigator.mediaSession.setActionHandler('pause', () => {
+        if (!hostRef.current) return;
         const pb = roomRef.current?.playback;
         if (pb?.isPlaying) {
           togglePlay();
@@ -368,6 +410,7 @@ export function PlaybackProvider({ user, children }) {
         if (hostRef.current) playNext();
       });
       navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (!hostRef.current) return;
         if (details.seekTime != null) seekTo(details.seekTime);
       });
     } catch {}
@@ -500,6 +543,7 @@ export function PlaybackProvider({ user, children }) {
           onEnded={isHost ? playNext : undefined}
           onError={() => {}}
           onBlocked={setBlocked}
+          onPlayingStart={handleHostPlayingStart}
         />
       )}
 
