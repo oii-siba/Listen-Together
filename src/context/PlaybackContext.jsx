@@ -314,7 +314,7 @@ export function PlaybackProvider({ user, children }) {
 
       const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
       const expected = (pb.position || 0) + Math.max(0, (serverNow() - updated) / 1000);
-      if (Math.abs(expected - currentTime) > 0.8) {
+      if (Math.abs(expected - currentTime) > 0.35) {
         update(ref(db, `rooms/${activeRoomId}/playback`), {
           position: currentTime,
           updatedAt: serverTimestamp(),
@@ -323,6 +323,32 @@ export function PlaybackProvider({ user, children }) {
     },
     [activeRoomId]
   );
+
+  // Host drift safeguard: If host experienced lag/buffering > 0.8s, realign the room
+  useEffect(() => {
+    if (!isHost || !activeRoomId || !playback?.isPlaying || !hasVideo) return;
+
+    const interval = setInterval(() => {
+      const p = playerRef.current;
+      if (!p) return;
+      const cur = p.getCurrentTime();
+      if (typeof cur !== 'number' || cur <= 0) return;
+
+      const pb = roomRef.current?.playback;
+      if (!pb || !pb.isPlaying) return;
+
+      const expected = expectedPosition(pb);
+      // If host's actual player drifted by > 0.8s from the room's clock (e.g. host buffered)
+      if (Math.abs(expected - cur) > 0.8) {
+        update(ref(db, `rooms/${activeRoomId}/playback`), {
+          position: cur,
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isHost, activeRoomId, playback?.isPlaying, hasVideo]);
 
   // Silent audio loop to maintain background audio priority on mobile and desktop
   useEffect(() => {

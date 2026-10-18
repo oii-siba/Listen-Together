@@ -101,22 +101,20 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Extreme drift (> 2.5s) after initial join, heavy lag or tab sleep: snap seek
-        if (absDiff > 2.5 && (force || timeSinceLastSeek > 5000)) {
+        // 1. Definite audible drift (> 0.65s): snap immediately to expected position
+        // 3000ms cooldown prevents any stutter or seek loop
+        if (absDiff > 0.65 && (force || timeSinceLastSeek > 3000)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Micro-Sync via playback rate (NO AUDIO CUTOUT / CONTINUOUS AUDIO):
-        // If guest is behind by > 0.35s: speed up to 1.25x smoothly until caught up
-        // If guest is ahead by > 0.35s: slow down to 0.75x smoothly until aligned
-        // Once within 0.15s: return to normal 1.0x speed
-        if (diff > 0.35) {
+        // 2. Seamless micro-sync for minor differences (0.18s - 0.65s):
+        if (diff > 0.18) {
           setRate(yt, 1.25);
-        } else if (diff < -0.35) {
+        } else if (diff < -0.18) {
           setRate(yt, 0.75);
-        } else if (absDiff <= 0.15) {
+        } else if (absDiff <= 0.10) {
           setRate(yt, 1);
         }
       }
@@ -180,9 +178,9 @@ const Player = forwardRef(function Player(
             yt.playVideo();
           } catch {}
         } else {
-          // If already playing, check if host made a big jump (scrubbed)
+          // If already playing, check if host made a jump (scrubbed)
           const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(want - cur) > 2.5) {
+          if (Math.abs(want - cur) > 0.8) {
             seek(yt, want);
           }
         }
@@ -221,10 +219,17 @@ const Player = forwardRef(function Player(
           },
           onStateChange: (e) => {
             if (e.data === ENDED) onEndedRef.current?.();
-            // Transitioning to PLAYING: notify without seeking
+            // Transitioning to PLAYING:
             if (e.data === PLAYING) {
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
+              // Guest initial buffer alignment: snap if initial buffering caused delay
+              if (!isHostRef.current) {
+                const want = expectedPosition(stateRef.current);
+                if (Math.abs(want - cur) > 0.45) {
+                  seek(ytRef.current, want);
+                }
+              }
               onPlayingStartRef.current?.(cur);
             }
             // Auto-resume cleanly only if still paused after 1.2s
