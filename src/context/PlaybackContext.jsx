@@ -159,6 +159,7 @@ export function PlaybackProvider({ user, children }) {
           addedByName: item.addedByName || '',
           isPlaying: true,
           position: 0,
+          hostTime: serverNow(),
           updatedAt: serverTimestamp(),
         },
         ...(item.key ? { [`queue/${item.key}`]: null } : {}),
@@ -184,6 +185,7 @@ export function PlaybackProvider({ user, children }) {
       await set(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: false,
         position: 0,
+        hostTime: serverNow(),
         updatedAt: serverTimestamp(),
       });
     }
@@ -196,6 +198,7 @@ export function PlaybackProvider({ user, children }) {
     update(ref(db, `rooms/${activeRoomId}/playback`), {
       isPlaying: !playback.isPlaying,
       position: cur,
+      hostTime: serverNow(),
       updatedAt: serverTimestamp(),
     });
   }, [activeRoomId, hasVideo, isHost, playback.isPlaying, playback.position, user?.uid]);
@@ -207,6 +210,7 @@ export function PlaybackProvider({ user, children }) {
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: !!playback.isPlaying,
         position: t,
+        hostTime: serverNow(),
         updatedAt: serverTimestamp(),
       });
     },
@@ -315,6 +319,7 @@ export function PlaybackProvider({ user, children }) {
       // Always anchor the room timestamp to the EXACT position when host actually starts hearing audio
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         position: currentTime,
+        hostTime: serverNow(),
         updatedAt: serverTimestamp(),
       }).catch(() => {});
     },
@@ -335,10 +340,11 @@ export function PlaybackProvider({ user, children }) {
       if (!pb || !pb.isPlaying) return;
 
       const expected = expectedPosition(pb);
-      // If host's actual player drifted by > 0.8s from the room's clock (e.g. host buffered)
-      if (Math.abs(expected - cur) > 0.8) {
+      // If host's actual player drifted by > 0.3s from room clock (e.g. host buffered)
+      if (Math.abs(expected - cur) > 0.3) {
         update(ref(db, `rooms/${activeRoomId}/playback`), {
           position: cur,
+          hostTime: serverNow(),
           updatedAt: serverTimestamp(),
         }).catch(() => {});
       }

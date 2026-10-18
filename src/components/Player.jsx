@@ -29,13 +29,18 @@ export function setSyncNudge(ms) {
   } catch {}
 }
 
-// Where the song *should* be right now, based on the host's last write + global server clock + local nudge.
+// Where the song *should* be right now, canceling network transit skew via hostTime + global server clock + local nudge.
 export function expectedPosition(pb) {
   if (!pb) return 0;
   const base = pb.position || 0;
   if (!pb.isPlaying) return base;
-  const updated = typeof pb.updatedAt === 'number' ? pb.updatedAt : serverNow();
-  return base + Math.max(0, (serverNow() - updated) / 1000) + (localNudge / 1000);
+  const anchorTime =
+    typeof pb.hostTime === 'number'
+      ? pb.hostTime
+      : typeof pb.updatedAt === 'number'
+      ? pb.updatedAt
+      : serverNow();
+  return base + Math.max(0, (serverNow() - anchorTime) / 1000) + (localNudge / 1000);
 }
 
 const Player = forwardRef(function Player(
@@ -118,20 +123,20 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Audible acoustic drift (> 0.28s): snap immediately to expected position
-        // 3000ms cooldown prevents any stutter or seek loop
-        if (absDiff > 0.28 && (force || timeSinceLastSeek > 3000)) {
+        // 1. Audible acoustic drift (> 0.12s): snap immediately to expected position
+        // 2500ms cooldown ensures it settles cleanly without looping
+        if (absDiff > 0.12 && (force || timeSinceLastSeek > 2500)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Seamless micro-sync for minor acoustic differences (0.08s - 0.28s):
-        if (diff > 0.08) {
+        // 2. Seamless micro-sync for minor acoustic differences (0.04s - 0.12s):
+        if (diff > 0.04) {
           setRate(yt, 1.25);
-        } else if (diff < -0.08) {
+        } else if (diff < -0.04) {
           setRate(yt, 0.75);
-        } else if (absDiff <= 0.04) {
+        } else if (absDiff <= 0.02) {
           setRate(yt, 1);
         }
       }
@@ -195,9 +200,9 @@ const Player = forwardRef(function Player(
             yt.playVideo();
           } catch {}
         } else {
-          // If already playing, check if host made a jump (scrubbed)
+          // If already playing, check if host made a scrub/jump
           const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(want - cur) > 0.8) {
+          if (Math.abs(want - cur) > 0.4) {
             seek(yt, want);
           }
         }
@@ -240,10 +245,10 @@ const Player = forwardRef(function Player(
             if (e.data === PLAYING) {
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
-              // Guest initial buffer alignment: snap if initial buffering caused delay
+              // Guest initial buffer alignment: snap if initial buffering caused delay (> 0.06s)
               if (!isHostRef.current) {
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.12) {
+                if (Math.abs(want - cur) > 0.06) {
                   seek(ytRef.current, want);
                 }
               }
