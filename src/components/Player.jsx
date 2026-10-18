@@ -106,7 +106,7 @@ const Player = forwardRef(function Player(
 
       // If player paused or stopped unexpectedly while room is playing:
       if (st !== PLAYING && st !== BUFFERING) {
-        if (absDiff > 2.5) {
+        if (absDiff > 0.2) {
           seek(yt, want);
         }
         try {
@@ -311,7 +311,7 @@ const Player = forwardRef(function Player(
           onBlockedRef.current?.(false);
         } else if (st === UNSTARTED || st === CUED || st === PAUSED) {
           notPlaying.current += 1;
-          if (notPlaying.current >= 4) onBlockedRef.current?.(true);
+          if (notPlaying.current >= 2) onBlockedRef.current?.(true);
         }
       } else {
         notPlaying.current = 0;
