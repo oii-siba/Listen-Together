@@ -350,6 +350,12 @@ const Player = forwardRef(function Player(
       } catch {}
 
       if (!document.hidden) {
+        try {
+          const st = yt.getPlayerState?.();
+          if (st !== PLAYING && st !== BUFFERING && pb.isPlaying) {
+            yt.playVideo?.();
+          }
+        } catch {}
         syncPlayback(true);
       }
     };
@@ -371,6 +377,10 @@ const Player = forwardRef(function Player(
         enabledRef.current = true;
         try {
           ytRef.current?.unMute?.();
+          const st = ytRef.current?.getPlayerState?.();
+          if (st !== PLAYING && st !== BUFFERING && stateRef.current?.isPlaying) {
+            ytRef.current?.playVideo?.();
+          }
         } catch {}
         syncPlayback(true);
       },
@@ -405,7 +415,7 @@ const Player = forwardRef(function Player(
       className={
         showVideo
           ? 'fixed bottom-24 right-3 sm:right-6 w-72 sm:w-84 max-w-[calc(100vw-1.5rem)] aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.85)] border border-green-500/50 z-50 animate-in fade-in zoom-in-95 group'
-          : 'fixed -bottom-[400px] -right-[400px] w-[240px] h-[240px] opacity-[0.01] pointer-events-none z-[1]'
+          : 'fixed bottom-0 right-0 w-[160px] h-[160px] opacity-[0.001] pointer-events-none -z-50 overflow-hidden'
       }
     >
       <div ref={wrapRef} className="absolute inset-0 [&_iframe]:w-full [&_iframe]:h-full" />

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
 import { ref, set, update, remove, onValue, onDisconnect, serverTimestamp } from '../lib/db';
 import { serverNow } from '../lib/serverTime';
@@ -35,6 +35,7 @@ export function PlaybackProvider({ user, children }) {
   const [showVideo, setShowVideo] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const playerRef = useRef(null);
   const roomRef = useRef(null);
@@ -331,15 +332,32 @@ export function PlaybackProvider({ user, children }) {
 
   const joinRoom = useCallback(
     (roomId) => {
-      if (activeRoomId !== roomId) {
-        setActiveRoomId(roomId);
-      }
+      setActiveRoomId(roomId);
       try {
-        playerRef.current?.resync();
+        localStorage.setItem('TT_ACTIVE_ROOM', roomId);
+        sessionStorage.setItem('TT_ACTIVE_ROOM', roomId);
       } catch {}
+      setTimeout(() => {
+        try {
+          playerRef.current?.resync();
+        } catch {}
+      }, 80);
     },
-    [activeRoomId]
+    []
   );
+
+  // When user navigates between pages (e.g., from /room/:id back to / or returns to /room/:id),
+  // immediately ensure YouTube player is active, alive, and in sync!
+  useEffect(() => {
+    if (activeRoomId && playback?.isPlaying) {
+      const timer = setTimeout(() => {
+        try {
+          playerRef.current?.resync();
+        } catch {}
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, activeRoomId, playback?.isPlaying]);
 
   const leaveRoom = useCallback(async () => {
     if (!activeRoomId) return;

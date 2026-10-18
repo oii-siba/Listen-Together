@@ -91,12 +91,21 @@ export default function Room() {
     toastTimer.current = setTimeout(() => setToast(''), 3500);
   }, []);
 
-  // Sync active room in playback context
+  // Sync active room in playback context and force resync on entry
   useEffect(() => {
-    if (roomId && activeRoomId !== roomId) {
-      joinRoom(roomId);
+    if (roomId) {
+      if (activeRoomId !== roomId) {
+        joinRoom(roomId);
+      } else {
+        const timer = setTimeout(() => {
+          try {
+            playerRef.current?.resync();
+          } catch {}
+        }, 100);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [roomId, activeRoomId, joinRoom]);
+  }, [roomId, activeRoomId, joinRoom, playerRef]);
 
   // Host Permission Controls
   const setAllowGuestAdd = (v) => set(ref(db, `rooms/${roomId}/allowGuestAdd`), v);
