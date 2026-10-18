@@ -386,7 +386,7 @@ export async function acceptFriendRequest(currentUser, requestNotif) {
     friendCode: requestNotif.senderCode || getFriendCode(requestNotif.senderUid),
     name: requestNotif.senderName || 'Friend',
     photo: requestNotif.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${requestNotif.senderUid}`,
-    status: 'online',
+    status: 'offline',
     listeningTo: 'TuneTogether',
   };
 
@@ -395,7 +395,7 @@ export async function acceptFriendRequest(currentUser, requestNotif) {
     friendCode: getFriendCode(currentUser.uid),
     name: currentUser.displayName || 'Friend',
     photo: currentUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.uid}`,
-    status: 'online',
+    status: 'offline',
     listeningTo: 'TuneTogether',
   };
 

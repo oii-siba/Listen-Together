@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ref, onValue } from '../lib/db';
+import { db } from '../firebase';
 import {
   getFriendsList,
   subscribeToFriends,
@@ -17,6 +19,7 @@ import {
 
 export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
   const [friends, setFriends] = useState([]);
+  const [presenceMap, setPresenceMap] = useState({});
   const [pendingRequests, setPendingRequests] = useState([]);
   const [friendCodeInput, setFriendCodeInput] = useState('');
   const [copied, setCopied] = useState(false);
@@ -48,6 +51,55 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
       unsubNotifs();
     };
   }, [user]);
+
+  // Real-time subscription to each friend's online presence
+  useEffect(() => {
+    if (!friends || friends.length === 0) return;
+    const unsubs = [];
+    friends.forEach((f) => {
+      if (!f?.uid) return;
+      const pRef = ref(db, `users/${f.uid}/presence`);
+      const unsub = onValue(pRef, (snap) => {
+        const val = snap.val();
+        setPresenceMap((prev) => ({
+          ...prev,
+          [f.uid]: val,
+        }));
+      });
+      unsubs.push(unsub);
+    });
+
+    return () => {
+      unsubs.forEach((u) => {
+        try {
+          u();
+        } catch {}
+      });
+    };
+  }, [friends]);
+
+  // Check if a friend is actually online right now
+  const isFriendOnline = useCallback(
+    (friend) => {
+      if (!friend?.uid) return false;
+      // If already connected inside the same room:
+      if (people.some((p) => p.uid === friend.uid)) return true;
+      // Live Firebase presence:
+      const p = presenceMap[friend.uid];
+      return Boolean(p && p.online === true);
+    },
+    [people, presenceMap]
+  );
+
+  // Sort friends: Online friends at the top
+  const sortedFriends = useMemo(() => {
+    return [...friends].sort((a, b) => {
+      const aOn = isFriendOnline(a);
+      const bOn = isFriendOnline(b);
+      if (aOn === bOn) return (a.name || '').localeCompare(b.name || '');
+      return aOn ? -1 : 1;
+    });
+  }, [friends, isFriendOnline]);
 
   const copyMyCode = () => {
     navigator.clipboard.writeText(myCode);
@@ -152,6 +204,12 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
 
   const inviteFriend = async (friend) => {
     if (!currentRoomId || !friend?.uid) return;
+    if (!isFriendOnline(friend)) {
+      setMsg(`⚠️ ${friend.name} is currently offline. You can only invite friends who are online!`);
+      setIsError(true);
+      setTimeout(() => setMsg(''), 3500);
+      return;
+    }
     try {
       await sendRoomInvite(user, friend.uid, currentRoomId);
       setMsg(`Room invite sent to ${friend.name}! 🚀`);
@@ -310,61 +368,99 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
 
         {/* Friends List */}
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-2.5">
-            Your Friends ({friends.length})
-          </h3>
+          <div className="flex items-center justify-between mb-2.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">
+              Your Friends ({friends.length})
+            </h3>
+            {friends.length > 0 && (
+              <span className="text-[11px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
+                {friends.filter(isFriendOnline).length} Online
+              </span>
+            )}
+          </div>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-            {friends.length === 0 ? (
+            {sortedFriends.length === 0 ? (
               <p className="text-center text-xs text-white/40 py-6">No friends added yet. Share your code!</p>
             ) : (
-              friends.map((f) => (
-                <div
-                  key={f.uid}
-                  className="bg-panel2/60 border border-white/5 rounded-2xl p-3 flex items-center justify-between gap-3 hover:border-white/10 transition"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative">
-                      <img
-                        src={f.photo}
-                        alt=""
-                        className="w-9 h-9 rounded-full border border-white/10"
-                      />
-                      <span
-                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-panel ${
-                          f.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-white/30'
-                        }`}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-xs text-white truncate">{f.name}</p>
-                      <p className="text-[10px] text-white/50 truncate">
-                        {f.status === 'online' ? `🎧 ${f.listeningTo || 'Listening'}` : 'Offline'}
-                      </p>
-                    </div>
-                  </div>
+              sortedFriends.map((f) => {
+                const on = isFriendOnline(f);
+                const inRoom = Boolean(currentRoomId && people.some((p) => p.uid === f.uid));
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {currentRoomId && (
+                return (
+                  <div
+                    key={f.uid}
+                    className={`border rounded-2xl p-3 flex items-center justify-between gap-3 transition ${
+                      on
+                        ? 'bg-panel2/80 border-white/10 hover:border-green-500/30'
+                        : 'bg-panel2/30 border-white/5 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative">
+                        <img
+                          src={f.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${f.uid}`}
+                          alt=""
+                          className={`w-9 h-9 rounded-full border ${on ? 'border-green-400/50' : 'border-white/10 grayscale-[35%]'}`}
+                        />
+                        <span
+                          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-panel ${
+                            on ? 'bg-green-400 animate-pulse' : 'bg-white/30'
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`font-bold text-xs truncate ${on ? 'text-white' : 'text-white/70'}`}>
+                          {f.name}
+                        </p>
+                        <p className="text-[10px] truncate">
+                          {on ? (
+                            <span className="text-green-400 font-medium">
+                              {inRoom ? '🎧 In this room' : '● Online'}
+                            </span>
+                          ) : (
+                            <span className="text-white/40 font-medium">Offline</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {currentRoomId && (
+                        inRoom ? (
+                          <span className="text-[10.5px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+                            In Room ✓
+                          </span>
+                        ) : on ? (
+                          <button
+                            type="button"
+                            onClick={() => inviteFriend(f)}
+                            className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow-[0_0_12px_rgba(34,197,94,0.4)]"
+                          >
+                            Invite 🚀
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            title="Cannot invite: Friend is currently offline"
+                            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/30 font-bold text-[11px] cursor-not-allowed"
+                          >
+                            Offline
+                          </button>
+                        )
+                      )}
                       <button
                         type="button"
-                        onClick={() => inviteFriend(f)}
-                        className="px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/40 text-green-300 font-bold text-[11px] hover:bg-green-500 hover:text-black active:scale-95 transition"
+                        onClick={() => handleRemoveFriend(f.uid)}
+                        className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition"
+                        title="Remove Friend"
                       >
-                        Invite
+                        ✕
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFriend(f.uid)}
-                      className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition"
-                      title="Remove Friend"
-                    >
-                      ✕
-                    </button>
+                    </div>
                   </div>
-                </div>
-
-              ))
+                );
+              })
             )}
           </div>
         </div>

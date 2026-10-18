@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbSignOut } from 'firebase/auth';
-import { auth, googleProvider, isFirebaseConfigured } from './firebase';
+import { auth, db, googleProvider, isFirebaseConfigured } from './firebase';
+import { ref, set, onDisconnect, serverTimestamp, onValue } from './lib/db';
 import { registerUserDirectory } from './lib/userData';
 
 const AuthCtx = createContext(null);
@@ -21,6 +22,50 @@ export function AuthProvider({ children }) {
       registerUserDirectory(user).catch(() => {});
     }
   }, [user]);
+
+  // Global Realtime Presence tracking for the user
+  useEffect(() => {
+    if (!user?.uid) return;
+    const userPresenceRef = ref(db, `users/${user.uid}/presence`);
+    const connRef = ref(db, '.info/connected');
+
+    let unsub = () => {};
+    unsub = onValue(connRef, (snap) => {
+      if (snap.val() === true) {
+        onDisconnect(userPresenceRef)
+          .set({
+            online: false,
+            lastSeen: serverTimestamp(),
+          })
+          .catch(() => {});
+
+        set(userPresenceRef, {
+          online: true,
+          name: user.displayName || 'Friend',
+          photo: user.photoURL || null,
+          lastSeen: serverTimestamp(),
+        }).catch(() => {});
+      }
+    });
+
+    const heartbeat = setInterval(() => {
+      set(userPresenceRef, {
+        online: true,
+        name: user.displayName || 'Friend',
+        photo: user.photoURL || null,
+        lastSeen: serverTimestamp(),
+      }).catch(() => {});
+    }, 25000);
+
+    return () => {
+      unsub();
+      clearInterval(heartbeat);
+      set(userPresenceRef, {
+        online: false,
+        lastSeen: serverTimestamp(),
+      }).catch(() => {});
+    };
+  }, [user?.uid, user?.displayName, user?.photoURL]);
 
   useEffect(() => {
     if (isFirebaseConfigured) {
@@ -97,13 +142,19 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     try {
+      if (user?.uid) {
+        await set(ref(db, `users/${user.uid}/presence`), {
+          online: false,
+          lastSeen: serverTimestamp(),
+        }).catch(() => {});
+      }
       localStorage.removeItem('LT_DEMO_USER');
+      setUser(null);
+      if (isFirebaseConfigured) {
+        await fbSignOut(auth);
+      }
     } catch {}
-    setUser(null);
-    if (isFirebaseConfigured) {
-      await fbSignOut(auth);
-    }
-  }, []);
+  }, [user?.uid]);
 
   const value = useMemo(
     () => ({ user, loading, signIn, signInDemo, signOut, isFirebaseConfigured }),
