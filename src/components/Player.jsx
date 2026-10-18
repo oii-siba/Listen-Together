@@ -59,6 +59,8 @@ const Player = forwardRef(function Player(
   const resumeTimer = useRef(null);
   const initialBufferDone = useRef(null);
 
+  stateRef.current = playback;
+  enabledRef.current = enabled;
   isHostRef.current = isHost;
   const onEndedRef = useRef(onEnded);
   const onErrorRef = useRef(onError);
@@ -124,20 +126,20 @@ const Player = forwardRef(function Player(
         // Guest synchronization logic:
         const timeSinceLastSeek = Date.now() - lastSeekAt.current;
 
-        // 1. Audible real drift (> 0.55s): snap immediately to expected position
-        // 4000ms cooldown ensures it settles cleanly without looping or getting stuck
-        if (absDiff > 0.55 && (force || timeSinceLastSeek > 4000)) {
+        // 1. Audible real drift (> 0.22s): snap immediately to expected position
+        // 3000ms cooldown ensures it settles cleanly without looping or getting stuck
+        if (absDiff > 0.22 && (force || timeSinceLastSeek > 3000)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Seamless micro-sync for minor differences:
-        if (diff > 0.15) {
+        // 2. Seamless micro-sync for minor acoustic differences:
+        if (diff > 0.08) {
           setRate(yt, 1.25);
-        } else if (diff < -0.15) {
+        } else if (diff < -0.08) {
           setRate(yt, 0.75);
-        } else if (absDiff <= 0.05) {
+        } else if (absDiff <= 0.03) {
           setRate(yt, 1);
         }
       }
@@ -240,7 +242,7 @@ const Player = forwardRef(function Player(
               if (!isHostRef.current && initialBufferDone.current !== loadedId.current) {
                 initialBufferDone.current = loadedId.current;
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.25) {
+                if (Math.abs(want - cur) > 0.12) {
                   seek(ytRef.current, want);
                 }
               }
