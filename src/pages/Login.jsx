@@ -14,7 +14,7 @@ function GoogleG() {
 }
 
 export default function Login() {
-  const { signIn, signInDemo, isFirebaseConfigured } = useAuth();
+  const { signIn, isFirebaseConfigured } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [showSetup, setShowSetup] = useState(!isFirebaseConfigured);
@@ -74,15 +74,6 @@ export default function Login() {
         {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
       </div>
 
-      {/* Instant Demo Switch */}
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => signInDemo()}
-          className="text-xs text-green-400/80 hover:text-green-300 transition underline font-medium"
-        >
-          Or continue with instant demo account
-        </button>
-      </div>
 
       {(inApp || (error && isFirebaseConfigured)) && (
         <div className="mt-5 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-4 text-xs">
