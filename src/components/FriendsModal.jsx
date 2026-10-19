@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ref, onValue } from '../lib/db';
+import { ref, onValue, remove } from '../lib/db';
 import { db } from '../firebase';
 import {
   getFriendsList,
@@ -17,7 +17,14 @@ import {
   requestBrowserNotificationPermission,
 } from '../lib/userData';
 
-export default function FriendsModal({ user, currentRoomId, people = [], onClose }) {
+export default function FriendsModal({
+  user,
+  currentRoomId,
+  people = [],
+  isHost = false,
+  kickedUsers = {},
+  onClose,
+}) {
   const [friends, setFriends] = useState([]);
   const [presenceMap, setPresenceMap] = useState({});
   const [pendingRequests, setPendingRequests] = useState([]);
@@ -27,6 +34,25 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
   const [isError, setIsError] = useState(false);
   const [searching, setSearching] = useState(false);
   const [permState, setPermState] = useState(() => getBrowserNotificationPermission());
+  const [roomHostId, setRoomHostId] = useState(null);
+  const [liveKickedUsers, setLiveKickedUsers] = useState(kickedUsers || {});
+
+  // Subscribe to real-time room host & kicked users state if currentRoomId is provided
+  useEffect(() => {
+    if (!currentRoomId) return;
+    const unsubHost = onValue(ref(db, `rooms/${currentRoomId}/hostId`), (snap) => {
+      setRoomHostId(snap.val());
+    });
+    const unsubKicked = onValue(ref(db, `rooms/${currentRoomId}/kickedUsers`), (snap) => {
+      setLiveKickedUsers(snap.val() || {});
+    });
+    return () => {
+      unsubHost();
+      unsubKicked();
+    };
+  }, [currentRoomId]);
+
+  const isRoomHost = isHost || (user?.uid && roomHostId === user.uid);
 
   const myCode = getFriendCode(user?.uid);
 
@@ -204,6 +230,13 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
 
   const inviteFriend = async (friend) => {
     if (!currentRoomId || !friend?.uid) return;
+    const isKicked = Boolean(liveKickedUsers && liveKickedUsers[friend.uid]);
+    if (isKicked && !isRoomHost) {
+      setMsg(`🚫 ${friend.name} was removed by the host. Only the host can re-invite them.`);
+      setIsError(true);
+      setTimeout(() => setMsg(''), 4000);
+      return;
+    }
     if (!isFriendOnline(friend)) {
       setMsg(`⚠️ ${friend.name} is currently offline. You can only invite friends who are online!`);
       setIsError(true);
@@ -219,6 +252,22 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
       setIsError(true);
     }
     setTimeout(() => setMsg(''), 3000);
+  };
+
+  const reInviteFriend = async (friend) => {
+    if (!currentRoomId || !friend?.uid) return;
+    try {
+      // 1. Host unblocks user
+      await remove(ref(db, `rooms/${currentRoomId}/kickedUsers/${friend.uid}`));
+      // 2. Host sends room invite
+      await sendRoomInvite(user, friend.uid, currentRoomId);
+      setMsg(`Unblocked & re-invited ${friend.name} back to the room! 🎉`);
+      setIsError(false);
+    } catch {
+      setMsg(`Could not re-invite ${friend.name}.`);
+      setIsError(true);
+    }
+    setTimeout(() => setMsg(''), 3500);
   };
 
 
@@ -385,6 +434,7 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
               sortedFriends.map((f) => {
                 const on = isFriendOnline(f);
                 const inRoom = Boolean(currentRoomId && people.some((p) => p.uid === f.uid));
+                const isKicked = Boolean(currentRoomId && liveKickedUsers && liveKickedUsers[f.uid]);
 
                 return (
                   <div
@@ -430,6 +480,24 @@ export default function FriendsModal({ user, currentRoomId, people = [], onClose
                           <span className="text-[10.5px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
                             In Room ✓
                           </span>
+                        ) : isKicked ? (
+                          isRoomHost ? (
+                            <button
+                              type="button"
+                              onClick={() => reInviteFriend(f)}
+                              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-black font-extrabold text-[10.5px] hover:brightness-110 active:scale-95 transition shadow-[0_0_12px_rgba(34,197,94,0.4)] flex items-center gap-1"
+                              title="Unblock user and invite them back to the room"
+                            >
+                              Re-invite 🔄
+                            </button>
+                          ) : (
+                            <span
+                              className="text-[10px] font-bold text-red-400/90 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full cursor-not-allowed"
+                              title="This friend was removed by the room host. Only the host can re-invite them."
+                            >
+                              🚫 Removed by Host
+                            </span>
+                          )
                         ) : on ? (
                           <button
                             type="button"

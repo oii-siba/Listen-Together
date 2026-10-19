@@ -66,6 +66,8 @@ export default function Room() {
   const [pinError, setPinError] = useState('');
   const [showHostSecurity, setShowHostSecurity] = useState(false);
   const [customPin, setCustomPin] = useState('');
+  const [kickCandidate, setKickCandidate] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   // Track PIN unlock in local session
   const [isPinUnlocked, setIsPinUnlocked] = useState(() => {
@@ -91,9 +93,11 @@ export default function Room() {
     toastTimer.current = setTimeout(() => setToast(''), 3500);
   }, []);
 
+  const isKicked = Boolean(room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost);
+
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || isKicked) return;
 
     // Check if room requires PIN and if this device is unlocked
     const storedUnlocked = (() => {
@@ -115,7 +119,7 @@ export default function Room() {
         playerRef.current?.resync();
       } catch {}
     }
-  }, [roomId, activeRoomId, isHost, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
+  }, [roomId, activeRoomId, isHost, isKicked, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 
   // Host Permission Controls
   const setAllowGuestAdd = (v) => set(ref(db, `rooms/${roomId}/allowGuestAdd`), v);
@@ -144,23 +148,52 @@ export default function Room() {
     }
   };
 
-  const handleKickUser = async (targetUid, targetName) => {
+  const handleKickUser = (targetUid, targetName) => {
     if (!isHost) return;
-    if (!window.confirm(`Remove ${targetName || 'this listener'} from the room?`)) return;
-    try {
-      await remove(ref(db, `rooms/${roomId}/presence/${targetUid}`));
-      await set(ref(db, `rooms/${roomId}/kickedUsers/${targetUid}`), true);
-      showToast(`${targetName || 'User'} was removed from room`);
-    } catch {}
+    setKickCandidate({ uid: targetUid, name: targetName || 'Listener' });
   };
 
-  const clearQueue = async () => {
-    if (!isHost) return;
-    if (!window.confirm('Clear all upcoming songs from queue?')) return;
+  const confirmKick = async () => {
+    if (!kickCandidate || !isHost) return;
+    const { uid, name } = kickCandidate;
+    setKickCandidate(null);
     try {
-      await remove(ref(db, `rooms/${roomId}/queue`));
-      showToast('Queue cleared ✓');
-    } catch {}
+      await remove(ref(db, `rooms/${roomId}/presence/${uid}`));
+      await set(ref(db, `rooms/${roomId}/kickedUsers/${uid}`), {
+        uid,
+        name,
+        kickedAt: Date.now(),
+      });
+      showToast(`${name} was removed from room`);
+    } catch {
+      showToast('Could not remove listener');
+    }
+  };
+
+  const handleUnbanUser = async (targetUid, targetName) => {
+    if (!isHost) return;
+    try {
+      await remove(ref(db, `rooms/${roomId}/kickedUsers/${targetUid}`));
+      showToast(`${targetName || 'Listener'} can now rejoin or be invited ✓`);
+    } catch {
+      showToast('Could not unblock listener');
+    }
+  };
+
+  const clearQueue = () => {
+    if (!isHost) return;
+    setConfirmModal({
+      title: 'Clear Queue?',
+      desc: 'Remove all upcoming songs from the playlist? Currently playing song will keep playing.',
+      confirmText: 'Clear Queue',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await remove(ref(db, `rooms/${roomId}/queue`));
+          showToast('Queue cleared ✓');
+        } catch {}
+      },
+    });
   };
 
   async function handleLeave() {
@@ -168,16 +201,49 @@ export default function Room() {
     nav('/');
   }
 
-  async function endRoom() {
-    if (!window.confirm('End this room for everyone?')) return;
-    try {
-      await remove(ref(db, `rooms/${roomId}`));
-    } catch {}
-    await leaveRoom();
-    nav('/');
+  function endRoom() {
+    if (!isHost) return;
+    setConfirmModal({
+      title: 'End Room?',
+      desc: 'End this room session for all listeners? All connected devices will be disconnected.',
+      confirmText: 'End Room',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await remove(ref(db, `rooms/${roomId}`));
+        } catch {}
+        await leaveRoom();
+        nav('/');
+      },
+    });
   }
 
   /* ---------- render states ---------- */
+  // 1. Check if current user was kicked FIRST before checking activeRoomId or room === null
+  if (isKicked) {
+    return (
+      <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
+        <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
+          <p className="text-5xl">🛡️</p>
+          <h1 className="mt-4 text-xl font-bold text-red-400">Access Restricted</h1>
+          <p className="mt-2 text-sm text-white/60">
+            You were removed from this room by the host.
+          </p>
+          <p className="mt-1 text-xs text-white/40">
+            Only the room host can re-invite you back into this room.
+          </p>
+          <button
+            type="button"
+            onClick={handleLeave}
+            className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3 shadow-[0_0_15px_rgba(34,197,94,0.4)] active:scale-95 transition"
+          >
+            Leave &amp; Return Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (activeRoomId !== roomId || room === undefined) return <Splash text="Joining room…" />;
 
   if (room === null) {
@@ -189,26 +255,6 @@ export default function Room() {
           <p className="mt-1 text-sm text-white/55">The link may be wrong, or the host ended the room.</p>
           <Link to="/" className="inline-block mt-6 bg-accent text-black font-semibold rounded-full px-6 py-3">
             Back to home
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if current user was kicked
-  if (room.kickedUsers && user && room.kickedUsers[user.uid] && !isHost) {
-    return (
-      <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
-        <div>
-          <p className="text-5xl">🛡️</p>
-          <h1 className="mt-4 text-xl font-bold text-red-400">Access Restricted</h1>
-          <p className="mt-1 text-sm text-white/55">You were removed from this room by the host.</p>
-          <Link
-            to="/"
-            onClick={handleLeave}
-            className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3"
-          >
-            Back to Home
           </Link>
         </div>
       </div>
@@ -447,6 +493,8 @@ export default function Room() {
             hostId={room.hostId}
             myUid={user.uid}
             onKick={handleKickUser}
+            kickedUsers={room.kickedUsers}
+            onUnban={handleUnbanUser}
           />
         )}
       </div>
@@ -601,6 +649,8 @@ export default function Room() {
           user={user}
           currentRoomId={roomId}
           people={people}
+          isHost={isHost}
+          kickedUsers={room?.kickedUsers}
           onClose={() => setShowFriends(false)}
         />
       )}
@@ -629,6 +679,78 @@ export default function Room() {
       {/* Android TWA & App Modal */}
       {showAndroid && (
         <AndroidAppModal onClose={() => setShowAndroid(false)} />
+      )}
+
+      {/* Non-blocking Kick Confirmation Modal (Never pauses JS or audio!) */}
+      {kickCandidate && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-2xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-bold text-white">Remove Listener?</h3>
+              <p className="mt-1 text-xs text-white/60">
+                Are you sure you want to remove <strong className="text-white">{kickCandidate.name}</strong> from the room?
+              </p>
+              <p className="mt-2 text-[11px] text-white/40">
+                Their audio will stop immediately, and only you can allow them to rejoin or re-invite them.
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setKickCandidate(null)}
+                className="flex-1 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmKick}
+                className="flex-1 py-2.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold text-xs transition shadow-[0_0_12px_rgba(239,68,68,0.4)]"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Non-blocking Generic Confirmation Modal (Clear Queue / End Room) */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="text-center">
+              <h3 className="text-base font-bold text-white">{confirmModal.title}</h3>
+              <p className="mt-1.5 text-xs text-white/60">{confirmModal.desc}</p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const cb = confirmModal.onConfirm;
+                  setConfirmModal(null);
+                  cb?.();
+                }}
+                className={`flex-1 py-2.5 rounded-full font-bold text-xs transition shadow ${
+                  confirmModal.danger
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                    : 'bg-green-500 hover:bg-green-600 text-black'
+                }`}
+              >
+                {confirmModal.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

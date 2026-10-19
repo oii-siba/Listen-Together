@@ -385,12 +385,19 @@ export function PlaybackProvider({ user, children }) {
     setRoom(null);
   }, [activeRoomId, isHost, people, user?.displayName, user?.uid]);
 
-  // Auto-leave room immediately if listener was kicked by host
+  // Cleanly teardown local playback if listener was kicked by host (stops audio immediately, avoids reconnect storms)
   useEffect(() => {
     if (activeRoomId && room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost) {
-      leaveRoom();
+      try {
+        audioAnchorRef.current?.pause();
+      } catch {}
+      try {
+        localStorage.removeItem('TT_ACTIVE_ROOM');
+        sessionStorage.removeItem('TT_ACTIVE_ROOM');
+      } catch {}
+      setActiveRoomId(null);
     }
-  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, leaveRoom]);
+  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost]);
 
   // Host auto-play next when queue is present
   useEffect(() => {
