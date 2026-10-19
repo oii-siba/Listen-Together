@@ -93,23 +93,35 @@ export default function Room() {
 
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
-    if (roomId) {
-      unlockAudio?.();
-      if (activeRoomId !== roomId) {
-        joinRoom(roomId);
-      } else {
+    if (!roomId) return;
+
+    // Check if room requires PIN and if this device is unlocked
+    const storedUnlocked = (() => {
+      try {
+        return sessionStorage.getItem(`TT_ROOM_UNLOCKED_${roomId}`) === 'true';
+      } catch {
+        return false;
+      }
+    })();
+
+    const isAuthorized = isHost || isPinUnlocked || storedUnlocked || !room?.roomPin;
+    if (!isAuthorized) return; // Do NOT connect audio or join until PIN is unlocked!
+
+    unlockAudio?.();
+    if (activeRoomId !== roomId) {
+      joinRoom(roomId);
+    } else {
+      try {
+        playerRef.current?.resync();
+      } catch {}
+      const timer = setTimeout(() => {
         try {
           playerRef.current?.resync();
         } catch {}
-        const timer = setTimeout(() => {
-          try {
-            playerRef.current?.resync();
-          } catch {}
-        }, 250);
-        return () => clearTimeout(timer);
-      }
+      }, 250);
+      return () => clearTimeout(timer);
     }
-  }, [roomId, activeRoomId, joinRoom, playerRef, unlockAudio]);
+  }, [roomId, activeRoomId, isHost, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 
   // Host Permission Controls
   const setAllowGuestAdd = (v) => set(ref(db, `rooms/${roomId}/allowGuestAdd`), v);
@@ -117,6 +129,7 @@ export default function Room() {
   const setAllowGuestReactions = (v) => set(ref(db, `rooms/${roomId}/allowGuestReactions`), v);
 
   const saveRoomPin = async () => {
+    if (!isHost) return;
     const cleanPin = customPin.trim().slice(0, 6);
     await set(ref(db, `rooms/${roomId}/roomPin`), cleanPin || null);
     showToast(cleanPin ? `Room PIN set to: ${cleanPin}` : 'Room PIN removed (Open room)');
@@ -131,6 +144,7 @@ export default function Room() {
         sessionStorage.setItem(`TT_ROOM_UNLOCKED_${roomId}`, 'true');
       } catch {}
       setPinError('');
+      joinRoom(roomId);
     } else {
       setPinError('Incorrect Room PIN. Please ask the host.');
     }

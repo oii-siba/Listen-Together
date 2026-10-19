@@ -1,84 +1,128 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
+
     "app_stats": {
       ".read": true,
-      ".write": true
+      ".write": "auth != null"
     },
+
     "app_installs": {
-      ".read": true,
+      ".read": false,
       "$installId": {
-        ".write": true
+        ".write": "auth != null || !data.exists()"
       }
     },
+
     "friend_directory": {
-      ".read": true,
+      ".read": "auth != null",
       "$code": {
-        ".write": true
+        ".write": "auth != null && (newData.child('uid').val() === auth.uid || (data.exists() && data.child('uid').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['uid', 'friendCode', 'name'])"
       }
     },
+
     "friend_directory_uids": {
-      ".read": true,
+      ".read": "auth != null",
       "$uid": {
-        ".write": true
+        ".write": "auth != null && ($uid === auth.uid)",
+        ".validate": "newData.hasChildren(['uid', 'friendCode', 'name'])"
       }
     },
+
     "users": {
-      ".read": true,
       "$uid": {
-        ".read": true,
-        ".write": true,
         "profile": {
-          ".read": true,
-          ".write": true
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "presence": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid"
         },
         "favorites": {
-          ".read": true,
-          ".write": true
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
         },
         "history": {
-          ".read": true,
-          ".write": true
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
         },
         "friends": {
-          ".read": true,
-          ".write": true
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
         },
         "notifications": {
-          ".read": true,
-          ".write": true
+          ".read": "auth != null && auth.uid === $uid",
+          "$notifId": {
+            ".write": "auth != null && (auth.uid === $uid || (!data.exists() && newData.child('senderUid').val() === auth.uid))",
+            ".validate": "newData.hasChildren(['type', 'senderUid', 'targetUid'])"
+          }
         }
       }
     },
+
     "rooms": {
       "$roomId": {
-        ".read": true,
-        ".write": true,
-        "playback": {
-          ".write": true
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() && newData.child('hostId').val() === auth.uid)",
+
+        "hostId": {
+          ".write": "auth != null && (data.val() === auth.uid || !data.exists())"
         },
+
+        "playback": {
+          ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || newData.parent().child('hostId').val() === auth.uid)"
+        },
+
         "queue": {
-          ".write": true,
+          ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || newData.parent().child('hostId').val() === auth.uid)",
           "$qid": {
-            ".write": true
+            ".write": "auth != null && (data.parent().parent().child('hostId').val() === auth.uid || (!data.exists() && newData.child('addedBy').val() === auth.uid && data.parent().parent().child('allowGuestAdd').val() !== false) || (data.exists() && data.child('addedBy').val() === auth.uid))"
           }
         },
+
         "chat": {
-          ".write": true,
+          ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || data.parent().child('allowGuestChat').val() !== false)",
           "$mid": {
-            ".write": true,
+            ".write": "auth != null && !data.exists() && newData.child('senderUid').val() === auth.uid && data.parent().parent().child('allowGuestChat').val() !== false",
             ".validate": "newData.hasChildren(['senderUid', 'text']) && newData.child('text').isString() && newData.child('text').val().length <= 500"
           }
         },
+
         "reactions": {
-          ".write": true
+          ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || data.parent().child('allowGuestReactions').val() !== false)"
         },
+
         "activity": {
-          ".write": true
+          ".write": "auth != null"
         },
+
         "presence": {
           "$uid": {
-            ".write": true
+            ".write": "auth != null && ($uid === auth.uid || data.parent().parent().child('hostId').val() === auth.uid)"
           }
+        },
+
+        "kickedUsers": {
+          "$uid": {
+            ".write": "auth != null && data.parent().parent().child('hostId').val() === auth.uid"
+          }
+        },
+
+        "roomPin": {
+          ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || newData.parent().child('hostId').val() === auth.uid)"
+        },
+
+        "allowGuestAdd": {
+          ".write": "auth != null && data.parent().child('hostId').val() === auth.uid"
+        },
+        "allowGuestChat": {
+          ".write": "auth != null && data.parent().child('hostId').val() === auth.uid"
+        },
+        "allowGuestReactions": {
+          ".write": "auth != null && data.parent().child('hostId').val() === auth.uid"
         }
       }
     }

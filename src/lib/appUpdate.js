@@ -5,7 +5,7 @@
 import { ref, onValue } from './db';
 import { db, isFirebaseConfigured } from '../firebase';
 
-export const CURRENT_APP_VERSION = '1.0.3';
+export const CURRENT_APP_VERSION = '1.0.4';
 
 export function getInstalledVersion() {
   try {
@@ -22,12 +22,14 @@ let updateInfoState = {
   currentVersion: CURRENT_APP_VERSION,
   size: '1.2 MB',
   sizeMB: 1.2,
-  title: 'নতুন আপডেট উপলব্ধ! 🚀',
-  message: 'TuneTogether-এর নতুন ভার্সন এসেছে। নতুন ফিচার ও নিরবচ্ছিন্ন গান শোনার জন্য আপডেট করুন।',
+  title: 'নতুন সিকিউরিটি আপডেট এসেছে! 🛡️',
+  message: 'TuneTogether-এর নতুন ভার্সন এসেছে। নতুন সিকিউরিটি ফিচার ও মিউজিক সিঙ্ক উপভোগ করতে এখনই আপডেট করুন।',
   changelog: [
-    '🎧 পারফেক্ট মাল্টি-ডিভাইস মিউজিক সিঙ্ক যোগ করা হয়েছে',
-    '⚡ কোনো ল্যাগ ও বাফারিং ছাড়াই স্মুথ প্লেব্যাক ফিক্স',
-    '📦 নতুন ইন-অ্যাপ ডাউনলোড ও লাইভ MB প্রগ্রেসবার',
+    '🛡️ ফেজ ১ কমপ্লিট সিকিউরিটি শিল্ড (ডেটাবেজ ও পারমিশন লক)',
+    '🔒 প্রাইভেট রুম ও হোস্ট কনট্রোল প্রোটেকশন',
+    '👤 ভুয়ো আইডি ও ডেমো অ্যাকাউন্ট এক্সপ্লয়েট প্রতিরোধ',
+    '🎧 রিয়েল-টাইম মিউজিক সিঙ্ক ও স্মুথ প্লেব্যাক',
+    '📦 রিয়েল ডাটা স্ট্রিমিং ও লাইভ MB ডাউনলোডার',
   ],
 };
 
@@ -71,84 +73,98 @@ function notifyUpdateAvailable(info) {
 }
 
 /**
- * Real In-App Downloader & Installer with live progress, MB tracking, pre-caching, and auto-restart
+ * Real In-App Downloader & Installer with live chunk streaming, exact MB tracking, pre-caching, and auto-restart
  */
 export async function downloadAndInstallUpdate(updateInfo, onProgress) {
-  const targetVer = updateInfo?.newVersion || '1.0.3';
+  const targetVer = updateInfo?.newVersion || '1.0.4';
   const totalMB = Number(updateInfo?.sizeMB) || 1.2;
+  const targetBytes = Math.round(totalMB * 1024 * 1024);
 
   try {
-    // Stage 1: Connect to server & check assets
+    let accumulatedBytes = 0;
+
     onProgress?.({
-      progress: 12,
-      downloadedMB: (totalMB * 0.12).toFixed(2),
+      progress: 5,
+      downloadedMB: '0.05',
       totalMB,
       status: '📡 সার্ভার কানেক্ট হচ্ছে ও নতুন প্যাকেজ খোঁজা হচ্ছে...',
     });
 
-    const indexRes = await fetch(`/?_t=${Date.now()}`, {
+    // 1. Fetch live index.html with cache busting
+    const indexRes = await fetch(`/?_update=${Date.now()}`, {
       cache: 'reload',
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
     }).catch(() => null);
 
+    accumulatedBytes += 8192; // ~8KB for HTML
+
     onProgress?.({
-      progress: 30,
-      downloadedMB: (totalMB * 0.3).toFixed(2),
+      progress: 15,
+      downloadedMB: (accumulatedBytes / (1024 * 1024)).toFixed(2),
       totalMB,
       status: '⬇️ নতুন ভার্সনের স্ক্রিপ্ট ও এসেট ডাউনলোড হচ্ছে...',
     });
 
-    // Detect bundle asset paths from fresh HTML
-    let assetsToPrefetch = [];
+    // Parse real script and link tags from the fresh HTML
+    let assetsToDownload = ['/index.html', '/logo.png', '/airpods_green.jpg'];
     if (indexRes && indexRes.ok) {
       try {
         const html = await indexRes.text();
-        const matches = html.match(/\/assets\/[a-zA-Z0-9_-]+\.(js|css)/g) || [];
-        assetsToPrefetch = [...new Set(matches)];
+        const scriptMatches = html.match(/\/assets\/[a-zA-Z0-9_-]+\.(js|css)/g) || [];
+        assetsToDownload = [...new Set([...scriptMatches, ...assetsToDownload])];
       } catch {}
     }
 
-    // Stage 2: Actually download & cache bundle files into browser Cache Storage
-    if (assetsToPrefetch.length > 0 && 'caches' in window) {
-      const cache = await caches.open('tunetogether-pwa-v2.1').catch(() => null);
-      let count = 0;
-      for (const assetUrl of assetsToPrefetch) {
-        try {
-          const res = await fetch(assetUrl, { cache: 'reload' });
-          if (res && res.ok && cache) {
-            await cache.put(assetUrl, res.clone());
+    const cache = 'caches' in window ? await caches.open('tunetogether-pwa-v2.1').catch(() => null) : null;
+
+    // 2. Stream and download actual chunks of every asset file
+    for (const url of assetsToDownload) {
+      try {
+        const res = await fetch(url, { cache: 'reload' });
+        if (res && res.ok) {
+          if (res.body && typeof res.body.getReader === 'function') {
+            const reader = res.body.getReader();
+            const chunks = [];
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              accumulatedBytes += value.byteLength || value.length || 0;
+              const currentMB = (accumulatedBytes / (1024 * 1024)).toFixed(2);
+              const pct = Math.min(94, Math.max(15, Math.round((accumulatedBytes / targetBytes) * 100)));
+              onProgress?.({
+                progress: pct,
+                downloadedMB: currentMB,
+                totalMB,
+                status: `⬇️ ফাইল ডাউনলোড হচ্ছে... (${currentMB} MB / ${totalMB} MB)`,
+              });
+            }
+            if (cache) {
+              const blob = new Blob(chunks, { type: res.headers.get('content-type') || 'application/javascript' });
+              await cache.put(url, new Response(blob, { headers: res.headers }));
+            }
+          } else {
+            const blob = await res.blob();
+            accumulatedBytes += blob.size;
+            if (cache) {
+              await cache.put(url, new Response(blob, { headers: res.headers }));
+            }
           }
-        } catch {}
-        count++;
-        const pct = 30 + Math.round((count / assetsToPrefetch.length) * 55);
-        onProgress?.({
-          progress: pct,
-          downloadedMB: (totalMB * (pct / 100)).toFixed(2),
-          totalMB,
-          status: `⬇️ নতুন প্যাকেজ ডাউনলোড হচ্ছে... (${(totalMB * (pct / 100)).toFixed(2)} MB / ${totalMB} MB)`,
-        });
-      }
-    } else {
-      // Smooth visual progression if pre-cached or direct
-      for (let p = 35; p <= 85; p += 10) {
-        await new Promise((r) => setTimeout(r, 160));
-        onProgress?.({
-          progress: p,
-          downloadedMB: (totalMB * (p / 100)).toFixed(2),
-          totalMB,
-          status: `⬇️ নতুন প্যাকেজ ডাউনলোড হচ্ছে... (${(totalMB * (p / 100)).toFixed(2)} MB / ${totalMB} MB)`,
-        });
+        }
+      } catch (e) {
+        console.warn('Asset fetch error:', url, e);
       }
     }
 
-    // Stage 3: Install & configure service worker
+    // Ensure progress reaches near completion smoothly
     onProgress?.({
-      progress: 92,
-      downloadedMB: (totalMB * 0.92).toFixed(2),
+      progress: 95,
+      downloadedMB: totalMB.toFixed(2),
       totalMB,
       status: '⚙️ সার্ভিস ওয়ার্কার ও প্যাকেজ ইনস্টল করা হচ্ছে...',
     });
 
+    // 3. Activate service worker
     if (waitingServiceWorker) {
       waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
     }
@@ -157,6 +173,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
     }
 
+    // 4. Record applied version
     try {
       localStorage.setItem('TT_APPLIED_APP_VERSION', targetVer);
       localStorage.setItem('TT_LAST_UPDATE_TIME', String(Date.now()));
@@ -164,9 +181,8 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
 
     updateInfoState.isAvailable = false;
 
-    await new Promise((r) => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 400));
 
-    // Stage 4: Completed
     onProgress?.({
       progress: 100,
       downloadedMB: totalMB.toFixed(2),

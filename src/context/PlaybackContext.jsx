@@ -215,10 +215,18 @@ export function PlaybackProvider({ user, children }) {
     };
   }, [activeRoomId]);
 
+  // Auto-leave room immediately if listener was kicked by host
+  useEffect(() => {
+    if (activeRoomId && room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost) {
+      leaveRoom();
+    }
+  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, leaveRoom]);
+
   /* ---------- Playback Controls ---------- */
   const playItem = useCallback(
     async (item) => {
-      if (!activeRoomId) return;
+      const r = roomRef.current;
+      if (!activeRoomId || !hostRef.current || !r || r.hostId !== user?.uid) return;
       lastCalibratedSongId.current = null;
       lastAdvanceRef.current = Date.now();
       await update(ref(db, `rooms/${activeRoomId}`), {
@@ -241,7 +249,7 @@ export function PlaybackProvider({ user, children }) {
         userName: item.addedByName || user?.displayName || 'Host',
       });
     },
-    [activeRoomId, user?.displayName]
+    [activeRoomId, user?.displayName, user?.uid]
   );
 
   const playNext = useCallback(async () => {

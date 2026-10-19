@@ -1,5 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut as fbSignOut } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signInAnonymously,
+  updateProfile,
+  signOut as fbSignOut,
+} from 'firebase/auth';
 import { auth, db, googleProvider, isFirebaseConfigured } from './firebase';
 import { ref, set, onDisconnect, serverTimestamp, onValue } from './lib/db';
 import { registerUserDirectory } from './lib/userData';
@@ -7,7 +14,9 @@ import { registerUserDirectory } from './lib/userData';
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
+  // Never trust arbitrary localStorage UIDs when Firebase is configured
   const [user, setUser] = useState(() => {
+    if (isFirebaseConfigured) return null;
     try {
       const saved = localStorage.getItem('LT_DEMO_USER');
       return saved ? JSON.parse(saved) : null;
@@ -18,14 +27,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && user.uid) {
       registerUserDirectory(user).catch(() => {});
     }
   }, [user]);
 
-  // Global Realtime Presence tracking for the user
+  // Global Realtime Presence tracking for verified user
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || user.isDemo) return;
     const userPresenceRef = ref(db, `users/${user.uid}/presence`);
     const connRef = ref(db, '.info/connected');
 
@@ -65,7 +74,7 @@ export function AuthProvider({ children }) {
         lastSeen: serverTimestamp(),
       }).catch(() => {});
     };
-  }, [user?.uid, user?.displayName, user?.photoURL]);
+  }, [user?.uid, user?.displayName, user?.photoURL, user?.isDemo]);
 
   useEffect(() => {
     if (isFirebaseConfigured) {
@@ -84,7 +93,6 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
-
 
   // Returns an error message string, or null on success / user-cancelled.
   const signIn = useCallback(async () => {
@@ -111,38 +119,45 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const signInDemo = useCallback((name = null, uid = null) => {
-    let savedUid = uid;
-    if (!savedUid) {
+  // Secure Guest / Demo Sign-In: uses real Firebase Anonymous Auth when configured
+  const signInDemo = useCallback(async (customName = null) => {
+    if (isFirebaseConfigured) {
       try {
-        const existing = localStorage.getItem('LT_DEMO_UID');
-        if (existing) {
-          savedUid = existing;
-        } else {
-          savedUid = 'user-' + Math.random().toString(36).substring(2, 9);
-          localStorage.setItem('LT_DEMO_UID', savedUid);
-        }
-      } catch {
-        savedUid = 'user-' + Math.random().toString(36).substring(2, 9);
+        const cred = await signInAnonymously(auth);
+        const anonUser = cred.user;
+        const displayName = customName || `Guest-${anonUser.uid.slice(-4)}`;
+        const photoURL = `https://api.dicebear.com/7.x/bottts/svg?seed=${anonUser.uid}`;
+        try {
+          await updateProfile(anonUser, { displayName, photoURL });
+        } catch {}
+        setUser({ ...anonUser, displayName, photoURL, isAnonymous: true });
+        return null;
+      } catch (err) {
+        console.warn('Anonymous sign-in error:', err);
+        return err.message || 'Guest sign-in failed.';
       }
     }
-    const demoName = name || `Guest-${savedUid.slice(-4)}`;
+
+    // Isolated offline mode only when Firebase is not configured
+    const safeUid = 'demo-' + Math.random().toString(36).substring(2, 9);
+    const demoName = customName || `Guest-${safeUid.slice(-4)}`;
     const demoUser = {
-      uid: savedUid,
+      uid: safeUid,
       displayName: demoName,
-      email: `${savedUid}@demo.local`,
-      photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${savedUid}`,
+      email: `${safeUid}@demo.local`,
+      photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${safeUid}`,
       isDemo: true,
     };
     try {
       localStorage.setItem('LT_DEMO_USER', JSON.stringify(demoUser));
     } catch {}
     setUser(demoUser);
+    return null;
   }, []);
 
   const signOut = useCallback(async () => {
     try {
-      if (user?.uid) {
+      if (user?.uid && !user.isDemo) {
         await set(ref(db, `users/${user.uid}/presence`), {
           online: false,
           lastSeen: serverTimestamp(),
@@ -154,7 +169,7 @@ export function AuthProvider({ children }) {
         await fbSignOut(auth);
       }
     } catch {}
-  }, [user?.uid]);
+  }, [user?.uid, user?.isDemo]);
 
   const value = useMemo(
     () => ({ user, loading, signIn, signInDemo, signOut, isFirebaseConfigured }),
