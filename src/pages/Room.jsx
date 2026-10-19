@@ -98,8 +98,8 @@ export default function Room() {
   const isKicked = Boolean(room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost);
   const isRoomEnded = Boolean(
     activeRoomId === roomId &&
-    room !== undefined &&
-    (room === null || room?.ended === true || room?.playback?.ended === true || (room && !room.hostId))
+    room &&
+    (room.ended === true || room.playback?.ended === true)
   );
 
   // Sync active room in playback context and force resync on entry
@@ -300,6 +300,32 @@ export default function Room() {
   }
 
   if (activeRoomId !== roomId || room === undefined) return <Splash text="Joining room…" />;
+
+  if (room === null) {
+    return (
+      <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
+        <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
+          <p className="text-5xl">🔍</p>
+          <h1 className="mt-4 text-xl font-bold text-white">Room Not Found</h1>
+          <p className="mt-2 text-sm text-white/60">
+            This room does not exist or has been closed.
+          </p>
+          <Link
+            to="/"
+            onClick={() => {
+              try {
+                localStorage.removeItem('TT_ACTIVE_ROOM');
+                sessionStorage.removeItem('TT_ACTIVE_ROOM');
+              } catch {}
+            }}
+            className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3 shadow-[0_0_15px_rgba(34,197,94,0.4)] active:scale-95 transition"
+          >
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Room Security PIN Gate
   const requiresPin = room.roomPin && !isHost && !isPinUnlocked;

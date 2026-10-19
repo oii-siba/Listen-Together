@@ -101,11 +101,11 @@ export function PlaybackProvider({ user, children }) {
     setRoom(undefined);
     hasLoggedJoinRef.current = false;
     const isTerminated = (val) => {
-      if (val === null) return true;
-      if (val?.ended === true) return true;
-      if (val?.playback?.ended === true) return true;
-      if (val?.hostId === null || val?.hostId === undefined) return true;
-      return false;
+      if (!val) {
+        // Only terminated if room was already active and loaded, then deleted by host
+        return Boolean(roomRef.current && roomRef.current.hostId);
+      }
+      return Boolean(val.ended === true || val.playback?.ended === true);
     };
 
     const unsub = onValue(
@@ -128,17 +128,8 @@ export function PlaybackProvider({ user, children }) {
           setRoom(val);
         }
       },
-      () => {
-        try {
-          audioAnchorRef.current?.pause();
-        } catch {}
-        try {
-          localStorage.removeItem('TT_ACTIVE_ROOM');
-          sessionStorage.removeItem('TT_ACTIVE_ROOM');
-        } catch {}
-        setActiveRoomId(null);
-        setRoom(null);
-        navigate('/', { replace: true });
+      (err) => {
+        console.warn('Room subscription error:', err);
       }
     );
     return unsub;
@@ -520,22 +511,7 @@ export function PlaybackProvider({ user, children }) {
     }
   }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, navigate]);
 
-  // When room is ended by host: immediately teardown on all connected devices and redirect to Home
-  useEffect(() => {
-    if (activeRoomId && (room === null || room?.ended === true || room?.playback?.ended === true || !room?.hostId)) {
-      try {
-        audioAnchorRef.current?.pause();
-      } catch {}
-      try {
-        localStorage.removeItem('TT_ACTIVE_ROOM');
-        sessionStorage.removeItem('TT_ACTIVE_ROOM');
-        sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
-      } catch {}
-      setActiveRoomId(null);
-      setRoom(null);
-      navigate('/', { replace: true });
-    }
-  }, [activeRoomId, room?.ended, room?.playback?.ended, room?.hostId, navigate]);
+
 
   // Host auto-play next when queue is present
   useEffect(() => {
