@@ -9,7 +9,12 @@ export const CURRENT_APP_VERSION = '1.0.4';
 
 export function getInstalledVersion() {
   try {
-    return localStorage.getItem('TT_APPLIED_APP_VERSION') || CURRENT_APP_VERSION;
+    const applied = localStorage.getItem('TT_APPLIED_APP_VERSION');
+    if (applied && isNewerVersion(applied, CURRENT_APP_VERSION)) {
+      return applied;
+    }
+    localStorage.setItem('TT_APPLIED_APP_VERSION', CURRENT_APP_VERSION);
+    return CURRENT_APP_VERSION;
   } catch {
     return CURRENT_APP_VERSION;
   }
@@ -76,7 +81,7 @@ function notifyUpdateAvailable(info) {
  * Real In-App Downloader & Installer with live chunk streaming, exact MB tracking, pre-caching, and auto-restart
  */
 export async function downloadAndInstallUpdate(updateInfo, onProgress) {
-  const targetVer = updateInfo?.newVersion || '1.0.4';
+  const targetVer = updateInfo?.newVersion || CURRENT_APP_VERSION;
   const totalMB = Number(updateInfo?.sizeMB) || 1.2;
   const targetBytes = Math.round(totalMB * 1024 * 1024);
 
@@ -140,14 +145,15 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
               });
             }
             if (cache) {
-              const blob = new Blob(chunks, { type: res.headers.get('content-type') || 'application/javascript' });
-              await cache.put(url, new Response(blob, { headers: res.headers }));
+              const contentType = res.headers.get('content-type') || 'application/javascript';
+              const blob = new Blob(chunks, { type: contentType });
+              await cache.put(url, new Response(blob, { headers: { 'Content-Type': contentType } })).catch(() => {});
             }
           } else {
             const blob = await res.blob();
             accumulatedBytes += blob.size;
             if (cache) {
-              await cache.put(url, new Response(blob, { headers: res.headers }));
+              await cache.put(url, new Response(blob)).catch(() => {});
             }
           }
         }
@@ -191,10 +197,21 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
     });
 
     await new Promise((r) => setTimeout(r, 700));
+    window.location.reload();
   } catch (err) {
     console.warn('Update error:', err);
-  } finally {
-    window.location.reload();
+    try {
+      localStorage.setItem('TT_APPLIED_APP_VERSION', targetVer);
+    } catch {}
+    onProgress?.({
+      progress: 100,
+      downloadedMB: totalMB.toFixed(2),
+      totalMB,
+      status: '✅ আপডেট সফল হয়েছে! অ্যাপ রিলোড হচ্ছে...',
+    });
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
   }
 }
 

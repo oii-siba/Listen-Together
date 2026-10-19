@@ -14,16 +14,23 @@ function GoogleG() {
 }
 
 export default function Login() {
-  const { signIn, isFirebaseConfigured } = useAuth();
+  const { signIn, signInDemo, isFirebaseConfigured } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [showSetup, setShowSetup] = useState(!isFirebaseConfigured);
   const inApp = isInAppBrowser();
 
   async function go() {
     setBusy(true);
     setError('');
     const err = await signIn();
+    if (err) setError(err);
+    setBusy(false);
+  }
+
+  async function goGuest() {
+    setBusy(true);
+    setError('');
+    const err = await signInDemo();
     if (err) setError(err);
     setBusy(false);
   }
@@ -59,16 +66,33 @@ export default function Login() {
 
       <div className="mt-8 bg-panel rounded-[24px] p-6 border border-white/10 shadow-xl">
         <p className="text-xs text-white/70 text-center leading-relaxed">
-          Sign in with Google to enter or create rooms. We only request your <b>name</b>, <b>email</b>, and <b>profile photo</b>.
+          Sign in with Google or continue instantly as a guest to enter or create rooms.
         </p>
 
         <button
           onClick={go}
           disabled={busy}
-          className="mt-5 w-full flex items-center justify-center gap-3 bg-white text-black font-bold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100 shadow-md"
+          className="mt-5 w-full flex items-center justify-center gap-3 bg-white text-black font-bold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100 shadow-md cursor-pointer"
         >
           <GoogleG />
           {busy ? 'Connecting to Google…' : 'Continue with Google'}
+        </button>
+
+        <div className="relative my-4 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10" />
+          </div>
+          <span className="relative px-3 bg-panel text-[11px] font-semibold text-white/40 uppercase">
+            বা / Or
+          </span>
+        </div>
+
+        <button
+          onClick={goGuest}
+          disabled={busy}
+          className="w-full py-3 px-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-green-400 font-bold text-xs active:scale-[0.98] transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+        >
+          <span>🚀 Continue as Guest (অতিথি হিসেবে প্রবেশ)</span>
         </button>
 
         {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}

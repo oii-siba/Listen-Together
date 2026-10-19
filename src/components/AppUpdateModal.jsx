@@ -21,7 +21,7 @@ export default function AppUpdateModal() {
     return () => window.removeEventListener('tt-app-update-available', handleUpdate);
   }, []);
 
-  if (!updateInfo.isAvailable || (isDismissed && !updateInfo.forceUpdate)) {
+  if (!updateInfo.isAvailable || isDismissed) {
     return null;
   }
 
@@ -178,15 +178,13 @@ export default function AppUpdateModal() {
                 <span>⬇️ ডাউনলোড ও আপডেট করুন ({updateInfo.size || `${totalMB} MB`})</span>
               </button>
 
-              {!updateInfo.forceUpdate && (
-                <button
-                  type="button"
-                  onClick={() => setIsDismissed(true)}
-                  className="text-xs text-white/40 hover:text-white/80 py-1 transition"
-                >
-                  পরে মনে করিয়ে দিন (Remind me later)
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setIsDismissed(true)}
+                className="text-xs text-white/50 hover:text-white py-1.5 transition cursor-pointer"
+              >
+                পরে মনে করিয়ে দিন (Skip for now)
+              </button>
             </div>
           </>
         )}

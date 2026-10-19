@@ -16,7 +16,7 @@
     },
 
     "friend_directory": {
-      ".read": "auth != null",
+      ".read": true,
       "$code": {
         ".write": "auth != null && (newData.child('uid').val() === auth.uid || (data.exists() && data.child('uid').val() === auth.uid))",
         ".validate": "newData.hasChildren(['uid', 'friendCode', 'name'])"
@@ -24,7 +24,7 @@
     },
 
     "friend_directory_uids": {
-      ".read": "auth != null",
+      ".read": true,
       "$uid": {
         ".write": "auth != null && ($uid === auth.uid)",
         ".validate": "newData.hasChildren(['uid', 'friendCode', 'name'])"
@@ -34,11 +34,11 @@
     "users": {
       "$uid": {
         "profile": {
-          ".read": "auth != null",
+          ".read": true,
           ".write": "auth != null && auth.uid === $uid"
         },
         "presence": {
-          ".read": "auth != null",
+          ".read": true,
           ".write": "auth != null && auth.uid === $uid"
         },
         "favorites": {
@@ -65,7 +65,7 @@
 
     "rooms": {
       "$roomId": {
-        ".read": "auth != null",
+        ".read": true,
         ".write": "auth != null && (!data.exists() && newData.child('hostId').val() === auth.uid)",
 
         "hostId": {

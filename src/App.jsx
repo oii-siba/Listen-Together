@@ -29,9 +29,14 @@ export default function App() {
 
   if (loading) return <Splash />;
 
-  // Not signed in: show Login in place. The URL stays the same, so after Google
-  // sign-in a guest lands straight in the room they were invited to.
-  if (!user) return <Login />;
+  if (!user) {
+    return (
+      <>
+        <Login />
+        <AppUpdateModal />
+      </>
+    );
+  }
 
   return (
     <PlaybackProvider user={user}>

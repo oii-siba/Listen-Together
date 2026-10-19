@@ -215,13 +215,6 @@ export function PlaybackProvider({ user, children }) {
     };
   }, [activeRoomId]);
 
-  // Auto-leave room immediately if listener was kicked by host
-  useEffect(() => {
-    if (activeRoomId && room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost) {
-      leaveRoom();
-    }
-  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, leaveRoom]);
-
   /* ---------- Playback Controls ---------- */
   const playItem = useCallback(
     async (item) => {
@@ -402,6 +395,13 @@ export function PlaybackProvider({ user, children }) {
     setActiveRoomId(null);
     setRoom(null);
   }, [activeRoomId, isHost, people, user?.displayName, user?.uid]);
+
+  // Auto-leave room immediately if listener was kicked by host
+  useEffect(() => {
+    if (activeRoomId && room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost) {
+      leaveRoom();
+    }
+  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, leaveRoom]);
 
   // Host auto-play next when queue is present
   useEffect(() => {

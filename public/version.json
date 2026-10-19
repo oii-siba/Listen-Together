@@ -2,7 +2,7 @@
   "version": "1.0.4",
   "size": "1.2 MB",
   "sizeMB": 1.2,
-  "forceUpdate": true,
+  "forceUpdate": false,
   "title": "নতুন সিকিউরিটি আপডেট এসেছে! 🛡️ (v1.0.4)",
   "message": "TuneTogether-এর হাই-সিকিউরিটি ভার্সন ১.০.৪ প্রকাশ হয়েছে। ডেটা প্রটেকশন ও মাল্টি-ডিভাইস মিউজিক উপভোগ করতে এখনই আপডেট করুন।",
   "changelog": [

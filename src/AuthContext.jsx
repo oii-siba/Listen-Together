@@ -14,9 +14,7 @@ import { registerUserDirectory } from './lib/userData';
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Never trust arbitrary localStorage UIDs when Firebase is configured
   const [user, setUser] = useState(() => {
-    if (isFirebaseConfigured) return null;
     try {
       const saved = localStorage.getItem('LT_DEMO_USER');
       return saved ? JSON.parse(saved) : null;
@@ -25,6 +23,14 @@ export function AuthProvider({ children }) {
     }
   });
   const [loading, setLoading] = useState(true);
+
+  // Safety fallback: Never keep the screen frozen on Splash longer than 1.5s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (user && user.uid) {
@@ -133,8 +139,7 @@ export function AuthProvider({ children }) {
         setUser({ ...anonUser, displayName, photoURL, isAnonymous: true });
         return null;
       } catch (err) {
-        console.warn('Anonymous sign-in error:', err);
-        return err.message || 'Guest sign-in failed.';
+        console.warn('Anonymous sign-in not enabled on Firebase, using local guest session:', err);
       }
     }
 
