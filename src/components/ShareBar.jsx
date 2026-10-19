@@ -11,20 +11,38 @@ export default function ShareBar({ roomId }) {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(link);
-    } catch {
-      window.prompt('Copy room link:', link);
-    }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    } catch {}
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 1800);
   }
 
   async function copyCode() {
     try {
-      await navigator.clipboard.writeText(roomId);
-    } catch {
-      window.prompt('Copy room code:', roomId);
-    }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(roomId);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = roomId;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    } catch {}
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 1800);
   }

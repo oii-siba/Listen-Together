@@ -114,12 +114,6 @@ export default function Room() {
       try {
         playerRef.current?.resync();
       } catch {}
-      const timer = setTimeout(() => {
-        try {
-          playerRef.current?.resync();
-        } catch {}
-      }, 250);
-      return () => clearTimeout(timer);
     }
   }, [roomId, activeRoomId, isHost, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 

@@ -342,11 +342,6 @@ export function PlaybackProvider({ user, children }) {
         localStorage.setItem('TT_ACTIVE_ROOM', roomId);
         sessionStorage.setItem('TT_ACTIVE_ROOM', roomId);
       } catch {}
-      setTimeout(() => {
-        try {
-          playerRef.current?.resync();
-        } catch {}
-      }, 80);
     },
     []
   );
@@ -360,12 +355,6 @@ export function PlaybackProvider({ user, children }) {
         audioAnchorRef.current?.play()?.catch(() => {});
         playerRef.current?.resync();
       } catch {}
-      const timer = setTimeout(() => {
-        try {
-          playerRef.current?.resync();
-        } catch {}
-      }, 300);
-      return () => clearTimeout(timer);
     }
   }, [location.pathname, activeRoomId, playback?.isPlaying]);
 
@@ -415,8 +404,9 @@ export function PlaybackProvider({ user, children }) {
   }, [isHost, hasVideo, queue.length, playItem]);
 
 
-  // Host playback start calibration: calibrates server time to exact moment audio starts playing on host
+  // Host playback start & resume calibration: anchors server time to exact moment audio plays on host
   const lastCalibratedSongId = useRef(null);
+  const lastCalibratedAt = useRef(0);
   const handleHostPlayingStart = useCallback(
     (currentTime) => {
       if (!hostRef.current || !activeRoomId) return;
@@ -424,11 +414,13 @@ export function PlaybackProvider({ user, children }) {
       const pb = r?.playback;
       if (!pb || !pb.isPlaying || !pb.videoId) return;
 
-      // Calibrate once per track when host actually starts hearing audio
-      if (lastCalibratedSongId.current === pb.videoId) return;
+      const now = Date.now();
+      // Throttle calibration updates to once every 2.5 seconds
+      if (lastCalibratedSongId.current === pb.videoId && now - lastCalibratedAt.current < 2500) return;
       lastCalibratedSongId.current = pb.videoId;
+      lastCalibratedAt.current = now;
 
-      // Anchor the room timestamp to the EXACT position when host starts hearing audio
+      // Anchor the room timestamp to the EXACT position when host plays or resumes audio
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         position: currentTime,
         hostTime: serverNow(),
