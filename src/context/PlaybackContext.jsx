@@ -12,8 +12,28 @@ const PlaybackContext = createContext(null);
 
 const toQueue = (q) =>
   Object.entries(q || {})
-    .map(([key, v]) => ({ key, ...v }))
-    .sort((a, b) => (a.key < b.key ? -1 : 1));
+    .map(([key, v]) => {
+      const votes = v.votes || {};
+      const upvotes = Object.values(votes).filter((val) => val === 1).length;
+      const downvotes = Object.values(votes).filter((val) => val === -1).length;
+      const score = upvotes - downvotes;
+      return {
+        key,
+        ...v,
+        votes,
+        upvotes,
+        downvotes,
+        score,
+      };
+    })
+    .sort((a, b) => {
+      // 1. Highest vote score plays first (Jukebox Voting)
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      // 2. Earliest added item is tie-breaker
+      return a.key < b.key ? -1 : 1;
+    });
 
 const toPeople = (p) =>
   Object.entries(p || {})
@@ -357,6 +377,30 @@ export function PlaybackProvider({ user, children }) {
       await remove(ref(db, `rooms/${activeRoomId}/queue/${key}`));
     },
     [activeRoomId]
+  );
+
+  const voteQueueItem = useCallback(
+    async (itemKey, type) => {
+      if (!activeRoomId || !user?.uid || !itemKey) return;
+      const currentVote = roomRef.current?.queue?.[itemKey]?.votes?.[user.uid];
+      let newVote = null;
+      if (type === 'up') {
+        newVote = currentVote === 1 ? null : 1;
+      } else if (type === 'down') {
+        newVote = currentVote === -1 ? null : -1;
+      }
+      try {
+        const voteRef = ref(db, `rooms/${activeRoomId}/queue/${itemKey}/votes/${user.uid}`);
+        if (newVote === null) {
+          await remove(voteRef);
+        } else {
+          await set(voteRef, newVote);
+        }
+      } catch (err) {
+        console.warn('Failed to vote on queue item:', err);
+      }
+    },
+    [activeRoomId, user?.uid]
   );
 
   const joinRoom = useCallback(
@@ -744,6 +788,7 @@ export function PlaybackProvider({ user, children }) {
     seekTo,
     addSong,
     removeFromQueue,
+    voteQueueItem,
   };
 
   return (

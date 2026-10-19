@@ -79,7 +79,12 @@
         "queue": {
           ".write": "auth != null && (data.parent().child('hostId').val() === auth.uid || newData.parent().child('hostId').val() === auth.uid)",
           "$qid": {
-            ".write": "auth != null && (data.parent().parent().child('hostId').val() === auth.uid || (!data.exists() && newData.child('addedBy').val() === auth.uid && data.parent().parent().child('allowGuestAdd').val() !== false) || (data.exists() && data.child('addedBy').val() === auth.uid))"
+            ".write": "auth != null && (data.parent().parent().child('hostId').val() === auth.uid || (!data.exists() && newData.child('addedBy').val() === auth.uid && data.parent().parent().child('allowGuestAdd').val() !== false) || (data.exists() && data.child('addedBy').val() === auth.uid))",
+            "votes": {
+              "$voterUid": {
+                ".write": "auth != null && $voterUid === auth.uid"
+              }
+            }
           }
         },
 

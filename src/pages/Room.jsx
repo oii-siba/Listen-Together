@@ -53,6 +53,7 @@ export default function Room() {
     seekTo,
     addSong,
     removeFromQueue,
+    voteQueueItem,
   } = usePlayback();
 
   const [tab, setTab] = useState('queue');
@@ -511,7 +512,14 @@ export default function Room() {
         {tab === 'queue' && (
           <div className="space-y-4">
             <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} user={user} />
-            <Queue items={queue} isHost={isHost} uid={user.uid} onRemove={removeFromQueue} onPlayNow={playItem} />
+            <Queue
+              items={queue}
+              isHost={isHost}
+              uid={user.uid}
+              onRemove={removeFromQueue}
+              onPlayNow={playItem}
+              onVote={voteQueueItem}
+            />
           </div>
         )}
         {tab === 'chat' && (
