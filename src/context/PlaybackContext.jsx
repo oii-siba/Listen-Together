@@ -219,6 +219,7 @@ export function PlaybackProvider({ user, children }) {
   const playItem = useCallback(
     async (item) => {
       if (!activeRoomId) return;
+      lastCalibratedSongId.current = null;
       lastAdvanceRef.current = Date.now();
       await update(ref(db, `rooms/${activeRoomId}`), {
         playback: {
@@ -250,6 +251,7 @@ export function PlaybackProvider({ user, children }) {
     if (q.length) {
       await playItem(q[0]);
     } else {
+      lastCalibratedSongId.current = null;
       lastAdvanceRef.current = Date.now();
       await set(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: false,
@@ -263,6 +265,7 @@ export function PlaybackProvider({ user, children }) {
   const togglePlay = useCallback(() => {
     const r = roomRef.current;
     if (!activeRoomId || !hasVideo || !isHost || !r || r.hostId !== user?.uid) return;
+    lastCalibratedSongId.current = null;
     const cur = playerRef.current?.getCurrentTime() ?? playback.position ?? 0;
     if (playback.isPlaying) {
       try {
@@ -281,6 +284,7 @@ export function PlaybackProvider({ user, children }) {
     (t) => {
       const r = roomRef.current;
       if (!activeRoomId || !hasVideo || !isHost || !r || r.hostId !== user?.uid) return;
+      lastCalibratedSongId.current = null;
       update(ref(db, `rooms/${activeRoomId}/playback`), {
         isPlaying: !!playback.isPlaying,
         position: t,
@@ -441,7 +445,7 @@ export function PlaybackProvider({ user, children }) {
           updatedAt: serverTimestamp(),
         }).catch(() => {});
       }
-    }, 5000); // Pulse every 5 seconds
+    }, 8000); // Pulse every 8 seconds
 
     return () => clearInterval(interval);
   }, [isHost, activeRoomId, playback?.isPlaying, playback?.videoId, playerRef]);

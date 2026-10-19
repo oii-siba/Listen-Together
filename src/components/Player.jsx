@@ -3,7 +3,11 @@ import { loadYT } from '../lib/youtube';
 import { serverNow } from '../lib/serverTime';
 
 // High-precision, continuous synchronization settings
-const SYNC_HEARTBEAT_MS = 250; // Check every 250ms for tight, real-time acoustic lock
+const SYNC_HEARTBEAT_MS = 250;      // Check every 250ms for smooth speed adjustment
+const SEEK_COOLDOWN_MS = 3500;       // Minimum 3.5s between hard seeks to avoid buffer thrashing
+const HARD_SEEK_THRESHOLD = 2.5;     // Only hard-seek if desync is > 2.5 seconds
+const SYNC_LOCK_TOLERANCE = 0.08;    // Within ±80ms: tight acoustic lock, standard 1.0x speed
+const FAST_CATCHUP_THRESHOLD = 1.0;  // If behind by > 1.0s: use 1.5x speed (or 1.25x)
 
 const UNSTARTED = -1;
 const ENDED = 0;
@@ -82,9 +86,30 @@ const Player = forwardRef(function Player(
   // Adjust playback speed smoothly without pausing or cutting audio
   const setRate = (yt, rate) => {
     try {
+      if (!yt) return;
       const curRate = yt.getPlaybackRate?.() || 1;
-      if (curRate !== rate) {
-        yt.setPlaybackRate?.(rate);
+      if (curRate === rate) return;
+
+      const available = yt.getAvailablePlaybackRates?.();
+      let chosenRate = rate;
+      if (Array.isArray(available) && available.length > 0) {
+        if (!available.includes(rate)) {
+          let minDiff = Infinity;
+          let best = 1;
+          for (const r of available) {
+            if ((rate > 1 && r > 1) || (rate < 1 && r < 1)) {
+              const d = Math.abs(r - rate);
+              if (d < minDiff) {
+                minDiff = d;
+                best = r;
+              }
+            }
+          }
+          chosenRate = best;
+        }
+      }
+      if (curRate !== chosenRate) {
+        yt.setPlaybackRate?.(chosenRate);
       }
     } catch {}
   };
@@ -96,9 +121,11 @@ const Player = forwardRef(function Player(
     if (!yt || !readyRef.current || !pb || !pb.videoId) return;
 
     const st = yt.getPlayerState?.();
+    if (st === BUFFERING) return; // Never interrupt while YouTube is buffering
+
     const cur = yt.getCurrentTime?.() || 0;
     const want = expectedPosition(pb);
-    const diff = want - cur; // positive => we are behind; negative => we are ahead
+    const diff = want - cur; // positive => we are behind host; negative => we are ahead of host
     const absDiff = Math.abs(diff);
 
     if (pb.isPlaying) {
@@ -107,11 +134,11 @@ const Player = forwardRef(function Player(
 
       // If player paused or stopped unexpectedly while room is playing:
       // Give YouTube player time to transition and buffer cleanly without hammering seekTo
-      if (st !== PLAYING && st !== BUFFERING) {
+      if (st !== PLAYING) {
         const now = Date.now();
         if (now - lastPlayAttempt.current > 1800) {
           lastPlayAttempt.current = now;
-          if (absDiff > 1.2) {
+          if (absDiff > 1.5) {
             seek(yt, want);
           }
           try {
@@ -130,24 +157,40 @@ const Player = forwardRef(function Player(
         }
 
         // Guest synchronization logic:
-        const timeSinceLastSeek = Date.now() - lastSeekAt.current;
+        const now = Date.now();
+        const timeSinceLastSeek = now - lastSeekAt.current;
 
-        // 1. Audible phase drift (> 0.12s): snap immediately to expected position
-        // 1500ms cooldown ensures it settles cleanly without looping
-        if (absDiff > 0.12 && (force || timeSinceLastSeek > 1500)) {
+        // 1. If we sought recently, let the player settle at 1.0x without thrashing
+        if (timeSinceLastSeek < SEEK_COOLDOWN_MS) {
+          setRate(yt, 1);
+          return;
+        }
+
+        // 2. Major desync (> 2.5s) or explicit forced resync with significant drift (> 1.5s):
+        // Snap immediately to expected position
+        if (absDiff > HARD_SEEK_THRESHOLD || (force && absDiff > 1.5)) {
           seek(yt, want);
           setRate(yt, 1);
           return;
         }
 
-        // 2. Continuous ultra-precise acoustic alignment (zero-echo lock):
-        // Micro-adjust speed to seamlessly close differences between 25ms and 120ms
-        if (diff > 0.03) {
-          setRate(yt, 1.05); // Gently speed up
-        } else if (diff < -0.03) {
-          setRate(yt, 0.95); // Gently slow down
-        } else if (absDiff <= 0.02) {
-          setRate(yt, 1); // Exact acoustic lock
+        // 3. Continuous smooth acoustic alignment (ZERO stutter, 100% continuous playback!):
+        // Micro-adjust speed to seamlessly close differences between devices without cutting audio
+        if (diff > FAST_CATCHUP_THRESHOLD) {
+          // Behind by > 1.0s: speed up to 1.5x
+          setRate(yt, 1.5);
+        } else if (diff > SYNC_LOCK_TOLERANCE) {
+          // Behind by 80ms - 1000ms: gentle speed-up to 1.25x
+          setRate(yt, 1.25);
+        } else if (diff < -FAST_CATCHUP_THRESHOLD) {
+          // Ahead of host by > 1.0s: slow down to 0.5x
+          setRate(yt, 0.5);
+        } else if (diff < -SYNC_LOCK_TOLERANCE) {
+          // Ahead of host by 80ms - 1000ms: gentle slow down to 0.75x
+          setRate(yt, 0.75);
+        } else {
+          // Within ±80ms tolerance: exact acoustic lock, standard 1.0x speed!
+          setRate(yt, 1);
         }
       }
     } else {
@@ -201,7 +244,7 @@ const Player = forwardRef(function Player(
         if (st !== PLAYING && st !== BUFFERING) {
           // If resuming from pause, align to expected position first
           const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(want - cur) > 0.25) {
+          if (Math.abs(want - cur) > 1.5) {
             seek(yt, want);
           }
           try {
@@ -214,7 +257,7 @@ const Player = forwardRef(function Player(
         yt.pauseVideo();
         if (typeof pb.position === 'number') {
           const cur = yt.getCurrentTime?.() || 0;
-          if (Math.abs(cur - pb.position) > 0.15) {
+          if (Math.abs(cur - pb.position) > 0.5) {
             seek(yt, pb.position);
           }
         }
@@ -260,11 +303,11 @@ const Player = forwardRef(function Player(
               }
               onBlockedRef.current?.(false);
               const cur = ytRef.current?.getCurrentTime?.() || 0;
-              // Guest initial buffer alignment: lock in to exact host position on first play!
+              // Guest initial buffer alignment: only seek if YouTube completely missed startSeconds (> 2.5s)
               if (!isHostRef.current && initialBufferDone.current !== loadedId.current) {
                 initialBufferDone.current = loadedId.current;
                 const want = expectedPosition(stateRef.current);
-                if (Math.abs(want - cur) > 0.03) {
+                if (Math.abs(want - cur) > HARD_SEEK_THRESHOLD) {
                   seek(ytRef.current, want);
                 }
               }
@@ -314,7 +357,7 @@ const Player = forwardRef(function Player(
     enabledRef.current = enabled;
     apply();
     if (!isHostRef.current && playback?.isPlaying) {
-      syncPlayback(true);
+      syncPlayback(false);
     }
   }, [
     playback?.videoId,
@@ -342,7 +385,7 @@ const Player = forwardRef(function Player(
           onBlockedRef.current?.(false);
         } else if (st === UNSTARTED || st === CUED || st === PAUSED) {
           notPlaying.current += 1;
-          // Give ample time (10 ticks = 4000ms) before flagging autoplay blocked
+          // Give ample time (10 ticks = 2500ms) before flagging autoplay blocked
           if (notPlaying.current >= 10) onBlockedRef.current?.(true);
         }
       } else {
@@ -370,7 +413,7 @@ const Player = forwardRef(function Player(
           }
         } catch {}
         setTimeout(() => {
-          syncPlayback(true);
+          syncPlayback(false);
         }, 300);
       }
     };
@@ -409,12 +452,18 @@ const Player = forwardRef(function Player(
             if (st !== PLAYING && st !== BUFFERING) {
               const want = expectedPosition(pb);
               const cur = yt.getCurrentTime?.() || 0;
-              if (Math.abs(want - cur) > 1.2) {
+              if (Math.abs(want - cur) > 1.5) {
                 seek(yt, want);
               }
               yt.playVideo?.();
             } else if (st === PLAYING) {
-              syncPlayback(true);
+              const want = expectedPosition(pb);
+              const cur = yt.getCurrentTime?.() || 0;
+              if (Math.abs(want - cur) > 2.0) {
+                seek(yt, want);
+              } else {
+                syncPlayback(false);
+              }
             }
           } catch {}
         } else {
