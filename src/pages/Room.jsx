@@ -46,6 +46,7 @@ export default function Room() {
     playerRef,
     joinRoom,
     leaveRoom,
+    endRoomForEveryone,
     playItem,
     playNext,
     togglePlay,
@@ -220,28 +221,22 @@ export default function Room() {
       danger: true,
       onConfirm: async () => {
         try {
-          // 1. Broadcast ended state to all connected devices in realtime
-          await update(ref(db, `rooms/${roomId}`), {
-            ended: true,
-            endedAt: serverTimestamp(),
-            playback: { isPlaying: false, position: 0 },
-          });
-          // 2. Remove the room after a brief moment to clean up database
-          setTimeout(async () => {
-            try {
-              await remove(ref(db, `rooms/${roomId}`));
-            } catch {}
-          }, 1500);
-        } catch {
-          try {
-            await remove(ref(db, `rooms/${roomId}`));
-          } catch {}
-        }
-        await leaveRoom();
+          await endRoomForEveryone();
+        } catch {}
         nav('/');
       },
     });
   }
+
+  // If room is ended or removed by host, immediately return to Home page
+  useEffect(() => {
+    if (room === null || room?.ended === true) {
+      try {
+        sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
+      } catch {}
+      nav('/', { replace: true });
+    }
+  }, [room, nav]);
 
   /* ---------- render states ---------- */
   // 1. Check if current user was kicked FIRST before checking activeRoomId or room === null
@@ -269,22 +264,25 @@ export default function Room() {
     );
   }
 
-  if (activeRoomId !== roomId || room === undefined) return <Splash text="Joining room…" />;
-
-  if (room === null) {
+  // 2. Check if room is ended or deleted
+  if (room === null || room?.ended === true) {
     return (
       <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
-        <div>
-          <p className="text-5xl">🎧</p>
-          <h1 className="mt-4 text-xl font-bold">Room not found</h1>
-          <p className="mt-1 text-sm text-white/55">The link may be wrong, or the host ended the room.</p>
-          <Link to="/" className="inline-block mt-6 bg-accent text-black font-semibold rounded-full px-6 py-3">
-            Back to home
+        <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
+          <p className="text-5xl">🛑</p>
+          <h1 className="mt-4 text-xl font-bold text-red-400">Room Ended</h1>
+          <p className="mt-2 text-sm text-white/60">
+            The host has ended this room session for everyone.
+          </p>
+          <Link to="/" className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3 shadow-[0_0_15px_rgba(34,197,94,0.4)] active:scale-95 transition">
+            Back to Home
           </Link>
         </div>
       </div>
     );
   }
+
+  if (activeRoomId !== roomId || room === undefined) return <Splash text="Joining room…" />;
 
   // Room Security PIN Gate
   const requiresPin = room.roomPin && !isHost && !isPinUnlocked;

@@ -376,14 +376,21 @@ export function PlaybackProvider({ user, children }) {
         });
       }
       if (isHost) {
-        const others = people.filter((p) => p.uid !== user?.uid);
-        if (others.length) {
-          await set(ref(db, `rooms/${activeRoomId}/hostId`), others[0].uid);
-        } else {
+        try {
+          await update(ref(db, `rooms/${activeRoomId}`), {
+            ended: true,
+            endedAt: serverTimestamp(),
+            playback: { isPlaying: false, position: 0 },
+          });
           await remove(ref(db, `rooms/${activeRoomId}`));
+        } catch {
+          try {
+            await remove(ref(db, `rooms/${activeRoomId}`));
+          } catch {}
         }
+      } else {
+        await remove(ref(db, `rooms/${activeRoomId}/presence/${user?.uid}`));
       }
-      await remove(ref(db, `rooms/${activeRoomId}/presence/${user?.uid}`));
     } catch {}
     try {
       audioAnchorRef.current?.pause();
@@ -394,7 +401,34 @@ export function PlaybackProvider({ user, children }) {
     } catch {}
     setActiveRoomId(null);
     setRoom(null);
-  }, [activeRoomId, isHost, people, user?.displayName, user?.uid]);
+  }, [activeRoomId, isHost, user?.displayName, user?.uid]);
+
+  // Host terminates the room session completely for all connected listeners
+  const endRoomForEveryone = useCallback(async () => {
+    if (!activeRoomId) return;
+    const targetRoomId = activeRoomId;
+    try {
+      await update(ref(db, `rooms/${targetRoomId}`), {
+        ended: true,
+        endedAt: serverTimestamp(),
+        playback: { isPlaying: false, position: 0, videoId: null },
+      });
+      await remove(ref(db, `rooms/${targetRoomId}`));
+    } catch {
+      try {
+        await remove(ref(db, `rooms/${targetRoomId}`));
+      } catch {}
+    }
+    try {
+      audioAnchorRef.current?.pause();
+    } catch {}
+    try {
+      localStorage.removeItem('TT_ACTIVE_ROOM');
+      sessionStorage.removeItem('TT_ACTIVE_ROOM');
+    } catch {}
+    setActiveRoomId(null);
+    setRoom(null);
+  }, [activeRoomId]);
 
   // Cleanly teardown local playback if listener was kicked by host and redirect immediately to Home page
   useEffect(() => {
@@ -674,6 +708,7 @@ export function PlaybackProvider({ user, children }) {
     playerRef,
     joinRoom,
     leaveRoom,
+    endRoomForEveryone,
     playItem,
     playNext,
     togglePlay,
