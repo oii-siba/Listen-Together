@@ -121,6 +121,16 @@ export default function Room() {
     }
   }, [roomId, activeRoomId, isHost, isKicked, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 
+  // If user is kicked while inside room: cleanly leave and immediately redirect to Home page
+  useEffect(() => {
+    if (activeRoomId === roomId && isKicked) {
+      try {
+        sessionStorage.setItem('TT_KICKED_NOTICE', 'You were removed from the room by the host.');
+      } catch {}
+      handleLeave();
+    }
+  }, [activeRoomId, roomId, isKicked]);
+
   // Host Permission Controls
   const setAllowGuestAdd = (v) => set(ref(db, `rooms/${roomId}/allowGuestAdd`), v);
   const setAllowGuestChat = (v) => set(ref(db, `rooms/${roomId}/allowGuestChat`), v);

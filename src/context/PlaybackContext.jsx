@@ -361,12 +361,15 @@ export function PlaybackProvider({ user, children }) {
   const leaveRoom = useCallback(async () => {
     if (!activeRoomId) return;
     try {
-      logRoomActivity(activeRoomId, {
-        type: 'leave',
-        title: 'Listener Left',
-        body: `${user?.displayName || 'Someone'} left the room 👋`,
-        userName: user?.displayName || 'Someone',
-      });
+      const isKicked = Boolean(roomRef.current?.kickedUsers?.[user?.uid]);
+      if (!isKicked) {
+        logRoomActivity(activeRoomId, {
+          type: 'leave',
+          title: 'Listener Left',
+          body: `${user?.displayName || 'Someone'} left the room 👋`,
+          userName: user?.displayName || 'Someone',
+        });
+      }
       if (isHost) {
         const others = people.filter((p) => p.uid !== user?.uid);
         if (others.length) {
@@ -378,6 +381,9 @@ export function PlaybackProvider({ user, children }) {
       await remove(ref(db, `rooms/${activeRoomId}/presence/${user?.uid}`));
     } catch {}
     try {
+      audioAnchorRef.current?.pause();
+    } catch {}
+    try {
       localStorage.removeItem('TT_ACTIVE_ROOM');
       sessionStorage.removeItem('TT_ACTIVE_ROOM');
     } catch {}
@@ -385,7 +391,7 @@ export function PlaybackProvider({ user, children }) {
     setRoom(null);
   }, [activeRoomId, isHost, people, user?.displayName, user?.uid]);
 
-  // Cleanly teardown local playback if listener was kicked by host (stops audio immediately, avoids reconnect storms)
+  // Cleanly teardown local playback if listener was kicked by host and redirect immediately to Home page
   useEffect(() => {
     if (activeRoomId && room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost) {
       try {
@@ -394,10 +400,13 @@ export function PlaybackProvider({ user, children }) {
       try {
         localStorage.removeItem('TT_ACTIVE_ROOM');
         sessionStorage.removeItem('TT_ACTIVE_ROOM');
+        sessionStorage.setItem('TT_KICKED_NOTICE', 'You were removed from the room by the host.');
       } catch {}
       setActiveRoomId(null);
+      setRoom(null);
+      navigate('/', { replace: true });
     }
-  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost]);
+  }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, navigate]);
 
   // Host auto-play next when queue is present
   useEffect(() => {
