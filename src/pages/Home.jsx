@@ -197,11 +197,6 @@ export default function Home() {
           <span>★</span> ONE BEAT. ONE CONNECTION.
         </div>
 
-        {/* Bengali / Banglish Keyword Tagline */}
-        <p className="mt-2 text-[11px] font-semibold text-green-400/90 tracking-wide">
-          এক সাথে গান শুনতে চান? · Ak Sathe Gaan Sunte Chai
-        </p>
-
         {/* Heading matching screenshot */}
         <h1 className="mt-5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-[1.15]">
           Listen together,<br />
@@ -418,34 +413,34 @@ export default function Home() {
       <section className="mt-16">
         <div className="text-center">
           <p className="text-[11px] font-bold text-green-400 uppercase tracking-widest">
-            FREQUENTLY ASKED QUESTIONS · এক সাথে গান শুনতে চাই
+            FREQUENTLY ASKED QUESTIONS
           </p>
           <h2 className="mt-1 text-2xl font-extrabold text-white tracking-tight">
             The Easiest Way to Listen Together
           </h2>
           <p className="mt-2 text-xs text-white/60 max-w-sm mx-auto">
-            এক সাথে গান শুনতে চান? (Ak Sathe Gaan Sunte Chai) TuneTogether দিয়ে যেকোনো ডিভাইস থেকে বন্ধুদের সাথে নিখুঁত রিয়েল-টাইম সিংকে YouTube গান শুনুন — কোনো ব্লুটুথ বা বাড়তি অ্যাপ ছাড়াই।
+            Listen to YouTube music in perfect real-time sync across multiple devices — no Bluetooth or extra apps required.
           </p>
         </div>
 
         <div className="mt-6 space-y-3">
-          {/* FAQ 1: Bengali Target Query */}
-          <div className="bg-panel/80 border border-green-500/20 rounded-2xl p-4 shadow-sm">
+          {/* FAQ 1 */}
+          <div className="bg-panel/80 border border-white/10 rounded-2xl p-4 shadow-sm">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span className="text-green-400 font-extrabold">Q.</span> এক সাথে গান শুনতে চাই - কিভাবে শুনব? (Ak Sathe Gaan Sunte Chai)
+              <span className="text-green-400 font-extrabold">Q.</span> Can I listen to music together with friends on different phones?
             </h3>
             <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              খুবই সহজ! <strong>"Create a room"</strong> বাটনে ক্লিক করে একটি রুম তৈরি করুন এবং আপনার বন্ধুদের লিংক বা QR কোড পাঠিয়ে দিন। এরপর হোস্ট যেকোনো গান প্লে করলে সবার ফোনে একই সাথে একই সেকেন্ডে (Zero Delay Sync) গান বেজে উঠবে।
+              Yes! Simply click <strong>"Create a room"</strong> on TuneTogether and share your room link or QR code with friends. The same song will play across all connected phones and computers at the exact same millisecond with zero delay.
             </p>
           </div>
 
-          {/* FAQ 2: Banglish Target Query */}
-          <div className="bg-panel/80 border border-green-500/20 rounded-2xl p-4 shadow-sm">
+          {/* FAQ 2 */}
+          <div className="bg-panel/80 border border-white/10 rounded-2xl p-4 shadow-sm">
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span className="text-green-400 font-extrabold">Q.</span> ak sathe sunte chai কোনো অ্যাপ ডাউনলোড করা ছাড়া, এটা কি সম্ভব?
+              <span className="text-green-400 font-extrabold">Q.</span> Do my friends need to install any app to listen?
             </h3>
             <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              হ্যাঁ, একশো ভাগ সম্ভব! TuneTogether সরাসরি যেকোনো ব্রাউজারে (Chrome, Safari, Firefox) চলে। কোনো ভারী অ্যাপ ইনস্টল না করেই মোবাইল, ট্যাবলেট বা ল্যাপটপ থেকে বন্ধুদের সাথে একই গান শুনতে পারবেন।
+              No app required! TuneTogether runs entirely in any web browser (Chrome, Safari, Firefox). Anyone can join instantly on Android, iPhone, Windows, or Mac without downloading anything.
             </p>
           </div>
 

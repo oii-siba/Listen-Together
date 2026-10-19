@@ -3,13 +3,13 @@
   "size": "1.2 MB",
   "sizeMB": 1.2,
   "forceUpdate": false,
-  "title": "নতুন সিকিউরিটি আপডেট এসেছে! 🛡️ (v1.0.4)",
-  "message": "TuneTogether-এর হাই-সিকিউরিটি ভার্সন ১.০.৪ প্রকাশ হয়েছে। ডেটা প্রটেকশন ও মাল্টি-ডিভাইস মিউজিক উপভোগ করতে এখনই আপডেট করুন।",
+  "title": "New Security Update Ready! 🛡️ (v1.0.4)",
+  "message": "TuneTogether v1.0.4 is now available. Update now to enjoy enhanced security and smooth music sync.",
   "changelog": [
-    "🛡️ ফেজ ১ কমপ্লিট সিকিউরিটি শিল্ড (ডেটাবেজ ও পারমিশন লক)",
-    "🔒 প্রাইভেট রুম ও হোস্ট কনট্রোল প্রোটেকশন",
-    "👤 ভুয়ো আইডি ও ডেমো অ্যাকাউন্ট এক্সপ্লয়েট প্রতিরোধ",
-    "🎧 রিয়েল-টাইম মিউজিক সিঙ্ক ও স্মুথ প্লেব্যাক",
-    "📦 রিয়েল ডাটা স্ট্রিমিং ও লাইভ MB ডাউনলোডার"
+    "🛡️ Complete Security Shield & Room Lock",
+    "🔒 Private Room & Host Controls Protection",
+    "👤 Fake User ID & Exploit Prevention",
+    "🎧 Real-time Music Sync & Smooth Playback",
+    "📦 Fast Data Streaming & Asset Caching"
   ]
 }

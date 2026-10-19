@@ -20,7 +20,7 @@ export default function ExitConfirmModal({ isOpen, onClose }) {
         </div>
 
         <h3 className="mt-4 text-lg font-extrabold text-white">
-          গান এখনও বাজছে!
+          Music is Still Playing!
         </h3>
         <p className="text-xs text-green-400 font-medium mt-1">
           Room #{activeRoomId} · {playback?.title || 'Now Playing'}
@@ -28,13 +28,10 @@ export default function ExitConfirmModal({ isOpen, onClose }) {
 
         <div className="mt-4 p-3.5 rounded-2xl bg-white/5 border border-white/10 text-left space-y-2">
           <p className="text-xs text-white/90 leading-relaxed font-semibold">
-            💡 অন্য অ্যাপ (WhatsApp, Facebook) ব্যবহার করবেন?
+            💡 Using other apps (WhatsApp, Facebook)?
           </p>
           <p className="text-[11px] text-white/60 leading-relaxed">
-            ব্রাউজারের <strong>Back</strong> বাটন চাপলে ওয়েবসাইট বন্ধ হয়ে গান থেমে যাবে। গান চালিয়ে রাখতে চাইলে ফোনের <strong>Home</strong> বাটন চাপুন বা অ্যাপ মিনিমাইজ করুন!
-          </p>
-          <p className="text-[10px] text-white/40 italic">
-            (Don't press Back to exit. Press your phone's Home button to keep listening in the background.)
+            Pressing your browser's <strong>Back</strong> button will leave the room and stop the music. To keep listening in the background, press your phone's <strong>Home</strong> button or minimize the app!
           </p>
         </div>
 
@@ -44,7 +41,7 @@ export default function ExitConfirmModal({ isOpen, onClose }) {
             onClick={onClose}
             className="w-full py-3.5 rounded-full bg-green-500 text-black font-extrabold text-sm hover:brightness-110 active:scale-95 transition shadow-[0_0_20px_rgba(34,197,94,0.5)]"
           >
-            🎵 গান চালিয়ে রাখুন (Keep Listening)
+            🎵 Keep Listening
           </button>
 
           <button
@@ -52,7 +49,7 @@ export default function ExitConfirmModal({ isOpen, onClose }) {
             onClick={handleExitAndStop}
             className="w-full py-2.5 rounded-full bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 text-xs font-semibold border border-white/10 transition active:scale-95"
           >
-            ✕ গান বন্ধ করে বের হন (Exit &amp; Stop Music)
+            ✕ Exit &amp; Stop Music
           </button>
         </div>
       </div>

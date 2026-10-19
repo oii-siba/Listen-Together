@@ -77,10 +77,10 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
   };
 
   const handleCheckUpdate = async () => {
-    setUpdateToast('আপডেট চেক করা হচ্ছে... ⏳');
+    setUpdateToast('Checking for updates... ⏳');
     const hasUpdate = await checkRemoteVersion();
     if (!hasUpdate) {
-      setUpdateToast(`✓ আপনি লেটেস্ট ভার্সনে আছেন (v${CURRENT_APP_VERSION})`);
+      setUpdateToast(`✓ You are on the latest version (v${CURRENT_APP_VERSION})`);
       setTimeout(() => setUpdateToast(''), 3500);
     } else {
       setIsOpen(false);

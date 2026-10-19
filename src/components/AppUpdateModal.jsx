@@ -29,7 +29,7 @@ export default function AppUpdateModal() {
     setIsDownloading(true);
     setDownloadProgress(5);
     setDownloadedMB('0.05');
-    setDownloadStatus('📡 সার্ভার কানেক্ট হচ্ছে...');
+    setDownloadStatus('📡 Connecting to server...');
 
     await downloadAndInstallUpdate(updateInfo, (info) => {
       if (info) {
@@ -63,13 +63,13 @@ export default function AppUpdateModal() {
             </div>
 
             <h3 className="text-lg font-black text-white leading-tight">
-              {downloadProgress >= 100 ? 'আপডেট সম্পন্ন হয়েছে! 🎉' : 'আপডেট ডাউনলোড হচ্ছে...'}
+              {downloadProgress >= 100 ? 'Update Complete! 🎉' : 'Downloading Update...'}
             </h3>
 
             {/* Percentage Display */}
             <div className="mt-3 flex items-baseline justify-center gap-1.5">
               <span className="text-4xl font-black text-white tracking-tight">{downloadProgress}%</span>
-              <span className="text-xs font-bold text-white/50 uppercase">সম্পন্ন</span>
+              <span className="text-xs font-bold text-white/50 uppercase">Complete</span>
             </div>
 
             {/* Live Downloaded MB vs Total MB */}
@@ -93,12 +93,12 @@ export default function AppUpdateModal() {
               {downloadProgress < 100 && (
                 <span className="w-3.5 h-3.5 border-2 border-green-400 border-t-transparent rounded-full animate-spin shrink-0" />
               )}
-              <span className="truncate">{downloadStatus || 'ডাউনলোড হচ্ছে...'}</span>
+              <span className="truncate">{downloadStatus || 'Downloading...'}</span>
             </div>
 
             {/* Safety Notice */}
             <p className="mt-4 text-[10px] text-white/45 leading-relaxed px-2">
-              ⚠️ অনুগ্রহ করে পেজটি বন্ধ বা রিফ্রেশ করবেন না। ডাউনলোড শেষ হলে নতুন ভার্সন নিয়ে অ্যাপটি স্বয়ংক্রিয়ভাবে রিস্টার্ট হবে।
+              ⚠️ Please do not close or refresh this page. TuneTogether will automatically restart once installation finishes.
             </p>
           </div>
         ) : (
@@ -119,11 +119,11 @@ export default function AppUpdateModal() {
 
             {/* Title & Message */}
             <h3 className="text-lg font-black text-white leading-tight">
-              {updateInfo.title || 'নতুন আপডেট উপলব্ধ! 🚀'}
+              {updateInfo.title || 'New Update Available! 🚀'}
             </h3>
             <p className="mt-2 text-xs text-white/70 leading-relaxed px-1">
               {updateInfo.message ||
-                'TuneTogether-এর নতুন ভার্সন এসেছে। নতুন ফিচার ও নিরবচ্ছিন্ন গান শোনার জন্য আপডেট করুন।'}
+                'A new version of TuneTogether is ready. Update now to enjoy enhanced security and smooth music sync.'}
             </p>
 
             {/* Prominent Download Size & Speed Card */}
@@ -134,7 +134,7 @@ export default function AppUpdateModal() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-wider text-green-400">
-                    ডাউনলোড প্যাকেজ
+                    Download Package
                   </p>
                   <p className="text-sm font-black text-white">
                     {updateInfo.size || `${totalMB} MB`}
@@ -142,7 +142,7 @@ export default function AppUpdateModal() {
                 </div>
               </div>
               <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30">
-                ⚡ লাইভ ইনস্টল
+                ⚡ Live Install
               </span>
             </div>
 
@@ -150,7 +150,7 @@ export default function AppUpdateModal() {
             {updateInfo.changelog && updateInfo.changelog.length > 0 && (
               <div className="mt-3.5 p-3 rounded-2xl bg-white/[0.04] border border-white/10 text-left space-y-1.5">
                 <p className="text-[10px] font-black uppercase tracking-wider text-green-400">
-                  ✨ নতুন যা যুক্ত হয়েছে (What&apos;s New):
+                  ✨ What&apos;s New:
                 </p>
                 {updateInfo.changelog.map((item, idx) => (
                   <p key={idx} className="text-[11px] text-white/80 flex items-start gap-1.5">
@@ -164,7 +164,7 @@ export default function AppUpdateModal() {
             {/* Mandatory Warning if forceUpdate */}
             {updateInfo.forceUpdate && (
               <div className="mt-3 py-1.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
-                ⚠️ অ্যাপটি ব্যবহার চালিয়ে যেতে এই আপডেটটি নেওয়া আবশ্যক।
+                ⚠️ This update is required to continue using TuneTogether.
               </div>
             )}
 
@@ -175,7 +175,7 @@ export default function AppUpdateModal() {
                 onClick={handleStartDownload}
                 className="w-full py-3.5 px-4 rounded-full bg-green-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.6)] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>⬇️ ডাউনলোড ও আপডেট করুন ({updateInfo.size || `${totalMB} MB`})</span>
+                <span>⬇️ Download &amp; Update ({updateInfo.size || `${totalMB} MB`})</span>
               </button>
 
               <button
@@ -183,7 +183,7 @@ export default function AppUpdateModal() {
                 onClick={() => setIsDismissed(true)}
                 className="text-xs text-white/50 hover:text-white py-1.5 transition cursor-pointer"
               >
-                পরে মনে করিয়ে দিন (Skip for now)
+                Remind me later (Skip for now)
               </button>
             </div>
           </>

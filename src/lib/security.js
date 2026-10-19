@@ -15,7 +15,7 @@ export function initClientSecurity() {
     const bodyStyle = 'color: #22c55e; font-size: 13px; font-weight: 600; line-height: 1.6;';
     const noteStyle = 'color: #94a3b8; font-size: 11px;';
 
-    console.log('%c⚠️ STOP! / সাবধান!', bannerStyle);
+    console.log('%c⚠️ STOP!', bannerStyle);
     console.log(
       '%cThis is a browser feature intended for developers. Do not paste any code here!\nTuneTogether database is fully secured by Firebase Security Rules.',
       bodyStyle

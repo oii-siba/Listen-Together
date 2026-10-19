@@ -83,7 +83,7 @@ export default function Login() {
             <div className="w-full border-t border-white/10" />
           </div>
           <span className="relative px-3 bg-panel text-[11px] font-semibold text-white/40 uppercase">
-            বা / Or
+            Or
           </span>
         </div>
 
@@ -92,7 +92,7 @@ export default function Login() {
           disabled={busy}
           className="w-full py-3 px-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-green-400 font-bold text-xs active:scale-[0.98] transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
         >
-          <span>🚀 Continue as Guest (অতিথি হিসেবে প্রবেশ)</span>
+          <span>🚀 Continue as Guest</span>
         </button>
 
         {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}

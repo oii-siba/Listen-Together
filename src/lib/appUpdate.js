@@ -27,14 +27,14 @@ let updateInfoState = {
   currentVersion: CURRENT_APP_VERSION,
   size: '1.2 MB',
   sizeMB: 1.2,
-  title: 'নতুন সিকিউরিটি আপডেট এসেছে! 🛡️',
-  message: 'TuneTogether-এর নতুন ভার্সন এসেছে। নতুন সিকিউরিটি ফিচার ও মিউজিক সিঙ্ক উপভোগ করতে এখনই আপডেট করুন।',
+  title: 'New Security Update Ready! 🛡️',
+  message: 'A new version of TuneTogether is available. Update now to enjoy enhanced security and smooth music sync.',
   changelog: [
-    '🛡️ ফেজ ১ কমপ্লিট সিকিউরিটি শিল্ড (ডেটাবেজ ও পারমিশন লক)',
-    '🔒 প্রাইভেট রুম ও হোস্ট কনট্রোল প্রোটেকশন',
-    '👤 ভুয়ো আইডি ও ডেমো অ্যাকাউন্ট এক্সপ্লয়েট প্রতিরোধ',
-    '🎧 রিয়েল-টাইম মিউজিক সিঙ্ক ও স্মুথ প্লেব্যাক',
-    '📦 রিয়েল ডাটা স্ট্রিমিং ও লাইভ MB ডাউনলোডার',
+    '🛡️ Complete Security Shield & Room Lock',
+    '🔒 Private Room & Host Controls Protection',
+    '👤 Fake User ID & Exploit Prevention',
+    '🎧 Real-time Music Sync & Smooth Playback',
+    '📦 Fast Data Streaming & Asset Caching',
   ],
 };
 
@@ -92,7 +92,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       progress: 5,
       downloadedMB: '0.05',
       totalMB,
-      status: '📡 সার্ভার কানেক্ট হচ্ছে ও নতুন প্যাকেজ খোঁজা হচ্ছে...',
+      status: '📡 Connecting to server and checking packages...',
     });
 
     // 1. Fetch live index.html with cache busting
@@ -107,7 +107,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       progress: 15,
       downloadedMB: (accumulatedBytes / (1024 * 1024)).toFixed(2),
       totalMB,
-      status: '⬇️ নতুন ভার্সনের স্ক্রিপ্ট ও এসেট ডাউনলোড হচ্ছে...',
+      status: '⬇️ Downloading updated scripts and assets...',
     });
 
     // Parse real script and link tags from the fresh HTML
@@ -141,7 +141,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
                 progress: pct,
                 downloadedMB: currentMB,
                 totalMB,
-                status: `⬇️ ফাইল ডাউনলোড হচ্ছে... (${currentMB} MB / ${totalMB} MB)`,
+                status: `⬇️ Downloading files... (${currentMB} MB / ${totalMB} MB)`,
               });
             }
             if (cache) {
@@ -167,7 +167,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       progress: 95,
       downloadedMB: totalMB.toFixed(2),
       totalMB,
-      status: '⚙️ সার্ভিস ওয়ার্কার ও প্যাকেজ ইনস্টল করা হচ্ছে...',
+      status: '⚙️ Installing service worker and assets...',
     });
 
     // 3. Activate service worker
@@ -193,7 +193,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       progress: 100,
       downloadedMB: totalMB.toFixed(2),
       totalMB,
-      status: '✅ ডাউনলোড সম্পন্ন! অ্যাপ রিস্টার্ট হচ্ছে... 🎉',
+      status: '✅ Download complete! Restarting app... 🎉',
     });
 
     await new Promise((r) => setTimeout(r, 700));
@@ -207,7 +207,7 @@ export async function downloadAndInstallUpdate(updateInfo, onProgress) {
       progress: 100,
       downloadedMB: totalMB.toFixed(2),
       totalMB,
-      status: '✅ আপডেট সফল হয়েছে! অ্যাপ রিলোড হচ্ছে...',
+      status: '✅ Update successful! Reloading app...',
     });
     setTimeout(() => {
       window.location.reload();
@@ -278,8 +278,8 @@ export function initAppUpdateSystem() {
       if (reg.waiting) {
         waitingServiceWorker = reg.waiting;
         notifyUpdateAvailable({
-          title: 'নতুন আপডেট প্রস্তুত! 🚀',
-          message: 'একটি নতুন আপডেট ব্যাকগ্রাউন্ডে ডাউনলোড হয়েছে। অ্যাপটি রিলোড করে আপডেট সম্পূর্ণ করুন।',
+          title: 'New Update Ready! 🚀',
+          message: 'A new update was downloaded in the background. Reload to complete updating.',
         });
       }
 
@@ -292,8 +292,8 @@ export function initAppUpdateSystem() {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             waitingServiceWorker = newWorker;
             notifyUpdateAvailable({
-              title: 'নতুন আপডেট প্রস্তুত! 🚀',
-              message: 'একটি নতুন আপডেট ব্যাকগ্রাউন্ডে ডাউনলোড হয়েছে। অ্যাপটি রিলোড করে আপডেট সম্পূর্ণ করুন।',
+              title: 'New Update Ready! 🚀',
+              message: 'A new update was downloaded in the background. Reload to complete updating.',
             });
           }
         });
@@ -351,8 +351,8 @@ export function initAppUpdateSystem() {
               forceUpdate: force,
               size: val.size || '1.2 MB',
               sizeMB: typeof val.sizeMB === 'number' ? val.sizeMB : 1.2,
-              title: val.title || 'লাইভ আপডেট পাওয়া গেছে! 🚀',
-              message: val.message || 'TuneTogether-এ জরুরি আপডেট এসেছে। অনুগ্রহ করে এখনই আপডেট করুন।',
+              title: val.title || 'Live Update Available! 🚀',
+              message: val.message || 'TuneTogether has a critical update available. Please update now.',
               changelog: val.changelog || updateInfoState.changelog,
             });
           }
