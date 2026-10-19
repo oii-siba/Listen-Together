@@ -214,14 +214,29 @@ export default function Room() {
   function endRoom() {
     if (!isHost) return;
     setConfirmModal({
-      title: 'End Room?',
-      desc: 'End this room session for all listeners? All connected devices will be disconnected.',
-      confirmText: 'End Room',
+      title: 'End Room for Everyone?',
+      desc: 'End this room session for all listeners? All connected devices will be disconnected and returned to Home.',
+      confirmText: 'End Room ⛔',
       danger: true,
       onConfirm: async () => {
         try {
-          await remove(ref(db, `rooms/${roomId}`));
-        } catch {}
+          // 1. Broadcast ended state to all connected devices in realtime
+          await update(ref(db, `rooms/${roomId}`), {
+            ended: true,
+            endedAt: serverTimestamp(),
+            playback: { isPlaying: false, position: 0 },
+          });
+          // 2. Remove the room after a brief moment to clean up database
+          setTimeout(async () => {
+            try {
+              await remove(ref(db, `rooms/${roomId}`));
+            } catch {}
+          }, 1500);
+        } catch {
+          try {
+            await remove(ref(db, `rooms/${roomId}`));
+          } catch {}
+        }
         await leaveRoom();
         nav('/');
       },
@@ -614,10 +629,24 @@ export default function Room() {
           )}
 
           <button
+            type="button"
             onClick={endRoom}
-            className="w-full rounded-2xl border border-red-500/40 text-red-300 py-3 text-xs sm:text-sm font-bold hover:bg-red-500/10 transition"
+            className="w-full rounded-2xl border border-red-500/40 text-red-300 py-3 text-xs sm:text-sm font-bold hover:bg-red-500/10 hover:border-red-500/60 transition shadow-sm"
           >
-            End room for everyone
+            End room for everyone ⛔
+          </button>
+        </div>
+      )}
+
+      {/* Guest Leave Room Button (Only visible to non-host listeners) */}
+      {!isHost && (
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={handleLeave}
+            className="w-full rounded-2xl border border-white/10 text-white/70 py-3 text-xs sm:text-sm font-semibold hover:bg-white/5 hover:text-white transition"
+          >
+            Leave Room
           </button>
         </div>
       )}

@@ -21,23 +21,28 @@ export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showAndroid, setShowAndroid] = useState(false);
-  const [kickedNotice, setKickedNotice] = useState(() => {
+  const [roomAlert, setRoomAlert] = useState(() => {
     try {
-      const msg = sessionStorage.getItem('TT_KICKED_NOTICE');
-      if (msg) {
+      const endedMsg = sessionStorage.getItem('TT_ROOM_ENDED_NOTICE');
+      if (endedMsg) {
+        sessionStorage.removeItem('TT_ROOM_ENDED_NOTICE');
+        return { type: 'ended', msg: endedMsg, icon: '🛑' };
+      }
+      const kickedMsg = sessionStorage.getItem('TT_KICKED_NOTICE');
+      if (kickedMsg) {
         sessionStorage.removeItem('TT_KICKED_NOTICE');
-        return msg;
+        return { type: 'kicked', msg: kickedMsg, icon: '🛡️' };
       }
     } catch {}
-    return '';
+    return null;
   });
 
   useEffect(() => {
-    if (kickedNotice) {
-      const t = setTimeout(() => setKickedNotice(''), 6000);
+    if (roomAlert) {
+      const t = setTimeout(() => setRoomAlert(null), 6000);
       return () => clearTimeout(t);
     }
-  }, [kickedNotice]);
+  }, [roomAlert]);
 
   async function createRoom() {
     setBusy(true);
@@ -96,20 +101,20 @@ export default function Home() {
       {/* Brand Header */}
       <BrandHeader user={user} onSignOut={signOut} showNav={true} />
 
-      {/* Kicked from room notice banner */}
-      {kickedNotice && (
+      {/* Room Alert Notice Banner (Kicked or Ended) */}
+      {roomAlert && (
         <div className="mt-3 rounded-2xl bg-gradient-to-r from-red-500/20 via-red-500/10 to-red-500/20 border border-red-500/30 text-red-200 text-xs p-3.5 flex items-center justify-between gap-3 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-2.5">
-            <span className="text-base">🛡️</span>
-            <div>
-              <p className="font-bold text-white text-xs">{kickedNotice}</p>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-base shrink-0">{roomAlert.icon}</span>
+            <div className="min-w-0">
+              <p className="font-bold text-white text-xs truncate">{roomAlert.msg}</p>
               <p className="text-[10.5px] text-white/50">You can create your own room or explore songs below.</p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setKickedNotice('')}
-            className="text-white/40 hover:text-white text-sm px-1.5 py-0.5 rounded-full hover:bg-white/10 transition"
+            onClick={() => setRoomAlert(null)}
+            className="text-white/40 hover:text-white text-sm px-1.5 py-0.5 rounded-full hover:bg-white/10 transition shrink-0"
           >
             ✕
           </button>

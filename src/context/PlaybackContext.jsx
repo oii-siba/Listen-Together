@@ -84,13 +84,18 @@ export function PlaybackProvider({ user, children }) {
       ref(db, `rooms/${activeRoomId}`),
       (snap) => {
         const val = snap.val();
-        if (val === null) {
+        if (val === null || val?.ended === true) {
+          try {
+            audioAnchorRef.current?.pause();
+          } catch {}
           try {
             localStorage.removeItem('TT_ACTIVE_ROOM');
             sessionStorage.removeItem('TT_ACTIVE_ROOM');
+            sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
           } catch {}
           setActiveRoomId(null);
           setRoom(null);
+          navigate('/', { replace: true });
         } else {
           setRoom(val);
         }
@@ -407,6 +412,23 @@ export function PlaybackProvider({ user, children }) {
       navigate('/', { replace: true });
     }
   }, [activeRoomId, room?.kickedUsers, user?.uid, isHost, navigate]);
+
+  // When room is ended by host: immediately teardown on all connected devices and redirect to Home
+  useEffect(() => {
+    if (activeRoomId && room?.ended) {
+      try {
+        audioAnchorRef.current?.pause();
+      } catch {}
+      try {
+        localStorage.removeItem('TT_ACTIVE_ROOM');
+        sessionStorage.removeItem('TT_ACTIVE_ROOM');
+        sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
+      } catch {}
+      setActiveRoomId(null);
+      setRoom(null);
+      navigate('/', { replace: true });
+    }
+  }, [activeRoomId, room?.ended, navigate]);
 
   // Host auto-play next when queue is present
   useEffect(() => {
