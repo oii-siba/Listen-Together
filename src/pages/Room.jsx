@@ -564,7 +564,8 @@ export default function Room() {
           <Participants
             people={people}
             hostId={room.hostId}
-            myUid={user.uid}
+            myUid={user?.uid}
+            user={user}
             onKick={handleKickUser}
             kickedUsers={room.kickedUsers}
             onUnban={handleUnbanUser}
