@@ -95,10 +95,11 @@ export default function Room() {
   }, []);
 
   const isKicked = Boolean(room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost);
+  const isRoomEnded = Boolean(room === null || room?.ended === true || room?.playback?.ended === true || (room && !room.hostId));
 
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
-    if (!roomId || isKicked) return;
+    if (!roomId || isKicked || isRoomEnded) return;
 
     // Check if room requires PIN and if this device is unlocked
     const storedUnlocked = (() => {
@@ -120,7 +121,7 @@ export default function Room() {
         playerRef.current?.resync();
       } catch {}
     }
-  }, [roomId, activeRoomId, isHost, isKicked, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
+  }, [roomId, activeRoomId, isHost, isKicked, isRoomEnded, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 
   // If user is kicked while inside room: cleanly leave and immediately redirect to Home page
   useEffect(() => {
@@ -230,13 +231,15 @@ export default function Room() {
 
   // If room is ended or removed by host, immediately return to Home page
   useEffect(() => {
-    if (room === null || room?.ended === true) {
+    if (isRoomEnded) {
       try {
         sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
+        localStorage.removeItem('TT_ACTIVE_ROOM');
+        sessionStorage.removeItem('TT_ACTIVE_ROOM');
       } catch {}
       nav('/', { replace: true });
     }
-  }, [room, nav]);
+  }, [isRoomEnded, nav]);
 
   /* ---------- render states ---------- */
   // 1. Check if current user was kicked FIRST before checking activeRoomId or room === null
@@ -265,7 +268,7 @@ export default function Room() {
   }
 
   // 2. Check if room is ended or deleted
-  if (room === null || room?.ended === true) {
+  if (isRoomEnded) {
     return (
       <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
         <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
@@ -274,7 +277,16 @@ export default function Room() {
           <p className="mt-2 text-sm text-white/60">
             The host has ended this room session for everyone.
           </p>
-          <Link to="/" className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3 shadow-[0_0_15px_rgba(34,197,94,0.4)] active:scale-95 transition">
+          <Link
+            to="/"
+            onClick={() => {
+              try {
+                localStorage.removeItem('TT_ACTIVE_ROOM');
+                sessionStorage.removeItem('TT_ACTIVE_ROOM');
+              } catch {}
+            }}
+            className="inline-block mt-6 bg-green-500 text-black font-extrabold rounded-full px-6 py-3 shadow-[0_0_15px_rgba(34,197,94,0.4)] active:scale-95 transition"
+          >
             Back to Home
           </Link>
         </div>

@@ -80,11 +80,19 @@ export function PlaybackProvider({ user, children }) {
     }
     setRoom(undefined);
     hasLoggedJoinRef.current = false;
+    const isTerminated = (val) => {
+      if (val === null) return true;
+      if (val?.ended === true) return true;
+      if (val?.playback?.ended === true) return true;
+      if (val?.hostId === null || val?.hostId === undefined) return true;
+      return false;
+    };
+
     const unsub = onValue(
       ref(db, `rooms/${activeRoomId}`),
       (snap) => {
         const val = snap.val();
-        if (val === null || val?.ended === true) {
+        if (isTerminated(val)) {
           try {
             audioAnchorRef.current?.pause();
           } catch {}
@@ -100,7 +108,18 @@ export function PlaybackProvider({ user, children }) {
           setRoom(val);
         }
       },
-      () => setRoom(null)
+      () => {
+        try {
+          audioAnchorRef.current?.pause();
+        } catch {}
+        try {
+          localStorage.removeItem('TT_ACTIVE_ROOM');
+          sessionStorage.removeItem('TT_ACTIVE_ROOM');
+        } catch {}
+        setActiveRoomId(null);
+        setRoom(null);
+        navigate('/', { replace: true });
+      }
     );
     return unsub;
   }, [activeRoomId]);
@@ -408,11 +427,21 @@ export function PlaybackProvider({ user, children }) {
     if (!activeRoomId) return;
     const targetRoomId = activeRoomId;
     try {
+      // 1. Mark playback as ended (guaranteed permission under all Firebase rules)
+      await update(ref(db, `rooms/${targetRoomId}/playback`), {
+        ended: true,
+        isPlaying: false,
+        videoId: null,
+      });
+      // 2. Clear presence
+      await remove(ref(db, `rooms/${targetRoomId}/presence`));
+      // 3. Mark root room ended & remove hostId
       await update(ref(db, `rooms/${targetRoomId}`), {
         ended: true,
+        hostId: null,
         endedAt: serverTimestamp(),
-        playback: { isPlaying: false, position: 0, videoId: null },
       });
+      // 4. Delete the entire room tree
       await remove(ref(db, `rooms/${targetRoomId}`));
     } catch {
       try {
@@ -449,7 +478,7 @@ export function PlaybackProvider({ user, children }) {
 
   // When room is ended by host: immediately teardown on all connected devices and redirect to Home
   useEffect(() => {
-    if (activeRoomId && room?.ended) {
+    if (activeRoomId && (room === null || room?.ended === true || room?.playback?.ended === true || !room?.hostId)) {
       try {
         audioAnchorRef.current?.pause();
       } catch {}
@@ -462,7 +491,7 @@ export function PlaybackProvider({ user, children }) {
       setRoom(null);
       navigate('/', { replace: true });
     }
-  }, [activeRoomId, room?.ended, navigate]);
+  }, [activeRoomId, room?.ended, room?.playback?.ended, room?.hostId, navigate]);
 
   // Host auto-play next when queue is present
   useEffect(() => {
