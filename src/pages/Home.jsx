@@ -13,7 +13,7 @@ import { usePlayback } from '../context/PlaybackContext';
 
 export default function Home() {
   const { user, signOut } = useAuth();
-  const { online, reconnectToast, retryConnection, activeRoomId, playback, blocked, unlockAudio } = usePlayback() || {};
+  const { online, reconnectToast, retryConnection, activeRoomId, playback, blocked, unlockAudio, joinRoom } = usePlayback() || {};
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -70,6 +70,7 @@ export default function Home() {
               )
             ),
           ]);
+          joinRoom?.(id);
           nav(`/room/${id}`);
           return;
         } catch (e) {
@@ -93,6 +94,7 @@ export default function Home() {
       setError('Please paste a valid room link or code.');
       return;
     }
+    joinRoom?.(id);
     nav(`/room/${id}`);
   }
 

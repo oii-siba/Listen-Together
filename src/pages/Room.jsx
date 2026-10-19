@@ -96,7 +96,11 @@ export default function Room() {
   }, []);
 
   const isKicked = Boolean(room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost);
-  const isRoomEnded = Boolean(room === null || room?.ended === true || room?.playback?.ended === true || (room && !room.hostId));
+  const isRoomEnded = Boolean(
+    activeRoomId === roomId &&
+    room !== undefined &&
+    (room === null || room?.ended === true || room?.playback?.ended === true || (room && !room.hostId))
+  );
 
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
