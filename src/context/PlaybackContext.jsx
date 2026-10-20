@@ -105,7 +105,7 @@ export function PlaybackProvider({ user, children }) {
         // Only terminated if room was already active and loaded, then deleted by host
         return Boolean(roomRef.current && roomRef.current.hostId);
       }
-      return Boolean(val.ended === true || val.playback?.ended === true);
+      return Boolean(val.ended === true || val.closed === true || val.playback?.ended === true);
     };
 
     const unsub = onValue(
@@ -119,7 +119,7 @@ export function PlaybackProvider({ user, children }) {
           try {
             localStorage.removeItem('TT_ACTIVE_ROOM');
             sessionStorage.removeItem('TT_ACTIVE_ROOM');
-            sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
+            sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'Room Closed: The host has closed this room.');
           } catch {}
           setActiveRoomId(null);
           setRoom(null);
@@ -431,15 +431,27 @@ export function PlaybackProvider({ user, children }) {
       }
       if (isHost) {
         try {
-          await update(ref(db, `rooms/${activeRoomId}`), {
-            ended: true,
-            endedAt: serverTimestamp(),
-            playback: { isPlaying: false, position: 0 },
+          // Permanently mark room as closed in both closedRooms registry and room node
+          await set(ref(db, `closedRooms/${activeRoomId}`), {
+            closed: true,
+            closedAt: serverTimestamp(),
+            hostId: user?.uid || null,
           });
-          await remove(ref(db, `rooms/${activeRoomId}`));
+          await set(ref(db, `rooms/${activeRoomId}`), {
+            ended: true,
+            closed: true,
+            endedAt: serverTimestamp(),
+            closedAt: serverTimestamp(),
+            hostId: null,
+            playback: { isPlaying: false, position: 0, videoId: null, ended: true },
+          });
         } catch {
           try {
-            await remove(ref(db, `rooms/${activeRoomId}`));
+            await update(ref(db, `rooms/${activeRoomId}`), {
+              ended: true,
+              closed: true,
+              endedAt: serverTimestamp(),
+            });
           } catch {}
         }
       } else {
@@ -462,25 +474,32 @@ export function PlaybackProvider({ user, children }) {
     if (!activeRoomId) return;
     const targetRoomId = activeRoomId;
     try {
-      // 1. Mark playback as ended (guaranteed permission under all Firebase rules)
-      await update(ref(db, `rooms/${targetRoomId}/playback`), {
-        ended: true,
-        isPlaying: false,
-        videoId: null,
+      // 1. Permanently register as closed
+      await set(ref(db, `closedRooms/${targetRoomId}`), {
+        closed: true,
+        closedAt: serverTimestamp(),
+        hostId: user?.uid || null,
       });
-      // 2. Clear presence
+      // 2. Clear presence, queue, and chat
       await remove(ref(db, `rooms/${targetRoomId}/presence`));
-      // 3. Mark root room ended & remove hostId
-      await update(ref(db, `rooms/${targetRoomId}`), {
+      await remove(ref(db, `rooms/${targetRoomId}/queue`));
+      await remove(ref(db, `rooms/${targetRoomId}/chat`));
+      // 3. Mark root room permanently ended and closed
+      await set(ref(db, `rooms/${targetRoomId}`), {
         ended: true,
-        hostId: null,
+        closed: true,
         endedAt: serverTimestamp(),
+        closedAt: serverTimestamp(),
+        hostId: null,
+        playback: { ended: true, isPlaying: false, videoId: null },
       });
-      // 4. Delete the entire room tree
-      await remove(ref(db, `rooms/${targetRoomId}`));
     } catch {
       try {
-        await remove(ref(db, `rooms/${targetRoomId}`));
+        await update(ref(db, `rooms/${targetRoomId}`), {
+          ended: true,
+          closed: true,
+          endedAt: serverTimestamp(),
+        });
       } catch {}
     }
     try {

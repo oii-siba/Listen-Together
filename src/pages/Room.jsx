@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ref, remove, set } from '../lib/db';
+import { ref, remove, set, get } from '../lib/db';
 import { db } from '../firebase';
 import { useAuth } from '../AuthContext';
 import { usePlayback } from '../context/PlaybackContext';
@@ -95,16 +95,31 @@ export default function Room() {
     toastTimer.current = setTimeout(() => setToast(''), 3500);
   }, []);
 
+  const [isPermanentlyClosed, setIsPermanentlyClosed] = useState(false);
+
+  useEffect(() => {
+    if (!roomId) return;
+    get(ref(db, `closedRooms/${roomId}`))
+      .then((snap) => {
+        if (snap?.exists?.() && snap.val()?.closed) {
+          setIsPermanentlyClosed(true);
+        }
+      })
+      .catch(() => {});
+  }, [roomId]);
+
   const isKicked = Boolean(room?.kickedUsers && user?.uid && room.kickedUsers[user.uid] && !isHost);
-  const isRoomEnded = Boolean(
-    activeRoomId === roomId &&
-    room &&
-    (room.ended === true || room.playback?.ended === true)
+  const isRoomClosed = Boolean(
+    isPermanentlyClosed ||
+    room?.closed === true ||
+    room?.ended === true ||
+    room?.playback?.ended === true ||
+    (activeRoomId === roomId && room && (room.ended === true || room.playback?.ended === true))
   );
 
   // Sync active room in playback context and force resync on entry
   useEffect(() => {
-    if (!roomId || isKicked || isRoomEnded) return;
+    if (!roomId || isKicked || isRoomClosed) return;
 
     // Check if room requires PIN and if this device is unlocked
     const storedUnlocked = (() => {
@@ -236,15 +251,15 @@ export default function Room() {
 
   // If room is ended or removed by host, immediately return to Home page
   useEffect(() => {
-    if (isRoomEnded) {
+    if (isRoomClosed && activeRoomId === roomId) {
       try {
-        sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'The host has ended the room for everyone.');
+        sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'Room Closed: The host has closed this room.');
         localStorage.removeItem('TT_ACTIVE_ROOM');
         sessionStorage.removeItem('TT_ACTIVE_ROOM');
       } catch {}
       nav('/', { replace: true });
     }
-  }, [isRoomEnded, nav]);
+  }, [isRoomClosed, activeRoomId, roomId, nav]);
 
   /* ---------- render states ---------- */
   // 1. Check if current user was kicked FIRST before checking activeRoomId or room === null
@@ -272,15 +287,18 @@ export default function Room() {
     );
   }
 
-  // 2. Check if room is ended or deleted
-  if (isRoomEnded) {
+  // 2. Check if room is closed or ended
+  if (isRoomClosed) {
     return (
       <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
-        <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
+        <div className="max-w-sm bg-panel border border-red-500/30 rounded-3xl p-6 shadow-2xl">
           <p className="text-5xl">🛑</p>
-          <h1 className="mt-4 text-xl font-bold text-red-400">Room Ended</h1>
-          <p className="mt-2 text-sm text-white/60">
-            The host has ended this room session for everyone.
+          <h1 className="mt-4 text-xl font-bold text-red-400">Room Closed</h1>
+          <p className="mt-2 text-sm text-white/70">
+            This room has been closed by the host.
+          </p>
+          <p className="mt-1 text-xs text-white/40">
+            You cannot join a room that has already ended.
           </p>
           <Link
             to="/"
@@ -304,11 +322,11 @@ export default function Room() {
   if (room === null) {
     return (
       <div className="min-h-[100dvh] grid place-items-center px-6 text-center">
-        <div className="max-w-sm bg-panel border border-white/10 rounded-3xl p-6 shadow-2xl">
-          <p className="text-5xl">🔍</p>
-          <h1 className="mt-4 text-xl font-bold text-white">Room Not Found</h1>
-          <p className="mt-2 text-sm text-white/60">
-            This room does not exist or has been closed.
+        <div className="max-w-sm bg-panel border border-red-500/30 rounded-3xl p-6 shadow-2xl">
+          <p className="text-5xl">🛑</p>
+          <h1 className="mt-4 text-xl font-bold text-red-400">Room Closed</h1>
+          <p className="mt-2 text-sm text-white/70">
+            This room is closed or does not exist.
           </p>
           <Link
             to="/"

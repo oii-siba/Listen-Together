@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, serverTimestamp, set } from '../lib/db';
+import { ref, serverTimestamp, set, get } from '../lib/db';
 import { db } from '../firebase';
 import { useAuth } from '../AuthContext';
 import { parseRoomId, randomRoomId } from '../lib/utils';
@@ -87,12 +87,37 @@ export default function Home() {
     }
   }
 
-  function join(e) {
+  async function join(e) {
     e.preventDefault();
     const id = parseRoomId(code);
     if (!id) {
       setError('Please paste a valid room link or code.');
       return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      // Check if room was closed by host before joining
+      const [roomSnap, closedSnap] = await Promise.all([
+        get(ref(db, `rooms/${id}`)).catch(() => null),
+        get(ref(db, `closedRooms/${id}`)).catch(() => null),
+      ]);
+      const r = roomSnap?.val?.();
+      const c = closedSnap?.val?.();
+      if ((r && (r.ended || r.closed)) || (c && c.closed)) {
+        setError('Room Closed: This room was closed by the host. 🔒');
+        setBusy(false);
+        return;
+      }
+      if (!roomSnap?.exists?.() && !c) {
+        setError('Room not found. Please check the room code or link.');
+        setBusy(false);
+        return;
+      }
+    } catch {
+      // Fallback to direct navigation if network precheck fails
+    } finally {
+      setBusy(false);
     }
     joinRoom?.(id);
     nav(`/room/${id}`);
