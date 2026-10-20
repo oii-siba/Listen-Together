@@ -13,6 +13,80 @@ import {
   showNativeNotification,
 } from '../lib/userData';
 
+function parseNotificationTimestamp(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'number') {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === 'string') {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === 'object') {
+    if (typeof raw.toMillis === 'function') {
+      const d = new Date(raw.toMillis());
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof raw.toDate === 'function') {
+      const d = raw.toDate();
+      return isNaN(d?.getTime?.()) ? null : d;
+    }
+    if (typeof raw.seconds === 'number') {
+      const d = new Date(raw.seconds * 1000);
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return null;
+}
+
+function formatNotificationDateTime(timestamp) {
+  const d = parseNotificationTimestamp(timestamp);
+  if (!d) return null;
+
+  const now = new Date();
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    d.getDate() === yesterday.getDate() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getFullYear() === yesterday.getFullYear();
+
+  const isCurrentYear = d.getFullYear() === now.getFullYear();
+
+  let dateStr = '';
+  if (isToday) {
+    dateStr = 'Today';
+  } else if (isYesterday) {
+    dateStr = 'Yesterday';
+  } else if (isCurrentYear) {
+    dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } else {
+    dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  const timeStr = d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const tooltip = d.toLocaleString(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return { dateStr, timeStr, tooltip };
+}
+
 export default function NotificationCenter({ user, roomId }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(roomId ? 'activity' : 'invites');
@@ -442,86 +516,99 @@ export default function NotificationCenter({ user, roomId }) {
                     <p className="text-[11px] text-white/30 mt-0.5">When friends invite you, they'll appear here.</p>
                   </div>
                 ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-3 rounded-xl border text-xs transition ${
-                        n.unread
-                          ? 'bg-green-500/10 border-green-500/30 text-white'
-                          : 'bg-panel2/60 border-white/5 text-white/70'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {n.senderPhoto && (
-                            <img
-                              src={n.senderPhoto}
-                              alt=""
-                              className="w-5 h-5 rounded-full border border-green-400/50 shrink-0 object-cover"
-                            />
+                  notifications.map((n) => {
+                    const dt = formatNotificationDateTime(n.timestamp);
+                    return (
+                      <div
+                        key={n.id}
+                        className={`p-3 rounded-xl border text-xs transition ${
+                          n.unread
+                            ? 'bg-green-500/10 border-green-500/30 text-white'
+                            : 'bg-panel2/60 border-white/5 text-white/70'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {n.senderPhoto && (
+                              <img
+                                src={n.senderPhoto}
+                                alt=""
+                                className="w-5 h-5 rounded-full border border-green-400/50 shrink-0 object-cover"
+                              />
+                            )}
+                            <p className="font-bold text-white text-[12px] truncate">{n.title}</p>
+                          </div>
+                          {dt && (
+                            <div
+                              className="text-right shrink-0 select-none leading-tight"
+                              title={dt.tooltip}
+                            >
+                              <span
+                                className={`text-[10px] font-semibold block sm:inline ${
+                                  n.unread ? 'text-green-400' : 'text-white/75'
+                                }`}
+                              >
+                                {dt.dateStr}
+                              </span>
+                              <span className="hidden sm:inline text-white/30 mx-1">•</span>
+                              <span className="text-[9px] text-white/45 block sm:inline">
+                                {dt.timeStr}
+                              </span>
+                            </div>
                           )}
-                          <p className="font-bold text-white text-[12px] truncate">{n.title}</p>
                         </div>
-                        <span className="text-[9px] text-white/40 shrink-0">
-                          {n.timestamp
-                            ? new Date(n.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : ''}
-                        </span>
-                      </div>
-                      <p className="text-white/70 mt-1 leading-relaxed text-[11px]">{n.body}</p>
+                        <p className="text-white/70 mt-1 leading-relaxed text-[11px]">{n.body}</p>
 
-                      {/* Action Buttons depending on type */}
-                      {n.type === 'friend_request' ? (
-                        n.status === 'accepted' ? (
-                          <div className="mt-2 text-right">
+                        {/* Action Buttons depending on type */}
+                        {n.type === 'friend_request' ? (
+                          n.status === 'accepted' ? (
+                            <div className="mt-2 text-right">
+                              <span className="text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-0.5 rounded-full">
+                                ✓ Friends now
+                              </span>
+                            </div>
+                          ) : n.status === 'declined' ? (
+                            <div className="mt-2 text-right">
+                              <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2.5 py-0.5 rounded-full">
+                                Declined
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 mt-2.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAccept(n)}
+                                className="flex-1 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
+                              >
+                                Accept Friend
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDecline(n)}
+                                className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white font-bold text-[11px] active:scale-95 transition"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          )
+                        ) : n.type === 'friend_accepted' ? (
+                          <div className="mt-2">
                             <span className="text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-0.5 rounded-full">
-                              ✓ Friends now
+                              🎉 Connected as friends
                             </span>
                           </div>
-                        ) : n.status === 'declined' ? (
-                          <div className="mt-2 text-right">
-                            <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2.5 py-0.5 rounded-full">
-                              Declined
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 mt-2.5">
-                            <button
-                              type="button"
-                              onClick={() => handleAccept(n)}
-                              className="flex-1 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
-                            >
-                              Accept Friend
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDecline(n)}
-                              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white font-bold text-[11px] active:scale-95 transition"
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        )
-                      ) : n.type === 'friend_accepted' ? (
-                        <div className="mt-2">
-                          <span className="text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/30 px-2.5 py-0.5 rounded-full">
-                            🎉 Connected as friends
-                          </span>
-                        </div>
-                      ) : n.roomId ? (
-                        <button
-                          type="button"
-                          onClick={() => handleJoin(n.roomId, n.id)}
-                          className="mt-2.5 w-full py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5 shadow"
-                        >
-                          <span>Join Room ({n.roomId})</span>
-                        </button>
-                      ) : null}
-                    </div>
-                  ))
+                        ) : n.roomId ? (
+                          <button
+                            type="button"
+                            onClick={() => handleJoin(n.roomId, n.id)}
+                            className="mt-2.5 w-full py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5 shadow"
+                          >
+                            <span>Join Room ({n.roomId})</span>
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             )}
@@ -546,34 +633,43 @@ export default function NotificationCenter({ user, roomId }) {
                     </p>
                   </div>
                 ) : (
-                  roomActivities.map((act) => (
-                    <div
-                      key={act.id || act.timestamp}
-                      className="p-2.5 rounded-xl bg-panel2/50 border border-white/5 hover:border-green-500/30 transition flex items-start gap-2.5 text-xs"
-                    >
-                      <div className="w-7 h-7 rounded-full bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-sm">
-                        {getActivityIcon(act.type)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="font-semibold text-white text-[11px] truncate">
-                            {act.title || 'Room Update'}
-                          </p>
-                          <span className="text-[9px] text-white/40 shrink-0">
-                            {act.timestamp
-                              ? new Date(act.timestamp).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
-                              : ''}
-                          </span>
+                  roomActivities.map((act) => {
+                    const dt = formatNotificationDateTime(act.timestamp);
+                    return (
+                      <div
+                        key={act.id || act.timestamp}
+                        className="p-2.5 rounded-xl bg-panel2/50 border border-white/5 hover:border-green-500/30 transition flex items-start gap-2.5 text-xs"
+                      >
+                        <div className="w-7 h-7 rounded-full bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-sm">
+                          {getActivityIcon(act.type)}
                         </div>
-                        <p className="text-white/60 text-[10px] leading-relaxed mt-0.5">
-                          {act.body}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-1">
+                            <p className="font-semibold text-white text-[11px] truncate">
+                              {act.title || 'Room Update'}
+                            </p>
+                            {dt && (
+                              <div
+                                className="text-right shrink-0 select-none leading-tight"
+                                title={dt.tooltip}
+                              >
+                                <span className="text-[9.5px] font-medium text-white/70 block sm:inline">
+                                  {dt.dateStr}
+                                </span>
+                                <span className="hidden sm:inline text-white/30 mx-1">•</span>
+                                <span className="text-[8.5px] text-white/40 block sm:inline">
+                                  {dt.timeStr}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-white/60 text-[10px] leading-relaxed mt-0.5">
+                            {act.body}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
