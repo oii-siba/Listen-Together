@@ -107,6 +107,19 @@ export async function saveUserProfile(uid, profileData) {
       ...profileData,
       updatedAt: serverTimestamp(),
     }).catch(() => {});
+
+    // Sync updated name and photo to directory so friends see the new display name immediately
+    const code = getFriendCode(uid);
+    const dirEntry = {
+      uid,
+      friendCode: code,
+      name: profileData.displayName || 'TuneTogether User',
+      photo: profileData.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`,
+      email: profileData.email || '',
+      registeredAt: Date.now(),
+    };
+    set(ref(db, `friend_directory/${code}`), dirEntry).catch(() => {});
+    set(ref(db, `friend_directory_uids/${uid}`), dirEntry).catch(() => {});
   }
 }
 
@@ -116,12 +129,13 @@ export function getFriendCode(uid) {
 
 export async function registerUserDirectory(user) {
   if (!user || !user.uid) return null;
+  const custom = getUserProfile(user.uid, user);
   const code = getFriendCode(user.uid);
   const entry = {
     uid: user.uid,
     friendCode: code,
-    name: user.displayName || user.email?.split('@')[0] || 'TuneTogether User',
-    photo: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
+    name: custom?.displayName || user.displayName || user.email?.split('@')[0] || 'TuneTogether User',
+    photo: custom?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
     email: user.email || '',
     registeredAt: Date.now(),
   };

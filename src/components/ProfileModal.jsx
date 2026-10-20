@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../AuthContext';
 import {
   getUserProfile,
   saveUserProfile,
@@ -18,6 +19,7 @@ const AVATAR_PRESETS = [
 ];
 
 export default function ProfileModal({ user, onClose, onUpdateUser }) {
+  const { updateUserProfile } = useAuth() || {};
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'favorites' | 'history' | 'friends'
   const [profile, setProfile] = useState(() => getUserProfile(user?.uid, user));
   const [name, setName] = useState('');
@@ -52,7 +54,11 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
       photoURL: selectedPhoto,
       favoriteGenre: genre,
     };
-    await saveUserProfile(user.uid, updated);
+    if (updateUserProfile) {
+      await updateUserProfile(updated);
+    } else {
+      await saveUserProfile(user.uid, updated);
+    }
     setProfile(updated);
     if (onUpdateUser) {
       onUpdateUser(updated);

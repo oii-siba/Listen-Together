@@ -448,7 +448,7 @@ export default function FriendsModal({
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="relative">
                         <img
-                          src={f.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${f.uid}`}
+                          src={presenceMap[f.uid]?.photo || f.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${f.uid}`}
                           alt=""
                           className={`w-9 h-9 rounded-full border ${on ? 'border-green-400/50' : 'border-white/10 grayscale-[35%]'}`}
                         />
@@ -460,7 +460,7 @@ export default function FriendsModal({
                       </div>
                       <div className="min-w-0">
                         <p className={`font-bold text-xs truncate ${on ? 'text-white' : 'text-white/70'}`}>
-                          {f.name}
+                          {presenceMap[f.uid]?.name || f.name}
                         </p>
                         <p className="text-[10px] truncate">
                           {on ? (

@@ -12,7 +12,7 @@ import AndroidAppModal from '../components/AndroidAppModal';
 import { usePlayback } from '../context/PlaybackContext';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserProfile } = useAuth();
   const { online, reconnectToast, retryConnection, activeRoomId, playback, blocked, unlockAudio, joinRoom } = usePlayback() || {};
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -129,7 +129,7 @@ export default function Home() {
   return (
     <div className="min-h-[100dvh] max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 pb-safe-player text-white font-sans">
       {/* Brand Header */}
-      <BrandHeader user={user} onSignOut={signOut} showNav={true} />
+      <BrandHeader user={user} onSignOut={signOut} showNav={true} onUpdateUser={updateUserProfile} />
 
       {/* Room Alert Notice Banner (Kicked or Ended) */}
       {roomAlert && (

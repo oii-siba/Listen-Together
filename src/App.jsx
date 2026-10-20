@@ -14,7 +14,7 @@ import AppUpdateModal from './components/AppUpdateModal';
 import { isInstalled, logAppInstall } from './lib/pwa';
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, updateUserProfile } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <MiniPlayer />
-      <BottomNav user={user} />
+      <BottomNav user={user} onUpdateUser={updateUserProfile} />
       <InstallPrompt />
       <AppUpdateModal />
     </PlaybackProvider>

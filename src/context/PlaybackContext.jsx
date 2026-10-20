@@ -238,6 +238,16 @@ export function PlaybackProvider({ user, children }) {
     };
   }, [activeRoomId, user?.uid, exists]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Live update room presence whenever user updates their display name or photo
+  useEffect(() => {
+    if (!activeRoomId || !user?.uid) return;
+    const pRef = ref(db, `rooms/${activeRoomId}/presence/${user.uid}`);
+    update(pRef, {
+      name: user.displayName || user.email || 'Guest',
+      photo: user.photoURL || null,
+    }).catch(() => {});
+  }, [activeRoomId, user?.uid, user?.displayName, user?.photoURL]);
+
   // Screen wake lock
   useEffect(() => {
     if (!activeRoomId) return undefined;

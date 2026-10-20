@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import { auth, db, googleProvider, isFirebaseConfigured } from './firebase';
 import { ref, set, onDisconnect, serverTimestamp, onValue } from './lib/db';
-import { registerUserDirectory } from './lib/userData';
+import { registerUserDirectory, getUserProfile, saveUserProfile } from './lib/userData';
 
 const AuthCtx = createContext(null);
 
@@ -84,17 +84,53 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (isFirebaseConfigured) {
-      const unsub = onAuthStateChanged(auth, (u) => {
+      let unsubProfile = () => {};
+      const unsubAuth = onAuthStateChanged(auth, (u) => {
+        unsubProfile();
         if (u) {
           try {
             localStorage.removeItem('LT_DEMO_USER');
           } catch {}
-          registerUserDirectory(u).catch(() => {});
+
+          const custom = getUserProfile(u.uid, u);
+          const initialUser = {
+            uid: u.uid,
+            email: u.email,
+            isAnonymous: u.isAnonymous,
+            displayName: custom?.displayName || u.displayName || 'Music Fan',
+            photoURL: custom?.photoURL || u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.uid}`,
+            bio: custom?.bio || '',
+            favoriteGenre: custom?.favoriteGenre || 'Lo-Fi & Pop',
+            friendCode: custom?.friendCode || `TT-${u.uid.slice(0, 6).toUpperCase()}`,
+          };
+          setUser(initialUser);
+          registerUserDirectory(initialUser).catch(() => {});
+
+          // Realtime profile subscription: sync display name across all tabs & devices
+          const profileRef = ref(db, `users/${u.uid}/profile`);
+          unsubProfile = onValue(profileRef, (snap) => {
+            const data = snap.val();
+            if (data && data.displayName) {
+              setUser((prev) => {
+                if (!prev || prev.uid !== u.uid) return prev;
+                return {
+                  ...prev,
+                  ...data,
+                  displayName: data.displayName,
+                  photoURL: data.photoURL || prev.photoURL,
+                };
+              });
+            }
+          });
+        } else {
+          setUser(null);
         }
-        setUser(u);
         setLoading(false);
       });
-      return unsub;
+      return () => {
+        unsubAuth();
+        unsubProfile();
+      };
     } else {
       setLoading(false);
     }
@@ -160,6 +196,62 @@ export function AuthProvider({ children }) {
     return null;
   }, []);
 
+  const updateUserProfile = useCallback(async (profileData) => {
+    if (!user?.uid) return;
+    const newName = (profileData.displayName || '').trim() || user.displayName || 'Music Fan';
+    const newPhoto = profileData.photoURL || user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+    
+    const fullProfile = {
+      ...getUserProfile(user.uid, user),
+      ...profileData,
+      displayName: newName,
+      photoURL: newPhoto,
+    };
+
+    // 1. Immediately update local React user state across all components
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...fullProfile,
+        displayName: newName,
+        photoURL: newPhoto,
+      };
+    });
+
+    // 2. Persist locally and in Firebase Realtime Database
+    await saveUserProfile(user.uid, fullProfile);
+
+    // 3. Update Firebase Auth currentUser profile if available
+    if (auth.currentUser) {
+      try {
+        await updateProfile(auth.currentUser, {
+          displayName: newName,
+          photoURL: newPhoto,
+        });
+      } catch (e) {
+        console.warn('Firebase Auth updateProfile error:', e);
+      }
+    }
+
+    // 4. Update real-time global user presence
+    if (!user.isDemo && isFirebaseConfigured) {
+      set(ref(db, `users/${user.uid}/presence`), {
+        online: true,
+        name: newName,
+        photo: newPhoto,
+        lastSeen: serverTimestamp(),
+      }).catch(() => {});
+    }
+
+    // 5. Update user directory so friends searching can find the user with the new display name
+    await registerUserDirectory({
+      ...user,
+      displayName: newName,
+      photoURL: newPhoto,
+    }).catch(() => {});
+  }, [user]);
+
   const signOut = useCallback(async () => {
     try {
       if (user?.uid && !user.isDemo) {
@@ -177,8 +269,8 @@ export function AuthProvider({ children }) {
   }, [user?.uid, user?.isDemo]);
 
   const value = useMemo(
-    () => ({ user, loading, signIn, signInDemo, signOut, isFirebaseConfigured }),
-    [user, loading, signIn, signInDemo, signOut]
+    () => ({ user, loading, signIn, signInDemo, signOut, updateUserProfile, isFirebaseConfigured }),
+    [user, loading, signIn, signInDemo, signOut, updateUserProfile]
   );
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

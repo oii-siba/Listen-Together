@@ -24,7 +24,7 @@ import { isInstalled, triggerDirectInstall } from '../lib/pwa';
 
 export default function Room() {
   const { roomId } = useParams();
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const nav = useNavigate();
 
   const {
@@ -786,6 +786,7 @@ export default function Room() {
         <ProfileModal
           user={user}
           onClose={() => setShowProfile(false)}
+          onUpdateUser={updateUserProfile}
         />
       )}
 
