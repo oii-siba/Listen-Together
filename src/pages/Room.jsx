@@ -370,60 +370,60 @@ export default function Room() {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-16">
-      <header className="flex items-center gap-3 mb-4">
+    <div className="min-h-[100dvh] max-w-xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-safe-player">
+      <header className="flex items-center gap-2 sm:gap-3 mb-4">
         {/* Back button navigates to Home while keeping music playing via Mini Player */}
         <button
           onClick={() => nav('/')}
-          className="w-10 h-10 rounded-full bg-panel border border-white/10 grid place-items-center active:scale-90 transition text-white/80 hover:text-white"
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel border border-white/10 grid place-items-center active:scale-90 transition text-white/80 hover:text-white shrink-0"
           aria-label="Back to home"
           title="Back to Home (Playback continues in Mini Player)"
         >
-          <Back size={20} />
+          <Back size={18} />
         </button>
 
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <img src="/logo.png" alt="" className="w-7 h-7 rounded-full border border-green-400 shrink-0" />
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          <img src="/logo.png" alt="" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-green-400 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="font-extrabold text-sm text-white leading-tight truncate flex items-center gap-1.5">
+            <p className="font-extrabold text-xs sm:text-sm text-white leading-tight truncate flex items-center gap-1">
               <span>Tune<span className="text-green-400">Together</span></span>
               <span className="font-mono text-white/70">· {roomId}</span>
               {room.roomPin && <span className="text-[10px]" title="Secured with PIN">🔒</span>}
             </p>
-            <p className="text-[11px] text-white/50 truncate">
+            <p className="text-[10px] sm:text-[11px] text-white/50 truncate">
               {isHost ? "👑 You're the host" : hostName ? `Hosted by ${hostName}` : 'Listening in sync'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <NotificationCenter user={user} roomId={roomId} />
           <button
             type="button"
             onClick={() => setShowFriends(true)}
-            className="w-9 h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
             title="Friends"
           >
-            <span className="text-sm">👥</span>
+            <span className="text-xs sm:text-sm">👥</span>
           </button>
           <button
             type="button"
             onClick={() => setShowQr(true)}
-            className="w-9 h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
             title="Show Room QR Code Invite"
           >
-            <span className="text-sm">📷</span>
+            <span className="text-xs sm:text-sm">📷</span>
           </button>
           {/* Front Direct Install App Button */}
           {!installed && (
             <button
               type="button"
               onClick={triggerDirectInstall}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.2)] active:scale-95"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.2)] active:scale-95"
               title="Direct Install App"
             >
               <span className="text-xs">📲</span>
-              <span className="hidden sm:inline">Install</span>
+              <span className="hidden md:inline">Install</span>
             </button>
           )}
           <MenuBar
@@ -433,16 +433,16 @@ export default function Room() {
             onOpenPrivacy={() => setShowPrivacy(true)}
             onOpenAndroid={() => setShowAndroid(true)}
           />
-          <span className="flex items-center gap-1.5 text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2.5 py-1.5 shrink-0">
-            <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
-            {people.length} live
+          <span className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 shrink-0">
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
+            <span>{people.length} <span className="hidden xs:inline">live</span></span>
           </span>
 
           {/* Leave Room Button */}
           <button
             type="button"
             onClick={handleLeave}
-            className="text-xs text-white/40 hover:text-red-400 px-2 py-1 rounded-full border border-white/10 hover:border-red-500/30 transition ml-0.5"
+            className="text-xs text-white/40 hover:text-red-400 p-1 sm:px-2 sm:py-1 rounded-full border border-white/10 hover:border-red-500/30 transition shrink-0"
             title="Leave Room"
           >
             ✕
@@ -478,227 +478,236 @@ export default function Room() {
       {blocked && (
         <button
           onClick={unlockAudio}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-accent text-black font-bold rounded-full py-3.5 animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.5)]"
+          className="mt-3 mb-4 w-full flex items-center justify-center gap-2 bg-accent text-black font-bold rounded-full py-3.5 animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.5)]"
         >
           <Play size={22} /> Tap to start the music
         </button>
       )}
 
-      {/* Hero Glowing AirPods Player */}
-      <NowPlaying
-        playback={playback}
-        playerRef={playerRef}
-        isHost={isHost}
-        user={user}
-        onToggle={togglePlay}
-        onNext={() => playNext().catch(() => {})}
-        onSeek={seekTo}
-      />
+      {/* Main Room Body: Responsive 2-Column Grid on Desktop, Single Column on Mobile */}
+      <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
+        {/* Left Column: Player, Emoji Reactions, Share Bar, Host Panel */}
+        <div className="lg:col-span-5 xl:col-span-5 space-y-3 lg:sticky lg:top-4">
+          {/* Hero Glowing AirPods Player */}
+          <NowPlaying
+            playback={playback}
+            playerRef={playerRef}
+            isHost={isHost}
+            user={user}
+            onToggle={togglePlay}
+            onNext={() => playNext().catch(() => {})}
+            onSeek={seekTo}
+          />
 
-      {/* Live Floating Emoji Reactions Bar */}
-      <EmojiReactions
-        roomId={roomId}
-        user={user}
-        className="my-2"
-        isHost={isHost}
-        allowGuestReactions={room.allowGuestReactions !== false}
-      />
-
-      {/* Optional Video Clip Toggle */}
-      {hasVideo && (
-        <div className="flex items-center justify-end px-2 -mt-1 mb-3">
-          <button
-            type="button"
-            onClick={() => setShowVideo((v) => !v)}
-            className="text-xs text-white/55 hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-panel2/70 border border-white/10 active:scale-95 transition"
-          >
-            <span>{showVideo ? '✕ Hide Video' : '📹 Watch Video Clip'}</span>
-          </button>
-        </div>
-      )}
-
-      <ShareBar roomId={roomId} />
-
-      {/* Room Tabs: Queue, Live Chat, Listeners */}
-      <div className="mt-5 flex gap-1 bg-panel rounded-full p-1">
-        {[
-          ['queue', QueueIcon, `Queue · ${queue.length}`],
-          ['chat', ChatIcon, 'Live Chat'],
-          ['people', People, `Listeners · ${people.length}`],
-        ].map(([id, Icon, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-semibold transition ${
-              tab === id ? 'bg-panel2 text-white shadow' : 'text-white/50 hover:text-white/80'
-            }`}
-          >
-            <Icon size={16} /> {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        {tab === 'queue' && (
-          <div className="space-y-4">
-            <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} user={user} />
-            <Queue
-              items={queue}
-              isHost={isHost}
-              uid={user.uid}
-              onRemove={removeFromQueue}
-              onPlayNow={playItem}
-              onVote={voteQueueItem}
-            />
-          </div>
-        )}
-        {tab === 'chat' && (
-          <Chat
+          {/* Live Floating Emoji Reactions Bar */}
+          <EmojiReactions
             roomId={roomId}
             user={user}
+            className="my-2"
             isHost={isHost}
-            allowGuestChat={room.allowGuestChat !== false}
+            allowGuestReactions={room.allowGuestReactions !== false}
           />
-        )}
-        {tab === 'people' && (
-          <Participants
-            people={people}
-            hostId={room.hostId}
-            myUid={user?.uid}
-            user={user}
-            onKick={handleKickUser}
-            kickedUsers={room.kickedUsers}
-            onUnban={handleUnbanUser}
-          />
-        )}
-      </div>
 
-      {/* Host Controls & Room Security Panel */}
-      {isHost && (
-        <div className="mt-6 bg-panel border border-white/10 rounded-3xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <span className="text-base">👑</span>
-              <h3 className="font-extrabold text-sm text-white">Host Controls &amp; Security</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowHostSecurity((v) => !v)}
-              className="text-xs text-green-400 font-bold hover:underline"
-            >
-              {showHostSecurity ? 'Collapse ▲' : 'Manage Permissions ▼'}
-            </button>
-          </div>
-
-          {showHostSecurity && (
-            <div className="space-y-3.5 pt-1 animate-in fade-in duration-200">
-              {/* Permission 1: Add Songs */}
-              <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
-                <div>
-                  <p className="font-bold text-white">Allow listeners to add songs</p>
-                  <p className="text-[11px] text-white/50">Turn off to keep full control of the queue</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={room.allowGuestAdd !== false}
-                  onChange={(e) => setAllowGuestAdd(e.target.checked)}
-                  className="w-5 h-5 accent-green-500 rounded cursor-pointer"
-                />
-              </label>
-
-              {/* Permission 2: Chat */}
-              <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
-                <div>
-                  <p className="font-bold text-white">Allow listeners to chat</p>
-                  <p className="text-[11px] text-white/50">Pause chat to prevent spam</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={room.allowGuestChat !== false}
-                  onChange={(e) => setAllowGuestChat(e.target.checked)}
-                  className="w-5 h-5 accent-green-500 rounded cursor-pointer"
-                />
-              </label>
-
-              {/* Permission 3: Reactions */}
-              <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
-                <div>
-                  <p className="font-bold text-white">Allow emoji reactions</p>
-                  <p className="text-[11px] text-white/50">Toggle floating screen reactions</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={room.allowGuestReactions !== false}
-                  onChange={(e) => setAllowGuestReactions(e.target.checked)}
-                  className="w-5 h-5 accent-green-500 rounded cursor-pointer"
-                />
-              </label>
-
-              {/* Room Security PIN */}
-              <div className="pt-2 border-t border-white/5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span>🛡️</span> Room PIN Code
-                  </span>
-                  {room.roomPin && (
-                    <span className="text-[11px] font-mono font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
-                      Active: {room.roomPin}
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    value={customPin}
-                    onChange={(e) => setCustomPin(e.target.value)}
-                    maxLength={6}
-                    placeholder={room.roomPin ? 'Change PIN or leave blank to remove' : 'Set 4-digit PIN (optional)'}
-                    className="flex-1 bg-panel2 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35"
-                  />
-                  <button
-                    type="button"
-                    onClick={saveRoomPin}
-                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition active:scale-95"
-                  >
-                    Save PIN
-                  </button>
-                </div>
-              </div>
-
-              {/* Clear Queue Button */}
-              {queue.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearQueue}
-                  className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold transition border border-white/10"
-                >
-                  Clear Song Queue ({queue.length})
-                </button>
-              )}
+          {/* Optional Video Clip Toggle */}
+          {hasVideo && (
+            <div className="flex items-center justify-end px-2 -mt-1 mb-3">
+              <button
+                type="button"
+                onClick={() => setShowVideo((v) => !v)}
+                className="text-xs text-white/55 hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-panel2/70 border border-white/10 active:scale-95 transition"
+              >
+                <span>{showVideo ? '✕ Hide Video' : '📹 Watch Video Clip'}</span>
+              </button>
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={endRoom}
-            className="w-full rounded-2xl border border-red-500/40 text-red-300 py-3 text-xs sm:text-sm font-bold hover:bg-red-500/10 hover:border-red-500/60 transition shadow-sm"
-          >
-            End room for everyone ⛔
-          </button>
-        </div>
-      )}
+          <ShareBar roomId={roomId} />
 
-      {/* Guest Leave Room Button (Only visible to non-host listeners) */}
-      {!isHost && (
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={handleLeave}
-            className="w-full rounded-2xl border border-white/10 text-white/70 py-3 text-xs sm:text-sm font-semibold hover:bg-white/5 hover:text-white transition"
-          >
-            Leave Room
-          </button>
+          {/* Host Controls & Room Security Panel (Desktop in left column, Mobile in flow) */}
+          {isHost && (
+            <div className="mt-4 bg-panel border border-white/10 rounded-3xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">👑</span>
+                  <h3 className="font-extrabold text-sm text-white">Host Controls &amp; Security</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHostSecurity((v) => !v)}
+                  className="text-xs text-green-400 font-bold hover:underline"
+                >
+                  {showHostSecurity ? 'Collapse ▲' : 'Manage Permissions ▼'}
+                </button>
+              </div>
+
+              {showHostSecurity && (
+                <div className="space-y-3.5 pt-1 animate-in fade-in duration-200">
+                  {/* Permission 1: Add Songs */}
+                  <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
+                    <div>
+                      <p className="font-bold text-white">Allow listeners to add songs</p>
+                      <p className="text-[11px] text-white/50">Turn off to keep full control of the queue</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={room.allowGuestAdd !== false}
+                      onChange={(e) => setAllowGuestAdd(e.target.checked)}
+                      className="w-5 h-5 accent-green-500 rounded cursor-pointer"
+                    />
+                  </label>
+
+                  {/* Permission 2: Chat */}
+                  <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
+                    <div>
+                      <p className="font-bold text-white">Allow listeners to chat</p>
+                      <p className="text-[11px] text-white/50">Pause chat to prevent spam</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={room.allowGuestChat !== false}
+                      onChange={(e) => setAllowGuestChat(e.target.checked)}
+                      className="w-5 h-5 accent-green-500 rounded cursor-pointer"
+                    />
+                  </label>
+
+                  {/* Permission 3: Reactions */}
+                  <label className="flex items-center justify-between gap-3 text-xs sm:text-sm cursor-pointer">
+                    <div>
+                      <p className="font-bold text-white">Allow emoji reactions</p>
+                      <p className="text-[11px] text-white/50">Toggle floating screen reactions</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={room.allowGuestReactions !== false}
+                      onChange={(e) => setAllowGuestReactions(e.target.checked)}
+                      className="w-5 h-5 accent-green-500 rounded cursor-pointer"
+                    />
+                  </label>
+
+                  {/* Room Security PIN */}
+                  <div className="pt-2 border-t border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>🛡️</span> Room PIN Code
+                      </span>
+                      {room.roomPin && (
+                        <span className="text-[11px] font-mono font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                          Active: {room.roomPin}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        value={customPin}
+                        onChange={(e) => setCustomPin(e.target.value)}
+                        maxLength={6}
+                        placeholder={room.roomPin ? 'Change PIN or leave blank to remove' : 'Set 4-digit PIN (optional)'}
+                        className="flex-1 bg-panel2 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35"
+                      />
+                      <button
+                        type="button"
+                        onClick={saveRoomPin}
+                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition active:scale-95"
+                      >
+                        Save PIN
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Clear Queue Button */}
+                  {queue.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearQueue}
+                      className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold transition border border-white/10"
+                    >
+                      Clear Song Queue ({queue.length})
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={endRoom}
+                className="w-full rounded-2xl border border-red-500/40 text-red-300 py-3 text-xs sm:text-sm font-bold hover:bg-red-500/10 hover:border-red-500/60 transition shadow-sm"
+              >
+                End room for everyone ⛔
+              </button>
+            </div>
+          )}
+
+          {/* Guest Leave Room Button */}
+          {!isHost && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleLeave}
+                className="w-full rounded-2xl border border-white/10 text-white/70 py-3 text-xs sm:text-sm font-semibold hover:bg-white/5 hover:text-white transition"
+              >
+                Leave Room
+              </button>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right Column: Queue, Live Chat, and Listeners Tabs */}
+        <div className="lg:col-span-7 xl:col-span-7 space-y-4 mt-6 lg:mt-0">
+          {/* Room Tabs */}
+          <div className="flex gap-1 bg-panel rounded-full p-1">
+            {[
+              ['queue', QueueIcon, `Queue · ${queue.length}`],
+              ['chat', ChatIcon, 'Live Chat'],
+              ['people', People, `Listeners · ${people.length}`],
+            ].map(([id, Icon, label]) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-semibold transition ${
+                  tab === id ? 'bg-panel2 text-white shadow' : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                <Icon size={16} /> {label}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            {tab === 'queue' && (
+              <div className="space-y-4">
+                <AddSong canAdd={isHost || room.allowGuestAdd !== false} onAdd={addSong} isHost={isHost} user={user} />
+                <Queue
+                  items={queue}
+                  isHost={isHost}
+                  uid={user.uid}
+                  onRemove={removeFromQueue}
+                  onPlayNow={playItem}
+                  onVote={voteQueueItem}
+                />
+              </div>
+            )}
+            {tab === 'chat' && (
+              <Chat
+                roomId={roomId}
+                user={user}
+                isHost={isHost}
+                allowGuestChat={room.allowGuestChat !== false}
+              />
+            )}
+            {tab === 'people' && (
+              <Participants
+                people={people}
+                hostId={room.hostId}
+                myUid={user?.uid}
+                user={user}
+                onKick={handleKickUser}
+                kickedUsers={room.kickedUsers}
+                onUnban={handleUnbanUser}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Footer Links with Privacy & Android Support */}
       <div className="mt-8 pt-4 border-t border-white/5 flex flex-wrap items-center justify-center gap-4 text-xs text-white/45">

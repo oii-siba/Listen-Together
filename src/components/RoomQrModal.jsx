@@ -111,8 +111,8 @@ export default function RoomQrModal({ roomId, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="w-full max-w-sm bg-panel border border-green-500/30 rounded-3xl p-6 shadow-[0_0_50px_rgba(34,197,94,0.2)] relative text-center">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-panel border border-green-500/30 rounded-3xl p-5 sm:p-6 shadow-[0_0_50px_rgba(34,197,94,0.2)] relative text-center">
         {/* Close button */}
         <button
           onClick={onClose}

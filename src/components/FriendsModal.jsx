@@ -272,8 +272,8 @@ export default function FriendsModal({
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-panel border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-panel border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
         {/* Close Button */}
         <button
           onClick={onClose}

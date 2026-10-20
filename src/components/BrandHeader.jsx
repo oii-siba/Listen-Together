@@ -20,13 +20,13 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
 
   return (
     <>
-      <header className="flex items-center justify-between py-4 px-2">
+      <header className="flex items-center justify-between py-3 sm:py-4 px-1 sm:px-2 w-full">
         {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="relative w-9 h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition">
+        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition shrink-0">
             <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
           </div>
-          <div className="font-extrabold text-lg sm:text-xl tracking-tight leading-none">
+          <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none">
             <span className="text-white">Tune</span>
             <span className="text-green-400 ml-0.5">Together</span>
           </div>
@@ -34,7 +34,7 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
 
         {/* Right Actions */}
         {showNav && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {user ? (
               <>
                 {/* Notification Center */}
@@ -44,17 +44,17 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                 <button
                   type="button"
                   onClick={() => setShowFriends(true)}
-                  className="w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
                   title="Friends"
                 >
-                  <span className="text-base">👥</span>
+                  <span className="text-xs sm:text-base">👥</span>
                 </button>
 
                 {/* Profile Avatar / Customization */}
                 <button
                   type="button"
                   onClick={() => setShowProfile(true)}
-                  className="relative w-10 h-10 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] active:scale-95 transition hidden sm:inline-block"
+                  className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] active:scale-95 transition hidden sm:inline-block"
                   title="Customize Profile"
                 >
                   <img
@@ -69,12 +69,12 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                   <button
                     type="button"
                     onClick={triggerDirectInstall}
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_12px_rgba(34,197,94,0.2)] active:scale-95"
+                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-[11px] sm:text-xs font-bold transition shadow-[0_0_12px_rgba(34,197,94,0.2)] active:scale-95"
                     title="Direct Install App"
                   >
-                    <span className="text-sm">📲</span>
-                    <span className="hidden sm:inline">Install App</span>
-                    <span className="sm:hidden">Install</span>
+                    <span className="text-xs sm:text-sm">📲</span>
+                    <span className="hidden md:inline">Install App</span>
+                    <span className="md:hidden">Install</span>
                   </button>
                 )}
 

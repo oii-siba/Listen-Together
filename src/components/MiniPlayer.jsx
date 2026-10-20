@@ -125,7 +125,7 @@ export default function MiniPlayer() {
   return (
     <aside
       aria-label="Global Mini Player Controls"
-      className="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
     >
       {/* Top Edge Interactive Scrubber / Progress Bar */}
       <div
@@ -146,11 +146,11 @@ export default function MiniPlayer() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 p-2.5">
+      <div className="flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5">
         {/* Album Artwork with Spinning Vinyl Pulse */}
         <div
           onClick={handleOpenRoom}
-          className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-green-400/80 cursor-pointer group shadow-[0_0_12px_rgba(34,197,94,0.35)]"
+          className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border border-green-400/80 cursor-pointer group shadow-[0_0_12px_rgba(34,197,94,0.35)]"
           title={isInsideRoom ? 'Scroll to Top' : 'Open Full Room'}
         >
           <img
@@ -170,7 +170,7 @@ export default function MiniPlayer() {
           <p className="font-extrabold text-xs text-white truncate hover:text-green-400 transition">
             {playback.title || 'Now Playing'}
           </p>
-          <div className="flex items-center gap-2 text-[10px] text-green-400 font-medium mt-0.5 truncate">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-green-400 font-medium mt-0.5 truncate">
             <span className="font-mono text-white/70">
               {fmtTime(cur)} / {fmtTime(dur)}
             </span>
@@ -179,7 +179,7 @@ export default function MiniPlayer() {
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
               Room #{activeRoomId}
             </span>
-            <span className="text-white/40 shrink-0 font-normal">
+            <span className="text-white/40 shrink-0 font-normal hidden sm:inline">
               {isInsideRoom ? '· Scroll ↗' : '· Tap to open ↗'}
             </span>
           </div>
@@ -187,15 +187,15 @@ export default function MiniPlayer() {
 
         {/* Global Music Controls */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Rewind 10 Seconds (Host only) */}
+          {/* Rewind 10 Seconds (Host only, responsive on narrow screens) */}
           {isHost && (
             <button
               type="button"
               onClick={handleRewind10}
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center active:scale-95 transition"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white hidden xs:flex items-center justify-center active:scale-95 transition"
               title="Rewind 10s"
             >
-              <Rewind10Icon size={16} />
+              <Rewind10Icon size={15} />
             </button>
           )}
 
@@ -204,13 +204,13 @@ export default function MiniPlayer() {
             <button
               type="button"
               onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)] cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)] cursor-pointer"
               title={playback.isPlaying ? 'Pause' : 'Play'}
             >
-              {playback.isPlaying ? <Pause size={20} /> : <Play size={20} />}
+              {playback.isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
           ) : (
-            <div className="px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1.5 text-[10px] text-green-400 font-bold tracking-wider select-none">
+            <div className="px-2 sm:px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1 text-[10px] text-green-400 font-bold tracking-wider select-none">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span>SYNC</span>
             </div>
@@ -221,10 +221,10 @@ export default function MiniPlayer() {
             <button
               type="button"
               onClick={playNext}
-              className="w-8 h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-panel2 border border-white/10 hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition"
               title="Next Track"
             >
-              <Next size={16} />
+              <Next size={15} />
             </button>
           )}
 
@@ -232,25 +232,25 @@ export default function MiniPlayer() {
           <button
             type="button"
             onClick={handleToggleMute}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition active:scale-95 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs transition active:scale-95 ${
               muted
                 ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                 : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white'
             }`}
             title={muted ? 'Unmute' : 'Mute'}
           >
-            {muted ? <VolumeMuteIcon size={16} /> : <Volume size={16} />}
+            {muted ? <VolumeMuteIcon size={15} /> : <Volume size={15} />}
           </button>
 
           {/* Close / Leave Room Button */}
           <button
             type="button"
             onClick={leaveRoom}
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition ml-0.5"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 flex items-center justify-center text-xs transition"
             title="Leave Room & Stop Music"
             aria-label="Leave Room"
           >
-            <Close size={14} />
+            <Close size={13} />
           </button>
         </div>
       </div>

@@ -36,7 +36,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-md mx-auto px-6 py-10 flex flex-col justify-center text-white font-sans">
+    <div className="min-h-[100dvh] max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col justify-center text-white font-sans pt-safe pb-safe">
       <div className="text-center flex flex-col items-center">
         {/* TuneTogether Official Logo with glowing aura */}
         <div className="relative w-24 h-24 rounded-full overflow-hidden p-1 border-2 border-green-400 shadow-[0_0_35px_rgba(34,197,94,0.7)] animate-pulse">

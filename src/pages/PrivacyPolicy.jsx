@@ -3,7 +3,7 @@ import { Back } from '../components/Icons';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-[100dvh] max-w-2xl mx-auto px-5 pt-6 pb-24 text-white font-sans">
+    <div className="min-h-[100dvh] max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 pt-safe pb-safe text-white font-sans">
       {/* Top Bar */}
       <header className="flex items-center gap-3 pb-6 border-b border-white/10">
         <Link

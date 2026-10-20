@@ -115,7 +115,7 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
           {/* Drawer Menu Panel */}
           <aside
             aria-label="Side Navigation Menu"
-            className="relative w-full max-w-[325px] sm:max-w-sm h-full bg-gradient-to-b from-[#0e1712] via-[#09100c] to-[#040805] border-l border-emerald-500/25 p-5 sm:p-6 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.15)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden"
+            className="relative w-full max-w-[min(320px,calc(100vw-2rem))] sm:max-w-sm h-full bg-gradient-to-b from-[#0e1712] via-[#09100c] to-[#040805] border-l border-emerald-500/25 p-4 sm:p-6 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.15)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden"
           >
             {/* Ambient Background Glows */}
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />

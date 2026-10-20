@@ -13,8 +13,8 @@ export default function ExitConfirmModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm bg-[#0d1410] border border-green-500/40 rounded-3xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9)] text-center animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-sm max-h-[92vh] overflow-y-auto bg-[#0d1410] border border-green-500/40 rounded-3xl p-5 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9)] text-center animate-in zoom-in-95 duration-200">
         <div className="w-16 h-16 rounded-full bg-green-500/15 border border-green-500/30 text-3xl grid place-items-center mx-auto shadow-[0_0_20px_rgba(34,197,94,0.3)]">
           🎧
         </div>

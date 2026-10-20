@@ -335,7 +335,7 @@ export default function NotificationCenter({ user, roomId }) {
               onClick={() => setOpen(false)}
             />
 
-            <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 w-[94vw] max-w-sm sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full sm:mt-2 sm:w-92 bg-panel/95 border border-white/15 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] p-4 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 w-[94vw] max-w-sm sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full sm:mt-2 sm:w-80 md:w-96 max-h-[85vh] overflow-y-auto bg-panel/95 border border-white/15 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] p-4 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
               {/* Browser Notification Permission Banner (if not yet granted) */}
               {permState === 'default' && (
                 <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 flex items-center justify-between gap-2.5">

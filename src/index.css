@@ -10,6 +10,7 @@ html,
 body,
 #root {
   min-height: 100%;
+  min-height: 100dvh;
   touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -19,6 +20,18 @@ body {
   @apply bg-[#050806] text-white antialiased font-sans;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  overflow-x: hidden;
+}
+
+/* Safe area utilities for notched and gesture phones */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.pb-safe-player {
+  padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
 }
 
 button {
