@@ -41,8 +41,17 @@ export async function fetchMeta(id) {
 
 const ROOM_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
 export function randomRoomId(len = 8) {
-  const bytes = crypto.getRandomValues(new Uint8Array(len));
-  return Array.from(bytes, (b) => ROOM_CHARS[b % ROOM_CHARS.length]).join('');
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const bytes = crypto.getRandomValues(new Uint8Array(len));
+      return Array.from(bytes, (b) => ROOM_CHARS[b % ROOM_CHARS.length]).join('');
+    }
+  } catch {}
+  let res = '';
+  for (let i = 0; i < len; i++) {
+    res += ROOM_CHARS[Math.floor(Math.random() * ROOM_CHARS.length)];
+  }
+  return res;
 }
 
 // Accepts a full room link or just the room code.

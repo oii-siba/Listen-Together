@@ -141,7 +141,7 @@ export default function Room() {
         playerRef.current?.resync();
       } catch {}
     }
-  }, [roomId, activeRoomId, isHost, isKicked, isRoomEnded, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
+  }, [roomId, activeRoomId, isHost, isKicked, isRoomClosed, isPinUnlocked, room?.roomPin, joinRoom, playerRef, unlockAudio]);
 
   // If user is kicked while inside room: cleanly leave and immediately redirect to Home page
   useEffect(() => {

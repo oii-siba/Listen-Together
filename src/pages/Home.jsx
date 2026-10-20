@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, serverTimestamp, set, get } from '../lib/db';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { useAuth } from '../AuthContext';
 import { parseRoomId, randomRoomId } from '../lib/utils';
 import BrandHeader from '../components/BrandHeader';
@@ -44,46 +44,51 @@ export default function Home() {
     }
   }, [roomAlert]);
 
+  const createRoomRef = useRef();
+
   async function createRoom() {
     if (busy) return;
     setBusy(true);
     setError('');
     const id = randomRoomId();
-    const uid = user?.uid || 'guest-' + Math.random().toString(36).slice(2, 8);
+    const uid = user?.uid || auth?.currentUser?.uid || 'guest-' + Math.random().toString(36).slice(2, 8);
+
+    const roomPayload = {
+      hostId: uid,
+      allowGuestAdd: true,
+      createdAt: serverTimestamp(),
+      playback: { isPlaying: false, position: 0, updatedAt: serverTimestamp() },
+    };
+
+    // Optimistically prime playback context with room data to ensure zero latency
+    joinRoom?.(id, roomPayload);
 
     try {
-      const roomPayload = {
-        hostId: uid,
-        allowGuestAdd: true,
-        createdAt: serverTimestamp(),
-        playback: { isPlaying: false, position: 0, updatedAt: serverTimestamp() },
-      };
-
-      // Initiate room write to database with fast optimistic timeout (max 2.5s)
+      // Initiate room write to database with fast optimistic timeout (max 2s)
       await Promise.race([
         set(ref(db, `rooms/${id}`), roomPayload),
-        new Promise((resolve) => setTimeout(resolve, 2500)),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
       ]);
 
-      joinRoom?.(id);
       nav(`/room/${id}`);
     } catch (err) {
       console.warn('Room write network fallback, navigating to room:', err);
-      joinRoom?.(id);
       nav(`/room/${id}`);
     } finally {
       setBusy(false);
     }
   }
 
+  createRoomRef.current = createRoom;
+
   // Global event listener to trigger room creation from MenuBar or BottomNav
   useEffect(() => {
     const handleCreate = () => {
-      createRoom();
+      createRoomRef.current?.();
     };
     window.addEventListener('tt-create-room', handleCreate);
     return () => window.removeEventListener('tt-create-room', handleCreate);
-  }, [busy, user?.uid]);
+  }, []);
 
   async function join(e) {
     e.preventDefault();

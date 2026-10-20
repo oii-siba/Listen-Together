@@ -266,7 +266,7 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                       if (location.pathname === '/') {
                         window.dispatchEvent(new CustomEvent('tt-create-room'));
                       } else {
-                        navigate('/');
+                        nav('/');
                         setTimeout(() => {
                           window.dispatchEvent(new CustomEvent('tt-create-room'));
                         }, 250);

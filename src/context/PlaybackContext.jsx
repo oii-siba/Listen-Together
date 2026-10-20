@@ -93,39 +93,50 @@ export function PlaybackProvider({ user, children }) {
   }, [activeRoomId]);
 
   // Subscribe to active room
+  const loadedRoomIdRef = useRef(null);
+
   useEffect(() => {
     if (!activeRoomId) {
       setRoom(null);
+      roomRef.current = null;
+      loadedRoomIdRef.current = null;
       return;
     }
-    setRoom(undefined);
+
+    if (loadedRoomIdRef.current !== activeRoomId) {
+      setRoom(undefined);
+      roomRef.current = null;
+      loadedRoomIdRef.current = null;
+    }
     hasLoggedJoinRef.current = false;
-    const isTerminated = (val) => {
-      if (!val) {
-        // Only terminated if room was already active and loaded, then deleted by host
-        return Boolean(roomRef.current && roomRef.current.hostId);
-      }
-      return Boolean(val.ended === true || val.closed === true || val.playback?.ended === true);
-    };
 
     const unsub = onValue(
       ref(db, `rooms/${activeRoomId}`),
       (snap) => {
         const val = snap.val();
-        if (isTerminated(val)) {
-          try {
-            audioAnchorRef.current?.pause();
-          } catch {}
-          try {
-            localStorage.removeItem('TT_ACTIVE_ROOM');
-            sessionStorage.removeItem('TT_ACTIVE_ROOM');
-            sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'Room Closed: The host has closed this room.');
-          } catch {}
-          setActiveRoomId(null);
-          setRoom(null);
-          navigate('/', { replace: true });
+        if (val) {
+          loadedRoomIdRef.current = activeRoomId;
+          roomRef.current = val;
+          if (val.ended === true || val.closed === true || val.playback?.ended === true) {
+            try {
+              audioAnchorRef.current?.pause();
+            } catch {}
+            try {
+              localStorage.removeItem('TT_ACTIVE_ROOM');
+              sessionStorage.removeItem('TT_ACTIVE_ROOM');
+              sessionStorage.setItem('TT_ROOM_ENDED_NOTICE', 'Room Closed: The host has closed this room.');
+            } catch {}
+            setRoom(val);
+          } else {
+            setRoom(val);
+          }
         } else {
-          setRoom(val);
+          // If val is null, check if we already have local optimistic room data
+          if (loadedRoomIdRef.current === activeRoomId && roomRef.current?.hostId) {
+            // Keep current optimistic room state while write commits
+          } else {
+            setRoom(null);
+          }
         }
       },
       (err) => {
@@ -395,8 +406,13 @@ export function PlaybackProvider({ user, children }) {
   );
 
   const joinRoom = useCallback(
-    (roomId) => {
+    (roomId, initialData = undefined) => {
       setActiveRoomId(roomId);
+      if (initialData) {
+        setRoom(initialData);
+        roomRef.current = initialData;
+        loadedRoomIdRef.current = roomId;
+      }
       try {
         localStorage.setItem('TT_ACTIVE_ROOM', roomId);
         sessionStorage.setItem('TT_ACTIVE_ROOM', roomId);

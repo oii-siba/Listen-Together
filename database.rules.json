@@ -8,6 +8,13 @@
       ".write": "auth != null"
     },
 
+    "closedRooms": {
+      ".read": true,
+      "$roomId": {
+        ".write": true
+      }
+    },
+
     "app_installs": {
       ".read": false,
       "$installId": {
