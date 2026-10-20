@@ -21,16 +21,21 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
   return (
     <>
       <header className="flex items-center justify-between py-3 sm:py-4 px-1 sm:px-2 w-full">
-        {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0">
-          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition shrink-0">
-            <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
-          </div>
-          <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none">
-            <span className="text-white">Tune</span>
-            <span className="text-green-400 ml-0.5">Together</span>
-          </div>
-        </Link>
+        {/* Left: Menu Bar Drawer Button + Brand Logo & Name */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+          {user && (
+            <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
+          )}
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition shrink-0">
+              <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
+            </div>
+            <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none">
+              <span className="text-white">Tune</span>
+              <span className="text-green-400 ml-0.5">Together</span>
+            </div>
+          </Link>
+        </div>
 
         {/* Right Actions */}
         {showNav && (
@@ -77,11 +82,6 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                     <span className="md:hidden">Install</span>
                   </button>
                 )}
-
-                {/* Navigation Menu Bar Drawer Button (Anchored far right with divider) */}
-                <div className="pl-1 sm:pl-1.5 border-l border-white/10 ml-0.5">
-                  <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
-                </div>
               </>
             ) : (
               <div className="flex items-center gap-2">

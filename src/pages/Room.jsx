@@ -372,17 +372,26 @@ export default function Room() {
   return (
     <div className="min-h-[100dvh] max-w-xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-safe-player">
       <header className="flex items-center gap-2 sm:gap-3 mb-4">
-        {/* Back button navigates to Home while keeping music playing via Mini Player */}
-        <button
-          onClick={() => nav('/')}
-          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel border border-white/10 grid place-items-center active:scale-90 transition text-white/80 hover:text-white shrink-0"
-          aria-label="Back to home"
-          title="Back to Home (Playback continues in Mini Player)"
-        >
-          <Back size={18} />
-        </button>
-
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          {/* MenuBar on the left */}
+          <MenuBar
+            user={user}
+            roomId={roomId}
+            onPlaySong={addSong}
+            onOpenPrivacy={() => setShowPrivacy(true)}
+            onOpenAndroid={() => setShowAndroid(true)}
+          />
+
+          {/* Back button navigates to Home while keeping music playing via Mini Player */}
+          <button
+            onClick={() => nav('/')}
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel border border-white/10 grid place-items-center active:scale-90 transition text-white/80 hover:text-white shrink-0"
+            aria-label="Back to home"
+            title="Back to Home (Playback continues in Mini Player)"
+          >
+            <Back size={18} />
+          </button>
+
           <img src="/logo.png" alt="" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-green-400 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="font-extrabold text-xs sm:text-sm text-white leading-tight truncate flex items-center gap-1">
@@ -449,17 +458,6 @@ export default function Room() {
           >
             ✕
           </button>
-
-          {/* Navigation Menu Bar (Anchored at the far right with elegant divider) */}
-          <div className="pl-1 sm:pl-1.5 border-l border-white/10 ml-0.5">
-            <MenuBar
-              user={user}
-              roomId={roomId}
-              onPlaySong={addSong}
-              onOpenPrivacy={() => setShowPrivacy(true)}
-              onOpenAndroid={() => setShowAndroid(true)}
-            />
-          </div>
         </div>
       </header>
 

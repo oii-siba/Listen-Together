@@ -125,7 +125,7 @@ export default function MiniPlayer() {
   return (
     <aside
       aria-label="Global Mini Player Controls"
-      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
+      className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
     >
       {/* Top Edge Interactive Scrubber / Progress Bar */}
       <div

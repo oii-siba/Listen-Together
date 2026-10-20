@@ -8,6 +8,7 @@ import Room from './pages/Room';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { PlaybackProvider } from './context/PlaybackContext';
 import MiniPlayer from './components/MiniPlayer';
+import BottomNav from './components/BottomNav';
 import InstallPrompt from './components/InstallPrompt';
 import AppUpdateModal from './components/AppUpdateModal';
 import { isInstalled, logAppInstall } from './lib/pwa';
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <MiniPlayer />
+      <BottomNav user={user} />
       <InstallPrompt />
       <AppUpdateModal />
     </PlaybackProvider>

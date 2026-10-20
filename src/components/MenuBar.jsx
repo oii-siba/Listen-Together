@@ -103,9 +103,9 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
         <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
       </button>
 
-      {/* Slide-over Drawer Backdrop & Panel */}
+      {/* Slide-over Drawer Backdrop & Panel (Left Aligned) */}
       {isOpen && (
-        <div className="fixed inset-0 z-[300] flex justify-end">
+        <div className="fixed inset-0 z-[300] flex justify-start">
           {/* Backdrop with ultra smooth blur */}
           <div
             onClick={() => setIsOpen(false)}
@@ -115,7 +115,7 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
           {/* Drawer Menu Panel */}
           <aside
             aria-label="Side Navigation Menu"
-            className="relative w-full max-w-[min(340px,calc(100vw-1.5rem))] sm:max-w-[360px] h-full bg-gradient-to-b from-[#09110d] via-[#050907] to-[#020503] border-l border-emerald-500/30 p-4 sm:p-5 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_40px_rgba(16,185,129,0.2)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden font-sans"
+            className="relative w-full max-w-[min(340px,calc(100vw-1.5rem))] sm:max-w-[360px] h-full bg-gradient-to-b from-[#09110d] via-[#050907] to-[#020503] border-r border-emerald-500/30 p-4 sm:p-5 shadow-[20px_0_60px_rgba(0,0,0,0.95),0_0_40px_rgba(16,185,129,0.2)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-left duration-300 ring-1 ring-white/10 overflow-hidden font-sans"
           >
             {/* Ambient Background Glows */}
             <div className="absolute -top-16 -right-16 w-52 h-52 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
