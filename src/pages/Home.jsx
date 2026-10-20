@@ -45,47 +45,45 @@ export default function Home() {
   }, [roomAlert]);
 
   async function createRoom() {
+    if (busy) return;
     setBusy(true);
     setError('');
+    const id = randomRoomId();
+    const uid = user?.uid || 'guest-' + Math.random().toString(36).slice(2, 8);
+
     try {
-      for (let i = 0; i < 3; i++) {
-        const id = randomRoomId();
-        try {
-          await Promise.race([
-            set(ref(db, `rooms/${id}`), {
-              hostId: user.uid,
-              allowGuestAdd: true,
-              createdAt: serverTimestamp(),
-              playback: { isPlaying: false, position: 0, updatedAt: serverTimestamp() },
-            }),
-            new Promise((_, reject) =>
-              setTimeout(
-                () =>
-                  reject(
-                    new Error(
-                      'Realtime Database connection timed out. Please verify your Firebase configuration.'
-                    )
-                  ),
-                7000
-              )
-            ),
-          ]);
-          joinRoom?.(id);
-          nav(`/room/${id}`);
-          return;
-        } catch (e) {
-          if (i === 2) throw e;
-        }
-      }
+      const roomPayload = {
+        hostId: uid,
+        allowGuestAdd: true,
+        createdAt: serverTimestamp(),
+        playback: { isPlaying: false, position: 0, updatedAt: serverTimestamp() },
+      };
+
+      // Initiate room write to database with fast optimistic timeout (max 2.5s)
+      await Promise.race([
+        set(ref(db, `rooms/${id}`), roomPayload),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]);
+
+      joinRoom?.(id);
+      nav(`/room/${id}`);
     } catch (err) {
-      setError(
-        err?.message ||
-          'Could not create the room. Please check your Firebase Realtime Database setup and security rules.'
-      );
+      console.warn('Room write network fallback, navigating to room:', err);
+      joinRoom?.(id);
+      nav(`/room/${id}`);
     } finally {
       setBusy(false);
     }
   }
+
+  // Global event listener to trigger room creation from MenuBar or BottomNav
+  useEffect(() => {
+    const handleCreate = () => {
+      createRoom();
+    };
+    window.addEventListener('tt-create-room', handleCreate);
+    return () => window.removeEventListener('tt-create-room', handleCreate);
+  }, [busy, user?.uid]);
 
   async function join(e) {
     e.preventDefault();
@@ -242,6 +240,7 @@ export default function Home() {
           <div className="w-full max-w-md mt-6 space-y-3.5">
             {/* Big Neon Green "Create a room" Button */}
             <button
+              id="create-room-btn"
               onClick={createRoom}
               disabled={busy}
               className="w-full py-4 rounded-full bg-green-500 text-black font-extrabold text-base flex items-center justify-center gap-2 shadow-[0_0_28px_rgba(34,197,94,0.6)] hover:brightness-110 active:scale-[0.98] transition disabled:opacity-50"

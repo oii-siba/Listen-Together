@@ -75,16 +75,19 @@ export default function BottomNav({ user, onUpdateUser }) {
     if (isInsideRoom) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (isHome) {
-      const formEl = document.querySelector('form') || document.getElementById('room-actions');
-      if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const input = formEl.querySelector('input');
-        input?.focus();
+      const btn = document.getElementById('create-room-btn');
+      if (btn) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const formEl = document.querySelector('form');
+        formEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } else {
       navigate('/');
+      setTimeout(() => {
+        const btn = document.getElementById('create-room-btn');
+        btn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
     }
   };
 

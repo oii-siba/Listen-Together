@@ -261,7 +261,17 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                 ) : (
                   <button
                     type="button"
-                    onClick={() => handleNav('/')}
+                    onClick={() => {
+                      setIsOpen(false);
+                      if (location.pathname === '/') {
+                        window.dispatchEvent(new CustomEvent('tt-create-room'));
+                      } else {
+                        navigate('/');
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent('tt-create-room'));
+                        }, 250);
+                      }
+                    }}
                     className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-emerald-500/40 text-white/90 transition-all duration-200 active:scale-98"
                   >
                     <div className="flex items-center gap-3 min-w-0">
