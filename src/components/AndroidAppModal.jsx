@@ -22,16 +22,16 @@ export default function AndroidAppModal({ onClose }) {
         className="fixed inset-0 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg max-h-[88vh] bg-[#0A100D] border border-white/[0.08] rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+      <div className="relative w-full max-w-lg max-h-[88vh] bg-[#0c140f] border border-green-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] shrink-0">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-2xl overflow-hidden p-0.5 border border-[#00FF87]/80 shadow-neon-sm bg-black shrink-0">
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden p-0.5 border border-green-400/80 shadow-[0_0_15px_rgba(34,197,94,0.5)] bg-black shrink-0">
               <img src="/logo.png" alt="TuneTogether" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
-              <h2 className="font-extrabold text-base text-[#F5F7F5] leading-tight">Android App &amp; TWA</h2>
-              <p className="text-[11px] text-[#00FF87] font-semibold">Native Android Experience</p>
+              <h2 className="font-extrabold text-base text-white leading-tight">Android App &amp; TWA</h2>
+              <p className="text-[11px] text-green-400 font-semibold">Native Android Experience</p>
             </div>
           </div>
           <button
@@ -46,24 +46,24 @@ export default function AndroidAppModal({ onClose }) {
         {/* Content */}
         <div className="overflow-y-auto py-4 space-y-4 pr-1 text-xs text-white/75 leading-relaxed custom-scrollbar">
           {/* Method 1: WebAPK 1-Tap Direct Install */}
-          <div className="bg-[#101814] rounded-2xl p-4 border border-[#00FF87]/30 shadow-neon-sm">
+          <div className="bg-gradient-to-br from-white/5 to-green-950/20 rounded-2xl p-4 border border-green-500/30">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-[#00FF87]">
+              <span className="text-xs font-black uppercase tracking-wider text-green-400">
                 Method 1 · Recommended for Users
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00FF87]/20 text-[#00FF87]">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">
                 1-Tap Install
               </span>
             </div>
-            <h3 className="font-extrabold text-[#F5F7F5] text-sm mt-1.5">Direct Android WebAPK Installation</h3>
-            <p className="mt-1 text-[#9AA59F]">
+            <h3 className="font-extrabold text-white text-sm mt-1.5">Direct Android WebAPK Installation</h3>
+            <p className="mt-1 text-white/70">
               Google Chrome generates a native signed Android APK automatically on your device. The app appears in your Android App Drawer, plays uninterrupted full-screen, and enables background playback.
             </p>
 
             <button
               onClick={handleInstall}
               disabled={installed}
-              className="mt-3.5 w-full py-3 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-neon-sm active:scale-95 transition disabled:opacity-50"
+              className="mt-3.5 w-full py-3 rounded-full bg-green-500 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-50"
             >
               <span>📲</span>
               <span>{installed ? 'Already Installed on this device' : 'Install Android App Now'}</span>

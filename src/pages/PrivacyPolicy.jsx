@@ -14,17 +14,17 @@ export default function PrivacyPolicy() {
           <Back size={20} />
         </Link>
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="TuneTogether" className="w-7 h-7 rounded-full border border-[#00FF87] shadow-neon-sm" />
-          <h1 className="text-lg font-black tracking-tight text-[#F5F7F5]">
-            Tune<span className="text-[#00FF87]">Together</span> Privacy Policy
+          <img src="/logo.png" alt="TuneTogether" className="w-7 h-7 rounded-full border border-green-400" />
+          <h1 className="text-lg font-black tracking-tight text-white">
+            Tune<span className="text-green-400">Together</span> Privacy Policy
           </h1>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="mt-8 space-y-8">
-        <div className="rounded-3xl bg-[#0A100D] border border-white/[0.08] p-5 sm:p-6 shadow-[0_0_25px_rgba(0,255,135,0.1)]">
-          <p className="text-xs font-bold text-[#00FF87] uppercase tracking-widest">Effective Date: October 2026</p>
+        <div className="rounded-2xl bg-panel border border-green-500/30 p-5 shadow-[0_0_25px_rgba(34,197,94,0.1)]">
+          <p className="text-xs font-bold text-green-400 uppercase tracking-widest">Effective Date: October 2026</p>
           <h2 className="text-2xl font-extrabold text-white mt-1.5">Your Privacy Is Our Priority</h2>
           <p className="text-xs text-white/70 mt-2 leading-relaxed">
             TuneTogether is committed to protecting your privacy. This Privacy Policy explains what information we collect, how it is used, and how we protect your personal data when you use TuneTogether to listen to synchronized YouTube music with your friends.

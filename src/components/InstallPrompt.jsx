@@ -96,18 +96,18 @@ export default function InstallPrompt() {
       {showBanner && (
         <aside 
           aria-label="Install App Prompt"
-          className="fixed top-3 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-50 bg-[#0A100D]/95 border border-[#00FF87]/40 rounded-3xl p-3 sm:p-3.5 shadow-[0_16px_50px_rgba(0,0,0,0.9),0_0_20px_rgba(0,255,135,0.2)] backdrop-blur-2xl animate-in slide-in-from-top-4 duration-300 ring-1 ring-white/10"
+          className="fixed top-3 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-50 bg-[#0d1611]/95 border border-green-500/60 rounded-2xl p-3 sm:p-3.5 shadow-[0_16px_50px_rgba(0,0,0,0.9),0_0_20px_rgba(34,197,94,0.25)] backdrop-blur-2xl animate-in slide-in-from-top-4 duration-300 ring-1 ring-white/10"
         >
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               <img
                 src="/logo.png"
                 alt="TuneTogether"
-                className="w-11 h-11 rounded-2xl border border-[#00FF87] p-0.5 shadow-neon-sm object-cover bg-black"
+                className="w-11 h-11 rounded-xl border border-green-400 p-0.5 shadow-[0_0_12px_rgba(34,197,94,0.5)] object-cover bg-black"
               />
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00FF87] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#00FF87]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
               </span>
             </div>
 
@@ -115,7 +115,7 @@ export default function InstallPrompt() {
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-black text-white tracking-wide flex items-center gap-1.5">
                   <span>Install TuneTogether</span>
-                  <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-full bg-[#00FF87]/20 text-[#00FF87] border border-[#00FF87]/30">
+                  <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                     App
                   </span>
                 </h4>
@@ -128,7 +128,7 @@ export default function InstallPrompt() {
                   ✕
                 </button>
               </div>
-              <p className="text-[11px] text-[#9AA59F] leading-snug mt-0.5 font-medium line-clamp-1 sm:line-clamp-none">
+              <p className="text-[11px] text-white/70 leading-snug mt-0.5 font-medium line-clamp-1 sm:line-clamp-none">
                 Direct app with full-screen music sync &amp; background play!
               </p>
               
@@ -136,7 +136,7 @@ export default function InstallPrompt() {
                 <button
                   type="button"
                   onClick={handleInstallClick}
-                  className="flex-1 sm:flex-initial px-4 py-1.5 rounded-full bg-gradient-to-r from-[#00FF87] to-[#00C96B] text-black font-extrabold text-xs active:scale-95 transition shadow-neon-sm flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-black font-extrabold text-xs hover:brightness-110 active:scale-95 transition shadow-[0_0_15px_rgba(34,197,94,0.6)] flex items-center justify-center gap-1.5"
                 >
                   <span>📲</span>
                   <span>Direct Install</span>

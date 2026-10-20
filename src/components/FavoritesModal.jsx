@@ -39,12 +39,12 @@ export default function FavoritesModal({ user, initialTab = 'favorites', roomId,
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0A100D] border border-white/[0.08] rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+      <div className="w-full max-w-md bg-panel border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
         {/* Close Button */}
         <button
           onClick={onClose}
           type="button"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#101814] text-white/60 hover:text-white flex items-center justify-center transition border border-white/[0.08]"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-panel2 text-white/60 hover:text-white flex items-center justify-center transition"
         >
           ✕
         </button>
@@ -56,14 +56,14 @@ export default function FavoritesModal({ user, initialTab = 'favorites', roomId,
             onClick={() => setActiveTab('favorites')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'favorites'
-                ? 'bg-[#00FF87] text-black shadow-neon-sm'
-                : 'bg-[#101814] text-[#9AA59F] hover:text-white border border-white/[0.06]'
+                ? 'bg-green-500 text-black shadow'
+                : 'bg-panel2 text-white/70 hover:text-white'
             }`}
           >
             <span>❤️ Favorites</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === 'favorites' ? 'bg-black text-[#00FF87] font-bold' : 'bg-white/10 text-white/80'
+                activeTab === 'favorites' ? 'bg-black text-green-400' : 'bg-white/10 text-white/80'
               }`}
             >
               {favorites.length}
@@ -75,14 +75,14 @@ export default function FavoritesModal({ user, initialTab = 'favorites', roomId,
             onClick={() => setActiveTab('history')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'history'
-                ? 'bg-[#00FF87] text-black shadow-neon-sm'
-                : 'bg-[#101814] text-[#9AA59F] hover:text-white border border-white/[0.06]'
+                ? 'bg-green-500 text-black shadow'
+                : 'bg-panel2 text-white/70 hover:text-white'
             }`}
           >
             <span>🕒 History</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === 'history' ? 'bg-black text-[#00FF87] font-bold' : 'bg-white/10 text-white/80'
+                activeTab === 'history' ? 'bg-black text-green-400' : 'bg-white/10 text-white/80'
               }`}
             >
               {history.length}
@@ -122,7 +122,7 @@ export default function FavoritesModal({ user, initialTab = 'favorites', roomId,
                     <button
                       type="button"
                       onClick={() => handlePlay(song)}
-                      className="px-3.5 py-1.5 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-[11px] active:scale-95 transition shadow-neon-sm"
+                      className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
                     >
                       {onPlaySong ? 'Play' : 'Listen'}
                     </button>

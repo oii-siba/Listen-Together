@@ -323,11 +323,11 @@ export default function NotificationCenter({ user, roomId }) {
     <>
       {/* Instant Floating Banner Toast when an invite or friend request arrives */}
       {activeToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] max-w-sm w-[92vw] bg-[#0A100D]/95 border-2 border-[#00FF87] rounded-2xl p-3.5 shadow-[0_0_35px_rgba(0,255,135,0.6)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] max-w-sm w-[92vw] bg-black/95 border-2 border-green-400 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(34,197,94,0.7)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 flex items-center justify-between gap-3">
           <img
             src={activeToast.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${activeToast.senderUid}`}
             alt=""
-            className="w-10 h-10 rounded-full border-2 border-[#00FF87] shrink-0 object-cover"
+            className="w-10 h-10 rounded-full border-2 border-green-400 shrink-0 object-cover"
           />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-extrabold text-white truncate">
@@ -348,14 +348,14 @@ export default function NotificationCenter({ user, roomId }) {
           <div className="flex items-center gap-1.5 shrink-0">
             {activeToast.type === 'friend_request' ? (
               activeToast.accepted ? (
-                <span className="text-xs font-extrabold text-[#00FF87] bg-[#00FF87]/20 px-3 py-1.5 rounded-full">
+                <span className="text-xs font-extrabold text-green-400 bg-green-500/20 px-3 py-1.5 rounded-full">
                   Friends ✓
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={() => handleAccept(activeToast)}
-                  className="px-3.5 py-1.5 rounded-full neon-green-btn text-[#020403] font-black text-xs active:scale-95 transition cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
                 >
                   Accept
                 </button>
@@ -364,7 +364,7 @@ export default function NotificationCenter({ user, roomId }) {
               <button
                 type="button"
                 onClick={() => handleJoin(activeToast.roomId, activeToast.id)}
-                className="px-3.5 py-1.5 rounded-full neon-green-btn text-[#020403] font-black text-xs active:scale-95 transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition shadow-lg hover:brightness-110"
               >
                 Join Now
               </button>
@@ -372,7 +372,7 @@ export default function NotificationCenter({ user, roomId }) {
             <button
               type="button"
               onClick={handleDismissToast}
-              className="text-white/40 hover:text-white p-1 text-xs cursor-pointer"
+              className="text-white/40 hover:text-white p-1 text-xs"
               aria-label="Close"
             >
               ✕
@@ -386,7 +386,7 @@ export default function NotificationCenter({ user, roomId }) {
         <button
           type="button"
           onClick={toggleOpen}
-          className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#0A100D]/90 border border-white/10 hover:border-[#00FF87]/40 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition shadow-sm cursor-pointer"
+          className="relative w-10 h-10 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
           title="Notifications & Activity"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -394,7 +394,7 @@ export default function NotificationCenter({ user, roomId }) {
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#00FF87] text-[#020403] font-black text-[10px] flex items-center justify-center shadow-[0_0_10px_rgba(0,255,135,0.8)] animate-pulse">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-green-500 text-black font-extrabold text-[10px] flex items-center justify-center shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse">
               {unreadCount}
             </span>
           )}
@@ -405,11 +405,11 @@ export default function NotificationCenter({ user, roomId }) {
           <>
             {/* Mobile backdrop overlay to tap outside and dismiss */}
             <div
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] sm:hidden"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] sm:hidden"
               onClick={() => setOpen(false)}
             />
 
-            <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 w-[94vw] max-w-sm sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full sm:mt-2 sm:w-80 md:w-96 max-h-[85vh] overflow-y-auto bg-[#0A100D]/98 border border-white/15 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.95),0_0_30px_rgba(0,255,135,0.15)] p-4 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 w-[94vw] max-w-sm sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full sm:mt-2 sm:w-80 md:w-96 max-h-[85vh] overflow-y-auto bg-panel/95 border border-white/15 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] p-4 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
               {/* Browser Notification Permission Banner (if not yet granted) */}
               {permState === 'default' && (
                 <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 flex items-center justify-between gap-2.5">

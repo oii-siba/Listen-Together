@@ -76,20 +76,20 @@ export default function Chat({ roomId, user, isHost = false, allowGuestChat = tr
   };
 
   return (
-    <div className="flex flex-col h-[420px] bg-[#0A100D] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-[420px] bg-panel border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
       {/* Chat Header */}
-      <div className="px-4 py-3 bg-[#101814] border-b border-white/[0.06] flex items-center justify-between">
+      <div className="px-4 py-2.5 bg-panel2/80 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#00FF87] animate-pulse shadow-neon-sm" />
-          <h3 className="font-bold text-xs uppercase tracking-wider text-[#F5F7F5]">Live Room Chat</h3>
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <h3 className="font-bold text-xs uppercase tracking-wider text-white">Live Room Chat</h3>
         </div>
-        <span className="text-[11px] text-[#9AA59F]">{messages.length} messages</span>
+        <span className="text-[11px] text-white/50">{messages.length} messages</span>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-[#9AA59F]/60">
+          <div className="h-full flex flex-col items-center justify-center text-center text-white/40">
             <span className="text-3xl mb-1">💬</span>
             <p className="text-xs font-medium">No messages yet.</p>
             <p className="text-[11px] text-white/30">Say hi to everyone in the room!</p>
@@ -109,17 +109,17 @@ export default function Chat({ roomId, user, isHost = false, allowGuestChat = tr
                 <div
                   className={`max-w-[78%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
                     isMe
-                      ? 'bg-[#00FF87] text-black font-semibold rounded-br-none shadow-neon-sm'
-                      : 'bg-[#101814] border border-white/[0.08] text-[#F5F7F5] rounded-bl-none shadow'
+                      ? 'bg-green-500 text-black font-medium rounded-br-none shadow-[0_2px_12px_rgba(34,197,94,0.3)]'
+                      : 'bg-panel2 border border-white/10 text-white rounded-bl-none shadow'
                   }`}
                 >
                   {!isMe && (
-                    <p className="text-[10px] font-bold text-[#00FF87] mb-0.5 truncate">{m.senderName}</p>
+                    <p className="text-[10px] font-bold text-green-400 mb-0.5 truncate">{m.senderName}</p>
                   )}
                   <p className="break-words select-text">{m.text}</p>
                   <p
                     className={`text-[9px] mt-1 text-right ${
-                      isMe ? 'text-black/60 font-semibold' : 'text-[#9AA59F]'
+                      isMe ? 'text-black/60 font-semibold' : 'text-white/40'
                     }`}
                   >
                     {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now'}
@@ -133,13 +133,13 @@ export default function Chat({ roomId, user, isHost = false, allowGuestChat = tr
       </div>
 
       {/* Quick chips */}
-      <div className="px-3 py-1.5 flex gap-1.5 overflow-x-auto border-t border-white/[0.06] bg-[#101814]/70 no-scrollbar">
+      <div className="px-3 py-1.5 flex gap-1.5 overflow-x-auto border-t border-white/5 bg-panel2/50 no-scrollbar">
         {['🎵 Love this song!', '🔥 Volume up!', '👏 Next song please', '❤️ Vibes!'].map((q) => (
           <button
             key={q}
             type="button"
             onClick={() => sendQuick(q)}
-            className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/10 text-white/70 whitespace-nowrap active:scale-95 transition border border-white/[0.05]"
+            className="text-[10px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-white/70 whitespace-nowrap active:scale-95 transition"
           >
             {q}
           </button>
@@ -155,22 +155,22 @@ export default function Chat({ roomId, user, isHost = false, allowGuestChat = tr
 
       {/* Message Input Form */}
       {!isHost && allowGuestChat === false ? (
-        <div className="p-3 bg-[#101814] border-t border-white/[0.08] text-center text-xs text-[#9AA59F]">
+        <div className="p-3 bg-panel2/80 border-t border-white/10 text-center text-xs text-white/50">
           🔒 The host has paused live chat for listeners.
         </div>
       ) : (
-        <form onSubmit={sendMessage} className="p-2.5 bg-[#101814] border-t border-white/[0.08] flex gap-2">
+        <form onSubmit={sendMessage} className="p-2.5 bg-panel2 border-t border-white/10 flex gap-2">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={450}
             placeholder="Send a message to everyone…"
-            className="flex-1 bg-[#0A100D] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#F5F7F5] outline-none focus:border-[#00FF87] placeholder:text-white/35 transition"
+            className="flex-1 bg-panel border border-white/10 rounded-full px-4 py-2 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
           />
           <button
             type="submit"
             disabled={!text.trim() || sending}
-            className="px-4 py-2 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-bold text-xs active:scale-95 transition disabled:opacity-40 shadow-neon-sm"
+            className="px-4 py-2 rounded-full bg-green-500 text-black font-bold text-xs active:scale-95 transition disabled:opacity-40 hover:brightness-110 shadow-md"
           >
             Send
           </button>

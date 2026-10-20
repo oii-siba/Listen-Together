@@ -48,9 +48,9 @@ export default function AppUpdateModal() {
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-sm bg-[#0A100D] border border-white/[0.08] rounded-3xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9)] text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+      <div className="w-full max-w-sm bg-gradient-to-b from-[#0e1b12] to-[#070b08] border-2 border-green-500/50 rounded-3xl p-6 shadow-[0_20px_60px_rgba(34,197,94,0.3)] text-center animate-in zoom-in-95 duration-200 ring-1 ring-white/10 relative overflow-hidden">
         {/* Ambient Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#00FF87]/15 blur-2xl pointer-events-none rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-green-500/20 blur-2xl pointer-events-none rounded-full" />
 
         {isDownloading ? (
           /* ================= Active Download & Install View ================= */
@@ -168,12 +168,12 @@ export default function AppUpdateModal() {
               </div>
             )}
 
-              {/* Action Buttons */}
+            {/* Action Buttons */}
             <div className="mt-5 flex flex-col gap-2.5">
               <button
                 type="button"
                 onClick={handleStartDownload}
-                className="w-full py-3.5 px-4 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-sm shadow-neon-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-full bg-green-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.6)] hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>⬇️ Download &amp; Update ({updateInfo.size || `${totalMB} MB`})</span>
               </button>
@@ -181,7 +181,7 @@ export default function AppUpdateModal() {
               <button
                 type="button"
                 onClick={() => setIsDismissed(true)}
-                className="text-xs text-[#9AA59F] hover:text-white py-1.5 transition cursor-pointer"
+                className="text-xs text-white/50 hover:text-white py-1.5 transition cursor-pointer"
               >
                 Remind me later (Skip for now)
               </button>

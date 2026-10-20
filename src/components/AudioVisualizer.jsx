@@ -26,8 +26,8 @@ export default function AudioVisualizer({ isPlaying = false, barCount = 28, clas
           }}
           className={`w-[3px] rounded-full transition-all duration-300 ${
             isPlaying
-              ? 'animate-eq-bar bg-gradient-to-t from-[#00C96B] via-[#00FF87] to-white shadow-neon-sm'
-              : 'bg-white/15'
+              ? 'animate-eq-bar bg-gradient-to-t from-emerald-600 via-green-400 to-green-300 shadow-[0_0_8px_rgba(34,197,94,0.7)]'
+              : 'bg-white/20'
           }`}
         />
       ))}

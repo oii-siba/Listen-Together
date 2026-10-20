@@ -60,19 +60,19 @@ export default function ShareBar({ roomId }) {
   }
 
   return (
-    <div className="mt-4 bg-[#0A100D] rounded-3xl p-4 border border-white/[0.08] space-y-3 shadow-xl">
+    <div className="mt-4 bg-panel rounded-2xl p-4 border border-white/10 space-y-3 shadow-xl">
       {/* Room Code Card (Prominent) */}
-      <div className="flex items-center justify-between gap-3 bg-[#101814] rounded-2xl p-3 border border-[#00FF87]/30 shadow-neon-sm">
+      <div className="flex items-center justify-between gap-3 bg-panel2/80 rounded-xl p-3 border border-green-500/30">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-[#00FF87]">Room Code</p>
-          <p className="text-lg font-mono font-extrabold text-[#F5F7F5] tracking-widest mt-0.5 select-all">
+          <p className="text-[10px] uppercase font-bold tracking-wider text-green-400">Room Code</p>
+          <p className="text-lg font-mono font-extrabold text-white tracking-widest mt-0.5 select-all">
             {roomId}
           </p>
         </div>
         <button
           type="button"
           onClick={copyCode}
-          className="shrink-0 flex items-center gap-1.5 bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold rounded-full px-3.5 py-2 text-xs active:scale-95 transition shadow-neon-sm"
+          className="shrink-0 flex items-center gap-1.5 bg-green-500 text-black font-extrabold rounded-full px-3.5 py-2 text-xs active:scale-95 transition shadow hover:brightness-110"
         >
           {copiedCode ? <Check size={14} className="stroke-[3]" /> : <Copy size={14} className="stroke-[2.5]" />}
           <span>{copiedCode ? 'Code Copied! ✓' : 'Copy Code'}</span>
@@ -82,7 +82,7 @@ export default function ShareBar({ roomId }) {
       {/* Room Link Card */}
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-[#9AA59F] font-medium">Room link</p>
+          <p className="text-[11px] text-white/50 font-medium">Room link</p>
           <p className="text-xs text-white/80 font-mono truncate mt-0.5">
             {link.replace(/^https?:\/\//, '')}
           </p>
@@ -90,9 +90,9 @@ export default function ShareBar({ roomId }) {
         <button
           type="button"
           onClick={copyLink}
-          className="shrink-0 flex items-center gap-1.5 bg-[#101814] hover:bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 active:scale-95 transition border border-white/[0.08]"
+          className="shrink-0 flex items-center gap-1.5 bg-panel2 hover:bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 active:scale-95 transition border border-white/10"
         >
-          {copiedLink ? <Check size={14} className="text-[#00FF87]" /> : <Copy size={14} />}
+          {copiedLink ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
           <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
         </button>
       </div>
@@ -102,7 +102,7 @@ export default function ShareBar({ roomId }) {
         <button
           type="button"
           onClick={() => setShowQr(true)}
-          className="flex-1 text-center rounded-full bg-gradient-to-r from-[#00FF87]/15 to-[#00C96B]/15 border border-[#00FF87]/30 text-[#00FF87] font-extrabold text-xs py-3 active:scale-95 transition hover:bg-[#00FF87]/25 shadow-neon-sm flex items-center justify-center gap-1.5"
+          className="flex-1 text-center rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/40 text-green-300 font-extrabold text-xs py-3 active:scale-95 transition hover:bg-green-500/30 shadow flex items-center justify-center gap-1.5"
         >
           <span>📷</span>
           <span>QR Code Invite</span>
@@ -121,7 +121,7 @@ export default function ShareBar({ roomId }) {
           <button
             type="button"
             onClick={nativeShare}
-            className="w-12 rounded-full bg-[#101814] border border-white/[0.08] grid place-items-center active:scale-95 transition text-white hover:bg-white/10 shrink-0"
+            className="w-12 rounded-full bg-panel2 border border-white/10 grid place-items-center active:scale-95 transition text-white hover:bg-white/10 shrink-0"
             aria-label="Share"
           >
             <Share size={18} />

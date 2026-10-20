@@ -125,7 +125,7 @@ export default function MiniPlayer() {
   return (
     <aside
       aria-label="Global Mini Player Controls"
-      className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-50 bg-[#0A100D]/95 backdrop-blur-2xl border border-[#00FF87]/35 rounded-[22px] shadow-[0_16px_50px_rgba(0,0,0,0.95),0_0_30px_rgba(0,255,135,0.18)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
+      className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 sm:left-4 sm:right-4 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-50 bg-[#080d0a]/95 backdrop-blur-2xl border border-green-500/40 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] overflow-hidden animate-in slide-in-from-bottom-5 duration-250 select-none"
     >
       {/* Top Edge Interactive Scrubber / Progress Bar */}
       <div
@@ -137,7 +137,7 @@ export default function MiniPlayer() {
         title={isHost ? 'Click to seek' : 'Progress'}
       >
         <div
-          className="h-full bg-gradient-to-r from-[#00FF87] via-[#4ade80] to-[#00C96B] shadow-[0_0_12px_rgba(0,255,135,0.8)] relative"
+          className="h-full bg-gradient-to-r from-green-500 via-emerald-400 to-green-300 shadow-[0_0_10px_rgba(34,197,94,0.8)] relative"
           style={{ width: `${progressPct}%` }}
         >
           {isHost && (
@@ -150,7 +150,7 @@ export default function MiniPlayer() {
         {/* Album Artwork with Spinning Vinyl Pulse */}
         <div
           onClick={handleOpenRoom}
-          className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border border-[#00FF87]/70 cursor-pointer group shadow-[0_0_12px_rgba(0,255,135,0.35)]"
+          className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border border-green-400/80 cursor-pointer group shadow-[0_0_12px_rgba(34,197,94,0.35)]"
           title={isInsideRoom ? 'Scroll to Top' : 'Open Full Room'}
         >
           <img
@@ -159,24 +159,24 @@ export default function MiniPlayer() {
             className={`w-full h-full object-cover transition ${playback.isPlaying ? 'scale-105' : 'grayscale-[20%]'}`}
           />
           {playback.isPlaying && (
-            <span className="absolute inset-0 bg-[#00FF87]/15 flex items-center justify-center">
-              <span className="w-2 h-2 rounded-full bg-[#00FF87] animate-ping" />
+            <span className="absolute inset-0 bg-green-500/15 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
             </span>
           )}
         </div>
 
         {/* Title, Time, & Room ID (Click to Expand / Scroll) */}
         <div onClick={handleOpenRoom} className="min-w-0 flex-1 cursor-pointer">
-          <p className="font-extrabold text-xs text-[#F5F7F5] truncate hover:text-[#00FF87] transition">
+          <p className="font-extrabold text-xs text-white truncate hover:text-green-400 transition">
             {playback.title || 'Now Playing'}
           </p>
-          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-[#00FF87] font-medium mt-0.5 truncate">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-green-400 font-medium mt-0.5 truncate">
             <span className="font-mono text-white/70">
               {fmtTime(cur)} / {fmtTime(dur)}
             </span>
             <span className="text-white/20">·</span>
             <span className="truncate flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF87] animate-pulse shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
               Room #{activeRoomId}
             </span>
             <span className="text-white/40 shrink-0 font-normal hidden sm:inline">
@@ -204,14 +204,14 @@ export default function MiniPlayer() {
             <button
               type="button"
               onClick={togglePlay}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full neon-green-btn text-[#020403] flex items-center justify-center active:scale-90 transition cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 text-black flex items-center justify-center hover:brightness-110 active:scale-90 transition shadow-[0_0_15px_rgba(34,197,94,0.5)] cursor-pointer"
               title={playback.isPlaying ? 'Pause' : 'Play'}
             >
               {playback.isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
           ) : (
-            <div className="px-2 sm:px-2.5 py-1 rounded-full bg-[#00FF87]/10 border border-[#00FF87]/25 flex items-center gap-1 text-[10px] text-[#00FF87] font-bold tracking-wider select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF87] animate-pulse" />
+            <div className="px-2 sm:px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1 text-[10px] text-green-400 font-bold tracking-wider select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span>SYNC</span>
             </div>
           )}

@@ -19,24 +19,22 @@ function ArrowDown({ size = 15, className = '' }) {
 export default function Queue({ items = [], isHost, uid, onRemove, onPlayNow, onVote }) {
   if (!items.length) {
     return (
-      <div className="text-center py-12 glass-card border border-white/10 rounded-[28px] p-6 shadow-xl">
-        <div className="w-12 h-12 rounded-2xl bg-[#00FF87]/15 border border-[#00FF87]/30 flex items-center justify-center text-2xl text-[#00FF87] mx-auto mb-3 shadow-[0_0_15px_rgba(0,255,135,0.25)]">
-          🎵
-        </div>
-        <p className="text-sm font-bold text-[#F5F7F5]">Queue is empty</p>
-        <p className="text-xs text-[#9AA59F] mt-1">Add songs from the search tab above. Friends can vote on what plays next!</p>
+      <div className="text-center py-10 bg-panel/40 border border-white/5 rounded-2xl p-6">
+        <span className="text-3xl block mb-2">🎵</span>
+        <p className="text-sm font-semibold text-white/70">Queue is empty</p>
+        <p className="text-xs text-white/40 mt-1">Add songs above. Friends can vote on what plays next!</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {/* Jukebox Queue Banner */}
-      <div className="flex items-center justify-between px-1 text-xs text-[#9AA59F]">
-        <span className="font-bold text-[#F5F7F5] flex items-center gap-1.5">
+      <div className="flex items-center justify-between px-1 text-xs text-white/50">
+        <span className="font-bold text-white/80 flex items-center gap-1.5">
           <span>🗳️</span> Song Queue ({items.length})
         </span>
-        <span className="text-[11px] text-[#00FF87] font-semibold flex items-center gap-1">
+        <span className="text-[11px] text-green-400 font-semibold flex items-center gap-1">
           <span>▲</span> Vote decides next song
         </span>
       </div>
@@ -50,10 +48,10 @@ export default function Queue({ items = [], isHost, uid, onRemove, onPlayNow, on
           return (
             <li
               key={it.key}
-              className={`flex items-center gap-2.5 glass-card rounded-2xl p-2.5 transition shadow-sm ${
+              className={`flex items-center gap-2.5 bg-panel border rounded-2xl p-2.5 transition shadow-sm ${
                 isTopVoted
-                  ? 'border-[#00FF87]/50 bg-gradient-to-r from-[#00FF87]/15 via-[#101814] to-[#0A100D]'
-                  : 'border-white/10 hover:border-[#00FF87]/30'
+                  ? 'border-green-500/40 bg-gradient-to-r from-green-500/10 via-panel to-panel'
+                  : 'border-white/5 hover:border-white/10'
               }`}
             >
               {/* Jukebox Voting Controls */}

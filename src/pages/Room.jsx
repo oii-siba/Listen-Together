@@ -683,7 +683,7 @@ export default function Room() {
         {/* Right Column: Queue, Live Chat, and Listeners Tabs */}
         <div className="lg:col-span-7 xl:col-span-7 space-y-4 mt-6 lg:mt-0">
           {/* Room Tabs */}
-          <div className="flex gap-1.5 bg-[#0A100D] border border-white/10 rounded-full p-1.5 shadow-lg">
+          <div className="flex gap-1 bg-panel rounded-full p-1">
             {[
               ['queue', QueueIcon, `Queue · ${queue.length}`],
               ['chat', ChatIcon, 'Live Chat'],
@@ -692,10 +692,8 @@ export default function Room() {
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
-                  tab === id
-                    ? 'bg-[#00FF87] text-[#020403] shadow-[0_0_16px_rgba(0,255,135,0.4)]'
-                    : 'text-[#9AA59F] hover:text-[#F5F7F5] hover:bg-white/[0.04]'
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-semibold transition ${
+                  tab === id ? 'bg-panel2 text-white shadow' : 'text-white/50 hover:text-white/80'
                 }`}
               >
                 <Icon size={16} /> {label}
