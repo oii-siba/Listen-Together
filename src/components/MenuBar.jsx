@@ -115,30 +115,30 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
           {/* Drawer Menu Panel */}
           <aside
             aria-label="Side Navigation Menu"
-            className="relative w-full max-w-[min(320px,calc(100vw-2rem))] sm:max-w-sm h-full bg-gradient-to-b from-[#0e1712] via-[#09100c] to-[#040805] border-l border-emerald-500/25 p-4 sm:p-6 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_35px_rgba(16,185,129,0.15)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden"
+            className="relative w-full max-w-[min(340px,calc(100vw-1.5rem))] sm:max-w-[360px] h-full bg-gradient-to-b from-[#09110d] via-[#050907] to-[#020503] border-l border-emerald-500/30 p-4 sm:p-5 shadow-[-20px_0_60px_rgba(0,0,0,0.95),0_0_40px_rgba(16,185,129,0.2)] flex flex-col justify-between z-10 backdrop-blur-2xl animate-in slide-in-from-right duration-300 ring-1 ring-white/10 overflow-hidden font-sans"
           >
             {/* Ambient Background Glows */}
-            <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-16 -left-16 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-16 -right-16 w-52 h-52 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-20 -left-16 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Scrollable Main Section */}
-            <div className="overflow-y-auto pr-1 -mr-1 space-y-5 relative z-10 custom-scrollbar">
-              {/* Header: Brand & Close */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 rounded-2xl overflow-hidden p-0.5 border border-emerald-400/80 shadow-[0_0_15px_rgba(34,197,94,0.5)] bg-black">
+            <div className="overflow-y-auto pr-1 -mr-1 space-y-4 relative z-10 custom-scrollbar">
+              {/* Header: Glowing Brand Emblem & Close Button */}
+              <div className="flex items-center justify-between pb-3.5 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-emerald-500 to-green-400 shadow-[0_0_18px_rgba(34,197,94,0.6)] flex items-center justify-center shrink-0">
                     <img
                       src="/logo.png"
                       alt="TuneTogether"
-                      className="w-full h-full object-cover rounded-xl"
+                      className="w-full h-full object-cover rounded-full"
                     />
                   </div>
                   <div>
-                    <h2 className="font-black text-base text-white tracking-tight leading-none flex items-center gap-1.5">
+                    <h2 className="font-extrabold text-base text-white tracking-tight leading-none flex items-center">
                       <span>Tune</span>
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">Together</span>
+                      <span className="text-emerald-400 ml-0.5">Together</span>
                     </h2>
-                    <p className="text-[10px] text-emerald-400/70 font-semibold tracking-wide uppercase mt-1">
+                    <p className="text-[9.5px] text-emerald-400/80 font-bold tracking-widest uppercase mt-1">
                       UltraSync Music Room
                     </p>
                   </div>
@@ -146,31 +146,31 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-90"
+                  className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/15 text-white/70 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-90 shadow-sm"
                   aria-label="Close Menu"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* User Profile VIP Card */}
+              {/* User Profile VIP Card matching mockup */}
               {user && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-emerald-950/40 border border-emerald-500/30 p-3.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] group">
+                <div className="rounded-[22px] bg-[#0c1510]/95 border border-emerald-500/35 p-3.5 backdrop-blur-xl shadow-[0_0_25px_rgba(16,185,129,0.15)] relative overflow-hidden group">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <img
                         src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
                         alt=""
-                        className="w-12 h-12 rounded-2xl border-2 border-emerald-400/90 object-cover shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                        className="w-12 h-12 rounded-2xl border-2 border-emerald-400 object-cover shadow-[0_0_14px_rgba(16,185,129,0.4)]"
                       />
-                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#0e1712] shadow-sm animate-pulse" />
+                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#0c1510] shadow-sm animate-pulse" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-extrabold text-sm text-white truncate leading-tight">
-                          {user.displayName || 'TuneTogether Fan'}
+                        <p className="font-black text-sm text-white truncate leading-tight">
+                          {user.displayName || 'Music Fan'}
                         </p>
-                        <span className="text-[10px]" title="Active Member">⭐</span>
+                        <span className="text-amber-400 text-xs" title="Verified Member">★</span>
                       </div>
                       <p className="text-[11px] text-white/50 truncate mt-0.5 font-medium">
                         {user.email || 'Online Listener'}
@@ -178,78 +178,81 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                     </div>
                   </div>
 
-                  {/* Friend Code with Copy Button */}
-                  <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between">
-                    <div>
-                      <p className="text-[9px] font-extrabold uppercase tracking-widest text-emerald-400/90">
-                        Your Friend Code
-                      </p>
-                      <p className="text-xs font-mono font-black text-white tracking-wider mt-0.5">
+                  {/* Friend Code with Copy Box matching mockup */}
+                  <div className="mt-3 pt-2.5 border-t border-white/10">
+                    <p className="text-[9px] font-extrabold uppercase tracking-widest text-emerald-400/90 mb-1.5">
+                      Your Friend Code
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 font-mono font-black text-xs text-white tracking-wider truncate select-all">
                         {myCode}
-                      </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyCode}
+                        className="px-3.5 py-2 rounded-xl border border-emerald-400/60 bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-300 font-extrabold text-xs transition-all duration-200 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.25)] flex items-center gap-1.5 shrink-0 cursor-pointer"
+                        title="Copy friend code to clipboard"
+                      >
+                        <span>{copied ? '✓' : '📋'}</span>
+                        <span>{copied ? 'Copied' : 'Copy'}</span>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={copyCode}
-                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 to-green-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-[10px] hover:from-emerald-500 hover:to-green-500 hover:text-black transition-all duration-200 active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.2)] flex items-center gap-1"
-                    >
-                      <span>{copied ? '✓' : '📋'}</span>
-                      <span>{copied ? 'Copied!' : 'Copy Code'}</span>
-                    </button>
                   </div>
                 </div>
               )}
 
-              {/* SECTION 1: DISCOVER & LISTEN */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+              {/* SECTION 1: DISCOVER & ROOMS */}
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/45 px-1.5">
                   Discover &amp; Rooms
                 </p>
 
-                {/* 1. Home / Discover */}
+                {/* 1. Home & Discover */}
                 <button
                   type="button"
                   onClick={() => handleNav('/')}
-                  className={`w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                  className={`w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold transition-all duration-200 active:scale-98 ${
                     location.pathname === '/'
-                      ? 'bg-gradient-to-r from-emerald-500/25 to-green-500/15 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
-                      : 'text-white/80 hover:bg-white/5 hover:text-white border border-transparent'
+                      ? 'bg-gradient-to-r from-emerald-500/25 via-green-500/15 to-emerald-500/25 border-2 border-emerald-400/80 shadow-[0_0_22px_rgba(34,197,94,0.3)] text-emerald-300'
+                      : 'bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-emerald-500/40 text-white/90'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-sm shadow-sm group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500/25 to-green-400/15 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-sm shadow-sm group-hover:scale-105 transition-transform shrink-0">
                       🏠
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Home &amp; Discover</p>
-                      <p className="text-[10px] text-white/40 font-medium">Browse &amp; create sync rooms</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Home &amp; Discover</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Browse &amp; create sync rooms</p>
                     </div>
                   </div>
-                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm shrink-0">
+                    ›
+                  </span>
                 </button>
 
-                {/* 2. Current Room (if in room) or Create Room */}
+                {/* 2. Active Room or Create/Join Room */}
                 {roomId ? (
                   <button
                     type="button"
                     onClick={() => handleNav(`/room/${roomId}`)}
-                    className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-400 text-black shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-95"
+                    className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-400 text-black shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-98"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-black/20 flex items-center justify-center text-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-9 h-9 rounded-xl bg-black/20 flex items-center justify-center text-sm shrink-0">
                         🎧
                       </span>
-                      <div className="text-left">
+                      <div className="text-left min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="font-black text-black text-xs">Current Room</p>
-                          <span className="text-[9px] uppercase font-mono font-black bg-black/20 px-1.5 py-0.5 rounded-md">
+                          <p className="font-black text-black text-xs truncate">Current Room</p>
+                          <span className="text-[9px] uppercase font-mono font-black bg-black/20 px-1.5 py-0.5 rounded-md shrink-0">
                             {roomId}
                           </span>
                         </div>
-                        <p className="text-[10px] text-black/75 font-semibold">Active playback &amp; chat</p>
+                        <p className="text-[10px] text-black/75 font-semibold truncate">Active playback &amp; chat</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <span className="w-1.5 h-3 bg-black rounded-full animate-bounce" />
                       <span className="w-1.5 h-4 bg-black rounded-full animate-bounce [animation-delay:0.15s]" />
                       <span className="w-1.5 h-2 bg-black rounded-full animate-bounce [animation-delay:0.3s]" />
@@ -259,104 +262,115 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                   <button
                     type="button"
                     onClick={() => handleNav('/')}
-                    className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                    className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-emerald-500/40 text-white/90 transition-all duration-200 active:scale-98"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/40 text-blue-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
                         ➕
                       </span>
-                      <div className="text-left">
-                        <p className="font-extrabold text-white text-xs">Create or Join Room</p>
-                        <p className="text-[10px] text-white/40 font-medium">Party code or instant room</p>
+                      <div className="text-left min-w-0">
+                        <p className="font-extrabold text-white text-xs truncate">Create or Join Room</p>
+                        <p className="text-[10px] text-white/45 font-medium truncate">Party code or instant room</p>
                       </div>
                     </div>
-                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                    <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm shrink-0">
+                      ›
+                    </span>
                   </button>
                 )}
               </div>
 
-              {/* SECTION 2: SOCIAL & LIBRARY */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+              {/* SECTION 2: SOCIAL & COLLECTION */}
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/45 px-1.5">
                   Social &amp; Collection
                 </p>
 
-                {/* 3. Friends System */}
+                {/* 3. Friends & Directory */}
                 <button
                   type="button"
                   onClick={openFriends}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-blue-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-400/40 text-blue-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
                       👥
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Friends &amp; Directory</p>
-                      <p className="text-[10px] text-white/40 font-medium">Send &amp; accept requests</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Friends &amp; Directory</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Send &amp; accept requests</p>
                     </div>
                   </div>
-                  {friendsCount > 0 ? (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                      {friendsCount}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {friendsCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-blue-500 text-white font-black text-[10px] flex items-center justify-center shadow-sm">
+                        {friendsCount}
+                      </span>
+                    )}
+                    <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm">
+                      ›
                     </span>
-                  ) : (
-                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-                  )}
+                  </div>
                 </button>
 
                 {/* 4. Favorite Songs */}
                 <button
                   type="button"
                   onClick={() => openFavs('favorites')}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-rose-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
-                      ❤️
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
+                      💖
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Favorite Songs</p>
-                      <p className="text-[10px] text-white/40 font-medium">Your curated tracks</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Favorite Songs</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Your curated tracks</p>
                     </div>
                   </div>
-                  {favoritesCount > 0 ? (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                      {favoritesCount}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {favoritesCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-rose-500 text-white font-black text-[10px] flex items-center justify-center shadow-sm">
+                        {favoritesCount}
+                      </span>
+                    )}
+                    <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm">
+                      ›
                     </span>
-                  ) : (
-                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-                  )}
+                  </div>
                 </button>
 
                 {/* 5. Listening History */}
                 <button
                   type="button"
                   onClick={() => openFavs('history')}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-amber-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
                       🕒
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Listening History</p>
-                      <p className="text-[10px] text-white/40 font-medium">Recently played songs</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Listening History</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Recently played songs</p>
                     </div>
                   </div>
-                  {historyCount > 0 ? (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      {historyCount}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {historyCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-black text-[10px] flex items-center justify-center shadow-sm">
+                        {historyCount}
+                      </span>
+                    )}
+                    <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm">
+                      ›
                     </span>
-                  ) : (
-                    <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-                  )}
+                  </div>
                 </button>
               </div>
 
-              {/* SECTION 3: APP & PREFERENCES */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/40 px-2">
+              {/* SECTION 3: SETTINGS & APP */}
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/45 px-1.5">
                   Settings &amp; App
                 </p>
 
@@ -364,41 +378,46 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                 <button
                   type="button"
                   onClick={openProfile}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-purple-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
-                      ⚙️
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/40 text-purple-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
+                      👤
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Profile Customization</p>
-                      <p className="text-[10px] text-white/40 font-medium">Avatar &amp; display name</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Profile Customization</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Avatar, display name &amp; more</p>
                     </div>
                   </div>
-                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm shrink-0">
+                    ›
+                  </span>
                 </button>
 
-                {/* 7. Android App & TWA Support */}
+                {/* 7. Settings (App Updates, Version & Info) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    if (onOpenAndroid) onOpenAndroid();
-                    else setShowAndroid(true);
-                  }}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  onClick={handleCheckUpdate}
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-emerald-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-xl overflow-hidden p-0.5 border border-green-400/60 shadow-sm bg-black shrink-0 group-hover:scale-110 transition-transform">
-                      <img src="/logo.png" alt="TuneTogether" className="w-full h-full object-cover rounded-lg" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Android App &amp; TWA</p>
-                      <p className="text-[10px] text-white/40 font-medium">Native APK &amp; TWA guide</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-slate-500/20 border border-slate-400/40 text-slate-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
+                      ⚙️
+                    </span>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Settings &amp; Updates</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">App preferences &amp; version v{CURRENT_APP_VERSION}</p>
                     </div>
                   </div>
-                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
+                    Check
+                  </span>
                 </button>
+                {updateToast && (
+                  <p className="text-[11px] text-emerald-400 font-semibold text-center mt-1 animate-in fade-in duration-200">
+                    {updateToast}
+                  </p>
+                )}
 
                 {/* 8. Privacy Policy */}
                 <button
@@ -408,21 +427,47 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                     if (onOpenPrivacy) onOpenPrivacy();
                     else setShowPrivacy(true);
                   }}
-                  className="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-white/80 hover:bg-white/5 hover:text-white transition-all duration-200"
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-emerald-500/40 text-white/90 transition-all duration-200 active:scale-98"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-slate-500/15 border border-slate-500/30 text-slate-300 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
                       🔒
                     </span>
-                    <div className="text-left">
-                      <p className="font-extrabold text-white text-xs">Privacy Policy</p>
-                      <p className="text-[10px] text-white/40 font-medium">Data collection &amp; safety</p>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Privacy Policy</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Data collection &amp; safety</p>
                     </div>
                   </div>
-                  <span className="text-white/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm shrink-0">
+                    ›
+                  </span>
                 </button>
 
-                {/* 9. Install App on Device (VIP Highlight Card) */}
+                {/* 9. Android App & TWA Support */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    if (onOpenAndroid) onOpenAndroid();
+                    else setShowAndroid(true);
+                  }}
+                  className="w-full group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs font-bold bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-green-500/40 text-white/90 transition-all duration-200 active:scale-98"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl bg-green-500/20 border border-green-400/40 text-green-300 flex items-center justify-center text-sm group-hover:scale-105 transition-transform shrink-0">
+                      📲
+                    </span>
+                    <div className="text-left min-w-0">
+                      <p className="font-extrabold text-white text-xs truncate">Android App &amp; TWA</p>
+                      <p className="text-[10px] text-white/45 font-medium truncate">Native APK &amp; install guide</p>
+                    </div>
+                  </div>
+                  <span className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm shrink-0">
+                    ›
+                  </span>
+                </button>
+
+                {/* 10. Install App on Device VIP Card (if not installed) */}
                 {!appInstalled && (
                   <button
                     type="button"
@@ -430,54 +475,27 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                       setIsOpen(false);
                       await triggerDirectInstall();
                     }}
-                    className="w-full group relative overflow-hidden flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold bg-gradient-to-r from-emerald-500/20 via-green-500/15 to-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+                    className="w-full group relative overflow-hidden flex items-center justify-between p-3 rounded-2xl text-xs font-bold bg-gradient-to-r from-emerald-500/20 via-green-500/15 to-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 transition-all duration-300 active:scale-98 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-emerald-500 text-black flex items-center justify-center text-base shadow-[0_0_10px_rgba(34,197,94,0.5)] group-hover:scale-110 transition-transform">
-                        📲
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-9 h-9 rounded-xl bg-emerald-500 text-black flex items-center justify-center text-base shadow-[0_0_10px_rgba(34,197,94,0.5)] group-hover:scale-105 transition-transform shrink-0">
+                        ⚡
                       </span>
-                      <div className="text-left">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-black text-emerald-300 text-xs">Install App on Device</p>
-                        </div>
-                        <p className="text-[10px] text-white/60 font-medium">Full screen &amp; background play</p>
+                      <div className="text-left min-w-0">
+                        <p className="font-black text-emerald-300 text-xs truncate">Install App on Device</p>
+                        <p className="text-[10px] text-white/60 font-medium truncate">Full screen &amp; zero delay</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-black px-2 py-0.5 rounded-full shadow-sm">
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-black px-2 py-0.5 rounded-full shadow-sm shrink-0">
                       Free App
                     </span>
                   </button>
                 )}
-
-                {/* Check for App Updates Button */}
-                <button
-                  type="button"
-                  onClick={handleCheckUpdate}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-green-500/40 transition-all duration-200 active:scale-98 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 flex items-center justify-center text-sm shadow-sm group-hover:scale-110 transition-transform">
-                      🔄
-                    </span>
-                    <div className="text-left">
-                      <p className="font-bold text-white text-xs">Check for App Updates</p>
-                      <p className="text-[10px] text-white/50">Version v{CURRENT_APP_VERSION}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
-                    Check
-                  </span>
-                </button>
-                {updateToast && (
-                  <p className="text-[11px] text-green-400 font-semibold text-center mt-1 animate-in fade-in duration-200">
-                    {updateToast}
-                  </p>
-                )}
               </div>
             </div>
 
-            {/* Bottom Footer Section */}
-            <div className="pt-4 border-t border-white/10 mt-3 space-y-3 relative z-10">
+            {/* Bottom Section: Glowing Red Sign Out & UltraSync Engine Status matching mockup */}
+            <div className="pt-3.5 border-t border-white/10 mt-3 space-y-2.5 relative z-10">
               {onSignOut && (
                 <button
                   type="button"
@@ -485,18 +503,18 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
                     setIsOpen(false);
                     onSignOut();
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 font-bold text-xs flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-sm"
+                  className="w-full py-2.5 sm:py-3 px-4 rounded-2xl border-2 border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-300 hover:text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.25)]"
                 >
-                  <span>🚪</span>
+                  <span className="text-sm">🚪</span>
                   <span>Sign Out</span>
                 </button>
               )}
 
-              <div className="flex items-center justify-between text-[10px] text-white/40 font-medium px-1">
-                <span>TuneTogether v2.0</span>
-                <span className="flex items-center gap-1 text-emerald-400/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  UltraSync Engine
+              <div className="flex items-center justify-between text-[11px] text-white/40 font-medium px-1">
+                <span>TuneTogether v{CURRENT_APP_VERSION}</span>
+                <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  UltraSync Engine Online
                 </span>
               </div>
             </div>
