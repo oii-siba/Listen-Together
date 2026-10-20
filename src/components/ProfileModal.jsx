@@ -72,12 +72,12 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-panel border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+      <div className="w-full max-w-md bg-[#0A100D] border border-white/[0.08] rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
         {/* Close Button */}
         <button
           onClick={onClose}
           type="button"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-panel2 text-white/60 hover:text-white flex items-center justify-center transition active:scale-95"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#101814] text-white/60 hover:text-white flex items-center justify-center transition border border-white/[0.08] active:scale-95"
           aria-label="Close"
         >
           ✕
@@ -85,7 +85,7 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
 
         {/* Modal Header */}
         <div className="mb-4">
-          <h2 className="text-lg font-extrabold text-white">
+          <h2 className="text-lg font-extrabold text-[#F5F7F5]">
             {activeTab === 'profile'
               ? 'Customize Profile'
               : activeTab === 'favorites'
@@ -94,7 +94,7 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
               ? 'Listening History'
               : 'Your Friends'}
           </h2>
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-[#9AA59F]">
             {activeTab === 'profile'
               ? 'Personalize your TuneTogether identity'
               : activeTab === 'favorites'
@@ -112,15 +112,15 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
             onClick={() => setActiveTab((prev) => (prev === 'favorites' ? 'profile' : 'favorites'))}
             className={`border rounded-2xl p-2.5 text-center transition active:scale-95 group cursor-pointer ${
               activeTab === 'favorites'
-                ? 'bg-green-500/20 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] ring-1 ring-green-400'
-                : 'bg-panel2/60 border-white/5 hover:border-green-500/30 hover:bg-panel2/90'
+                ? 'bg-[#00FF87]/15 border-[#00FF87] shadow-neon-sm ring-1 ring-[#00FF87]'
+                : 'bg-[#101814] border-white/[0.06] hover:border-[#00FF87]/30 hover:bg-[#16231D]'
             }`}
             title="Click to view Favorite Songs"
           >
-            <p className="text-lg font-extrabold text-green-400 group-hover:scale-105 transition">
+            <p className="text-lg font-extrabold text-[#00FF87] group-hover:scale-105 transition">
               {favoritesList.length}
             </p>
-            <p className="text-[10px] text-white/60 uppercase font-bold tracking-wider mt-0.5">
+            <p className="text-[10px] text-[#9AA59F] uppercase font-bold tracking-wider mt-0.5">
               Favorites
             </p>
           </button>
@@ -130,15 +130,15 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
             onClick={() => setActiveTab((prev) => (prev === 'history' ? 'profile' : 'history'))}
             className={`border rounded-2xl p-2.5 text-center transition active:scale-95 group cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-green-500/20 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] ring-1 ring-green-400'
-                : 'bg-panel2/60 border-white/5 hover:border-green-500/30 hover:bg-panel2/90'
+                ? 'bg-[#00FF87]/15 border-[#00FF87] shadow-neon-sm ring-1 ring-[#00FF87]'
+                : 'bg-[#101814] border-white/[0.06] hover:border-[#00FF87]/30 hover:bg-[#16231D]'
             }`}
             title="Click to view Listening History"
           >
-            <p className="text-lg font-extrabold text-green-400 group-hover:scale-105 transition">
+            <p className="text-lg font-extrabold text-[#00FF87] group-hover:scale-105 transition">
               {historyList.length}
             </p>
-            <p className="text-[10px] text-white/60 uppercase font-bold tracking-wider mt-0.5">
+            <p className="text-[10px] text-[#9AA59F] uppercase font-bold tracking-wider mt-0.5">
               Listened
             </p>
           </button>
@@ -148,15 +148,15 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
             onClick={() => setActiveTab((prev) => (prev === 'friends' ? 'profile' : 'friends'))}
             className={`border rounded-2xl p-2.5 text-center transition active:scale-95 group cursor-pointer ${
               activeTab === 'friends'
-                ? 'bg-green-500/20 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] ring-1 ring-green-400'
-                : 'bg-panel2/60 border-white/5 hover:border-green-500/30 hover:bg-panel2/90'
+                ? 'bg-[#00FF87]/15 border-[#00FF87] shadow-neon-sm ring-1 ring-[#00FF87]'
+                : 'bg-[#101814] border-white/[0.06] hover:border-[#00FF87]/30 hover:bg-[#16231D]'
             }`}
             title="Click to view Friends"
           >
-            <p className="text-lg font-extrabold text-green-400 group-hover:scale-105 transition">
+            <p className="text-lg font-extrabold text-[#00FF87] group-hover:scale-105 transition">
               {friendsList.length}
             </p>
-            <p className="text-[10px] text-white/60 uppercase font-bold tracking-wider mt-0.5">
+            <p className="text-[10px] text-[#9AA59F] uppercase font-bold tracking-wider mt-0.5">
               Friends
             </p>
           </button>
@@ -164,10 +164,10 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
 
         {/* TAB 1: Profile Customization View */}
         {activeTab === 'profile' && (
-          <div className="overflow-y-auto pr-1 flex-1">
+          <div className="overflow-y-auto pr-1 flex-1 custom-scrollbar">
             {/* Avatar Selection */}
             <div className="mb-4">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-white/60 mb-2">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#9AA59F] mb-2">
                 Select Avatar
               </label>
               <div className="flex items-center gap-3 overflow-x-auto pb-1 no-scrollbar">
@@ -178,7 +178,7 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
                     onClick={() => setSelectedPhoto(url)}
                     className={`relative w-12 h-12 rounded-full border-2 transition shrink-0 ${
                       selectedPhoto === url
-                        ? 'border-green-400 scale-110 shadow-[0_0_12px_rgba(34,197,94,0.6)]'
+                        ? 'border-[#00FF87] scale-110 shadow-neon-sm'
                         : 'border-white/10 hover:border-white/40 opacity-70'
                     }`}
                   >
@@ -191,37 +191,37 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
             {/* Edit Form */}
             <form onSubmit={handleSave} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/60 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#9AA59F] mb-1">
                   Display Name
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-panel2 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
+                  className="w-full bg-[#101814] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-[#F5F7F5] outline-none focus:border-[#00FF87] placeholder:text-white/35 transition"
                   placeholder="Your name"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/60 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#9AA59F] mb-1">
                   Bio / Status
                 </label>
                 <input
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  className="w-full bg-panel2 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
+                  className="w-full bg-[#101814] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-[#F5F7F5] outline-none focus:border-[#00FF87] placeholder:text-white/35 transition"
                   placeholder="e.g. Vibing to Lo-Fi 🎧"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/60 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#9AA59F] mb-1">
                   Favorite Genre / Vibe
                 </label>
                 <select
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
-                  className="w-full bg-panel2 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-green-500 transition"
+                  className="w-full bg-[#101814] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-[#F5F7F5] outline-none focus:border-[#00FF87] transition"
                 >
                   <option value="Lo-Fi & Pop">Lo-Fi & Pop</option>
                   <option value="Bollywood & Punjabi">Bollywood & Punjabi</option>
@@ -233,14 +233,14 @@ export default function ProfileModal({ user, onClose, onUpdateUser }) {
               </div>
 
               {savedMsg && (
-                <p className="text-xs text-center font-bold text-green-400 py-1">
+                <p className="text-xs text-center font-bold text-[#00FF87] py-1">
                   Profile updated successfully! ✓
                 </p>
               )}
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-full bg-green-500 text-black font-extrabold text-sm active:scale-95 transition hover:brightness-110 shadow-[0_0_20px_rgba(34,197,94,0.4)] mt-2"
+                className="w-full py-3 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-sm active:scale-95 transition shadow-neon-sm mt-2"
               >
                 Save Profile
               </button>

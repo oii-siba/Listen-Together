@@ -209,10 +209,10 @@ export default function AddSong({ canAdd, onAdd, isHost, user }) {
             key={t.id}
             type="button"
             onClick={() => setSubTab(t.id)}
-            className={`px-3 py-1.5 rounded-full font-bold whitespace-nowrap transition active:scale-95 ${
+            className={`px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition active:scale-95 ${
               subTab === t.id
-                ? 'bg-green-500 text-black shadow-[0_0_12px_rgba(34,197,94,0.4)]'
-                : 'bg-panel2/80 text-white/60 hover:text-white border border-white/5'
+                ? 'bg-[#00FF87] text-[#020403] shadow-[0_0_14px_rgba(0,255,135,0.4)]'
+                : 'bg-[#101814]/80 text-[#9AA59F] hover:text-white border border-white/5'
             }`}
           >
             {t.label}
@@ -234,7 +234,7 @@ export default function AddSong({ canAdd, onAdd, isHost, user }) {
                 }}
                 placeholder="Search any song, artist, album or paste link…"
                 inputMode="search"
-                className="w-full bg-panel2 rounded-full pl-10 pr-9 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-accent placeholder:text-white/35 transition"
+                className="w-full bg-[#0A100D] border border-white/10 rounded-full pl-10 pr-9 py-3 text-sm text-[#F5F7F5] outline-none focus:border-[#00FF87] focus:ring-1 focus:ring-[#00FF87] placeholder:text-[#9AA59F]/40 transition"
               />
               {q && (
                 <button
@@ -254,7 +254,7 @@ export default function AddSong({ canAdd, onAdd, isHost, user }) {
             <button
               type="submit"
               disabled={busy || !q.trim()}
-              className="px-5 rounded-full bg-accent text-black font-bold text-sm active:scale-95 transition disabled:opacity-40 hover:brightness-105 shadow-md shadow-accent/20 shrink-0 flex items-center gap-1.5"
+              className="px-5 rounded-full neon-green-btn text-[#020403] font-black text-sm active:scale-95 transition disabled:opacity-40 shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               {busy ? (
                 <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />

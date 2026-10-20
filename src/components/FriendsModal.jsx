@@ -273,12 +273,12 @@ export default function FriendsModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-      <div className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-panel border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+      <div className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#0A100D] border border-white/[0.08] rounded-3xl p-4 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
         {/* Close Button */}
         <button
           onClick={onClose}
           type="button"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-panel2 text-white/60 hover:text-white flex items-center justify-center transition"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#101814] text-white/60 hover:text-white flex items-center justify-center transition border border-white/[0.08]"
         >
           ✕
         </button>
@@ -287,14 +287,14 @@ export default function FriendsModal({
         <div className="flex items-center gap-2 mb-4">
           <span className="text-2xl">👥</span>
           <div>
-            <h2 className="text-lg font-extrabold text-white">Friends System</h2>
-            <p className="text-xs text-white/50">Listen in sync with your squad</p>
+            <h2 className="text-lg font-extrabold text-[#F5F7F5]">Friends System</h2>
+            <p className="text-xs text-[#9AA59F]">Listen in sync with your squad</p>
           </div>
         </div>
 
         {/* Permission Banner if default */}
         {permState === 'default' && (
-          <div className="bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 rounded-2xl p-3 mb-4 flex items-center justify-between gap-2.5">
+          <div className="bg-gradient-to-r from-[#00FF87]/15 to-[#00C96B]/10 border border-[#00FF87]/30 rounded-2xl p-3 mb-4 flex items-center justify-between gap-2.5">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white flex items-center gap-1.5">
                 <span>🔔</span> Browser Notifications
@@ -306,7 +306,7 @@ export default function FriendsModal({
             <button
               onClick={handleRequestPermission}
               type="button"
-              className="px-3 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] active:scale-95 transition hover:brightness-110 shadow shrink-0"
+              className="px-3 py-1.5 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-[11px] active:scale-95 transition shadow-neon-sm shrink-0"
             >
               Enable
             </button>
@@ -314,15 +314,15 @@ export default function FriendsModal({
         )}
 
         {/* My Friend Code Box */}
-        <div className="bg-panel2/80 border border-green-500/30 rounded-2xl p-3.5 mb-5 flex items-center justify-between">
+        <div className="bg-[#101814] border border-[#00FF87]/30 rounded-2xl p-3.5 mb-5 flex items-center justify-between shadow-neon-sm">
           <div>
-            <p className="text-[10px] uppercase font-bold text-green-400 tracking-wider">Your Friend Code</p>
-            <p className="text-base font-extrabold font-mono text-white mt-0.5">{myCode}</p>
+            <p className="text-[10px] uppercase font-bold text-[#00FF87] tracking-wider">Your Friend Code</p>
+            <p className="text-base font-extrabold font-mono text-[#F5F7F5] mt-0.5">{myCode}</p>
           </div>
           <button
             onClick={copyMyCode}
             type="button"
-            className="px-4 py-2 rounded-full bg-green-500 text-black font-extrabold text-xs active:scale-95 transition hover:brightness-110 shadow"
+            className="px-4 py-2 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-xs active:scale-95 transition shadow-neon-sm"
           >
             {copied ? 'Copied! ✓' : 'Copy Code'}
           </button>
@@ -334,12 +334,12 @@ export default function FriendsModal({
             value={friendCodeInput}
             onChange={(e) => setFriendCodeInput(e.target.value)}
             placeholder="Enter friend's Code (e.g. TT-A1B2C3)…"
-            className="flex-1 bg-panel2 border border-white/10 rounded-full px-4 py-2.5 text-xs text-white outline-none focus:border-green-500 placeholder:text-white/35 transition"
+            className="flex-1 bg-[#101814] border border-white/[0.08] rounded-full px-4 py-2.5 text-xs text-[#F5F7F5] outline-none focus:border-[#00FF87] placeholder:text-white/35 transition"
           />
           <button
             type="submit"
             disabled={!friendCodeInput.trim() || searching}
-            className="px-4 py-2.5 rounded-full bg-panel2 border border-white/10 font-bold text-xs text-white hover:bg-white/10 active:scale-95 transition disabled:opacity-40 flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-full bg-[#101814] border border-white/[0.08] font-bold text-xs text-white hover:bg-white/10 active:scale-95 transition disabled:opacity-40 flex items-center gap-1.5"
           >
             {searching ? (
               <span className="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -354,23 +354,22 @@ export default function FriendsModal({
             className={`text-xs text-center font-medium py-2 px-3 rounded-xl mb-4 transition border ${
               isError
                 ? 'bg-red-500/10 border-red-500/30 text-red-300'
-                : 'bg-green-500/10 border-green-500/20 text-green-400'
+                : 'bg-[#00FF87]/10 border-[#00FF87]/30 text-[#00FF87]'
             }`}
           >
             {msg}
           </div>
         )}
 
-
         {/* Pending Friend Requests if any */}
         {pendingRequests.length > 0 && (
-          <div className="mb-5 bg-green-500/10 border border-green-500/30 rounded-2xl p-3.5 shadow-sm">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-green-400 mb-2.5 flex items-center justify-between">
+          <div className="mb-5 bg-[#00FF87]/10 border border-[#00FF87]/30 rounded-2xl p-3.5 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#00FF87] mb-2.5 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <span>📬</span>
                 <span>Incoming Friend Requests</span>
               </span>
-              <span className="text-[10px] bg-green-500 text-black px-2 py-0.5 rounded-full font-extrabold">
+              <span className="text-[10px] bg-[#00FF87] text-black px-2 py-0.5 rounded-full font-extrabold">
                 {pendingRequests.length}
               </span>
             </h3>
@@ -384,7 +383,7 @@ export default function FriendsModal({
                     <img
                       src={req.senderPhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${req.senderUid}`}
                       alt=""
-                      className="w-8 h-8 rounded-full border border-green-400/60 shrink-0 object-cover"
+                      className="w-8 h-8 rounded-full border border-[#00FF87]/60 shrink-0 object-cover"
                     />
                     <div className="min-w-0">
                       <p className="font-bold text-xs text-white truncate">{req.senderName}</p>
@@ -397,7 +396,7 @@ export default function FriendsModal({
                     <button
                       type="button"
                       onClick={() => handleAcceptRequest(req)}
-                      className="px-3 py-1 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow"
+                      className="px-3.5 py-1.5 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-[11px] active:scale-95 transition shadow-neon-sm"
                     >
                       Accept
                     </button>
@@ -477,7 +476,7 @@ export default function FriendsModal({
                     <div className="flex items-center gap-1.5 shrink-0">
                       {currentRoomId && (
                         inRoom ? (
-                          <span className="text-[10.5px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+                          <span className="text-[10.5px] font-bold text-[#00FF87] bg-[#00FF87]/10 border border-[#00FF87]/20 px-2.5 py-1 rounded-full">
                             In Room ✓
                           </span>
                         ) : isKicked ? (
@@ -485,7 +484,7 @@ export default function FriendsModal({
                             <button
                               type="button"
                               onClick={() => reInviteFriend(f)}
-                              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-black font-extrabold text-[10.5px] hover:brightness-110 active:scale-95 transition shadow-[0_0_12px_rgba(34,197,94,0.4)] flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#00FF87] to-[#00C96B] text-black font-extrabold text-[10.5px] active:scale-95 transition shadow-neon-sm flex items-center gap-1"
                               title="Unblock user and invite them back to the room"
                             >
                               Re-invite 🔄
@@ -502,7 +501,7 @@ export default function FriendsModal({
                           <button
                             type="button"
                             onClick={() => inviteFriend(f)}
-                            className="px-3.5 py-1.5 rounded-full bg-green-500 text-black font-extrabold text-[11px] hover:brightness-110 active:scale-95 transition shadow-[0_0_12px_rgba(34,197,94,0.4)]"
+                            className="px-3.5 py-1.5 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-[11px] active:scale-95 transition shadow-neon-sm"
                           >
                             Invite 🚀
                           </button>

@@ -105,10 +105,10 @@ export default function BottomNav({ user, onUpdateUser }) {
 
   return (
     <>
-      {/* Mobile App Bottom Navigation Bar - Clean, Normal, No Animations */}
+      {/* Mobile App Bottom Navigation Bar - Luxury Dark Charcoal & Emerald Glow */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#0a0f14]/95 backdrop-blur-xl border-t border-white/10 px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-lg select-none"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#0A100D]/95 backdrop-blur-2xl border-t border-white/10 px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(0,0,0,0.9)] select-none"
       >
         <div className="grid grid-cols-5 items-center max-w-md mx-auto">
           {/* 1. Home */}
@@ -118,7 +118,7 @@ export default function BottomNav({ user, onUpdateUser }) {
             className="flex flex-col items-center justify-center py-1 cursor-pointer"
             aria-label="Home"
           >
-            <div className={`flex flex-col items-center ${activeTab === 'home' ? 'text-white' : 'text-white/45'}`}>
+            <div className={`flex flex-col items-center ${activeTab === 'home' ? 'text-[#00FF87]' : 'text-[#9AA59F]'}`}>
               <svg
                 width="22"
                 height="22"
@@ -128,16 +128,16 @@ export default function BottomNav({ user, onUpdateUser }) {
                 strokeWidth={activeTab === 'home' ? '1.8' : '2'}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className={activeTab === 'home' ? 'drop-shadow-[0_0_8px_rgba(0,255,135,0.6)]' : ''}
               >
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'home' ? 'font-bold text-white' : 'font-medium text-white/50'}`}>
+              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'home' ? 'font-bold text-[#00FF87]' : 'font-medium text-[#9AA59F]'}`}>
                 Home
               </span>
-              {/* Normal clean active underline */}
               {activeTab === 'home' && (
-                <span className="w-5 h-0.5 rounded-full bg-green-400 mt-0.5" />
+                <span className="w-5 h-0.5 rounded-full bg-[#00FF87] mt-0.5 shadow-[0_0_6px_rgba(0,255,135,0.8)]" />
               )}
             </div>
           </button>
@@ -149,7 +149,7 @@ export default function BottomNav({ user, onUpdateUser }) {
             className="flex flex-col items-center justify-center py-1 cursor-pointer"
             aria-label="Discover"
           >
-            <div className={`flex flex-col items-center ${activeTab === 'discover' ? 'text-white' : 'text-white/45'}`}>
+            <div className={`flex flex-col items-center ${activeTab === 'discover' ? 'text-[#00FF87]' : 'text-[#9AA59F]'}`}>
               <svg
                 width="22"
                 height="22"
@@ -159,6 +159,7 @@ export default function BottomNav({ user, onUpdateUser }) {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className={activeTab === 'discover' ? 'drop-shadow-[0_0_8px_rgba(0,255,135,0.6)]' : ''}
               >
                 <circle cx="12" cy="12" r="10" />
                 <polygon
@@ -166,11 +167,11 @@ export default function BottomNav({ user, onUpdateUser }) {
                   fill={activeTab === 'discover' ? 'currentColor' : 'none'}
                 />
               </svg>
-              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'discover' ? 'font-bold text-white' : 'font-medium text-white/50'}`}>
+              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'discover' ? 'font-bold text-[#00FF87]' : 'font-medium text-[#9AA59F]'}`}>
                 Discover
               </span>
               {activeTab === 'discover' && (
-                <span className="w-5 h-0.5 rounded-full bg-green-400 mt-0.5" />
+                <span className="w-5 h-0.5 rounded-full bg-[#00FF87] mt-0.5 shadow-[0_0_6px_rgba(0,255,135,0.8)]" />
               )}
             </div>
           </button>
@@ -182,10 +183,10 @@ export default function BottomNav({ user, onUpdateUser }) {
             className="flex flex-col items-center justify-center py-1 cursor-pointer"
             aria-label="Rooms"
           >
-            <div className={`flex flex-col items-center ${activeTab === 'rooms' || isInsideRoom ? 'text-green-400' : 'text-white/45'}`}>
+            <div className={`flex flex-col items-center ${activeTab === 'rooms' || isInsideRoom ? 'text-[#00FF87]' : 'text-[#9AA59F]'}`}>
               <div className={`w-7 h-7 rounded-full border flex items-center justify-center ${
                 activeTab === 'rooms' || isInsideRoom
-                  ? 'border-green-400 bg-green-500/20 text-green-300'
+                  ? 'border-[#00FF87] bg-[#00FF87]/20 text-[#00FF87] shadow-[0_0_10px_rgba(0,255,135,0.4)]'
                   : 'border-white/20 text-white/60'
               }`}>
                 <svg
@@ -202,11 +203,11 @@ export default function BottomNav({ user, onUpdateUser }) {
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </div>
-              <span className={`text-[10px] mt-0.5 tracking-tight ${activeTab === 'rooms' || isInsideRoom ? 'font-bold text-green-400' : 'font-medium text-white/50'}`}>
+              <span className={`text-[10px] mt-0.5 tracking-tight ${activeTab === 'rooms' || isInsideRoom ? 'font-bold text-[#00FF87]' : 'font-medium text-[#9AA59F]'}`}>
                 Rooms
               </span>
               {(activeTab === 'rooms' || isInsideRoom) && (
-                <span className="w-5 h-0.5 rounded-full bg-green-400 mt-0.5" />
+                <span className="w-5 h-0.5 rounded-full bg-[#00FF87] mt-0.5 shadow-[0_0_6px_rgba(0,255,135,0.8)]" />
               )}
             </div>
           </button>
@@ -218,7 +219,7 @@ export default function BottomNav({ user, onUpdateUser }) {
             className="flex flex-col items-center justify-center py-1 cursor-pointer"
             aria-label="Library"
           >
-            <div className={`flex flex-col items-center ${activeTab === 'library' ? 'text-white' : 'text-white/45'}`}>
+            <div className={`flex flex-col items-center ${activeTab === 'library' ? 'text-[#00FF87]' : 'text-[#9AA59F]'}`}>
               <div className="relative">
                 <svg
                   width="22"
@@ -229,6 +230,7 @@ export default function BottomNav({ user, onUpdateUser }) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className={activeTab === 'library' ? 'drop-shadow-[0_0_8px_rgba(0,255,135,0.6)]' : ''}
                 >
                   <path d="M9 18V5l12-2v13" />
                   <circle cx="6" cy="18" r="3" fill={activeTab === 'library' ? 'currentColor' : 'none'} />
@@ -240,11 +242,11 @@ export default function BottomNav({ user, onUpdateUser }) {
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'library' ? 'font-bold text-white' : 'font-medium text-white/50'}`}>
+              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'library' ? 'font-bold text-[#00FF87]' : 'font-medium text-[#9AA59F]'}`}>
                 Library
               </span>
               {activeTab === 'library' && (
-                <span className="w-5 h-0.5 rounded-full bg-green-400 mt-0.5" />
+                <span className="w-5 h-0.5 rounded-full bg-[#00FF87] mt-0.5 shadow-[0_0_6px_rgba(0,255,135,0.8)]" />
               )}
             </div>
           </button>
@@ -256,12 +258,12 @@ export default function BottomNav({ user, onUpdateUser }) {
             className="flex flex-col items-center justify-center py-1 cursor-pointer"
             aria-label="Profile"
           >
-            <div className={`flex flex-col items-center ${activeTab === 'profile' ? 'text-white' : 'text-white/45'}`}>
+            <div className={`flex flex-col items-center ${activeTab === 'profile' ? 'text-[#00FF87]' : 'text-[#9AA59F]'}`}>
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt=""
-                  className={`w-5 h-5 rounded-full object-cover ${activeTab === 'profile' ? 'border-2 border-green-400' : 'border border-white/20'}`}
+                  className={`w-5 h-5 rounded-full object-cover ${activeTab === 'profile' ? 'border-2 border-[#00FF87] shadow-[0_0_8px_rgba(0,255,135,0.6)]' : 'border border-white/20'}`}
                 />
               ) : (
                 <svg
@@ -273,16 +275,17 @@ export default function BottomNav({ user, onUpdateUser }) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className={activeTab === 'profile' ? 'drop-shadow-[0_0_8px_rgba(0,255,135,0.6)]' : ''}
                 >
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" fill={activeTab === 'profile' ? 'currentColor' : 'none'} />
                 </svg>
               )}
-              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'profile' ? 'font-bold text-white' : 'font-medium text-white/50'}`}>
+              <span className={`text-[10px] mt-1 tracking-tight ${activeTab === 'profile' ? 'font-bold text-[#00FF87]' : 'font-medium text-[#9AA59F]'}`}>
                 Profile
               </span>
               {activeTab === 'profile' && (
-                <span className="w-5 h-0.5 rounded-full bg-green-400 mt-0.5" />
+                <span className="w-5 h-0.5 rounded-full bg-[#00FF87] mt-0.5 shadow-[0_0_6px_rgba(0,255,135,0.8)]" />
               )}
             </div>
           </button>

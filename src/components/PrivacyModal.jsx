@@ -5,16 +5,16 @@ export default function PrivacyModal({ onClose }) {
         className="fixed inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg max-h-[85vh] bg-[#0d1611] border border-green-500/40 rounded-3xl p-6 shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+      <div className="relative w-full max-w-lg max-h-[85vh] bg-[#0A100D] border border-white/[0.08] rounded-3xl p-6 shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center text-sm border border-green-500/30">
+            <span className="w-8 h-8 rounded-xl bg-[#00FF87]/15 text-[#00FF87] flex items-center justify-center text-sm border border-[#00FF87]/30 shadow-neon-sm">
               🔒
             </span>
             <div>
-              <h2 className="font-extrabold text-base text-white leading-tight">Privacy Policy</h2>
-              <p className="text-[10px] text-green-400 font-semibold">TuneTogether Data &amp; Security</p>
+              <h2 className="font-extrabold text-base text-[#F5F7F5] leading-tight">Privacy Policy</h2>
+              <p className="text-[10px] text-[#00FF87] font-semibold">TuneTogether Data &amp; Security</p>
             </div>
           </div>
           <button
@@ -65,18 +65,18 @@ export default function PrivacyModal({ onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-white/10 flex items-center justify-between shrink-0">
+        <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between shrink-0">
           <a
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-green-400 hover:underline font-semibold"
+            className="text-[11px] text-[#00FF87] hover:underline font-semibold"
           >
             Open Full Page Policy ↗
           </a>
           <button
             onClick={onClose}
-            className="py-2 px-5 rounded-full bg-green-500 text-black font-extrabold text-xs hover:brightness-110 active:scale-95 transition"
+            className="py-2.5 px-6 rounded-full bg-[#00FF87] hover:bg-[#00C96B] text-black font-extrabold text-xs shadow-neon-sm active:scale-95 transition"
           >
             Got it
           </button>

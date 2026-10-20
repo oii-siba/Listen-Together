@@ -104,21 +104,21 @@ export default function Participants({ people, hostId, myUid, user, onKick, kick
           const reqState = requestStatus[p.uid];
 
           return (
-            <li key={p.uid} className="flex items-center gap-3 bg-panel rounded-xl p-3 border border-white/5">
+            <li key={p.uid} className="flex items-center gap-3 glass-card rounded-2xl p-3 border border-white/10 hover:border-[#00FF87]/30 transition shadow-sm">
               <Avatar name={p.name} photo={p.photo} size={40} ring={p.uid === hostId} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate flex items-center gap-1.5">
+                <p className="text-sm font-bold text-[#F5F7F5] truncate flex items-center gap-1.5">
                   <span>{p.name}</span>
-                  {isMe && <span className="text-white/40 text-xs font-normal">(you)</span>}
+                  {isMe && <span className="text-[#9AA59F] text-xs font-normal">(you)</span>}
                 </p>
-                <p className="text-[11px] text-white/40">
+                <p className="text-[11px] text-[#9AA59F]">
                   {p.uid === hostId ? 'Room Host & Controller' : 'Listening in sync'}
                 </p>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 {p.uid === hostId && (
-                  <span className="flex items-center gap-1 text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2.5 py-1">
+                  <span className="flex items-center gap-1 text-xs font-black text-[#00FF87] bg-[#00FF87]/15 border border-[#00FF87]/30 rounded-full px-2.5 py-1 shadow-[0_0_8px_rgba(0,255,135,0.2)]">
                     <Star size={13} /> Host
                   </span>
                 )}
@@ -126,7 +126,7 @@ export default function Participants({ people, hostId, myUid, user, onKick, kick
                 {!isMe && (
                   isFriend ? (
                     <span
-                      className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1"
+                      className="flex items-center gap-1 text-[11px] font-bold text-[#00FF87] bg-[#00FF87]/15 border border-[#00FF87]/30 rounded-full px-2.5 py-1"
                       title="You are friends"
                     >
                       <Check size={12} /> Friend
@@ -143,7 +143,7 @@ export default function Participants({ people, hostId, myUid, user, onKick, kick
                       type="button"
                       disabled={reqState === 'sending'}
                       onClick={() => handleAddFriend(p)}
-                      className="flex items-center gap-1 text-[11px] font-bold text-accent-light hover:text-white bg-accent/20 hover:bg-accent border border-accent/40 hover:border-accent rounded-full px-3 py-1 transition active:scale-95 disabled:opacity-50"
+                      className="flex items-center gap-1 text-[11px] font-black text-[#020403] bg-[#00FF87] hover:brightness-110 rounded-full px-3 py-1 transition active:scale-95 disabled:opacity-50 shadow-[0_0_10px_rgba(0,255,135,0.3)] cursor-pointer"
                       title={`Send friend request to ${p.name || 'this listener'}`}
                     >
                       {reqState === 'sending' ? (

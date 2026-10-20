@@ -92,10 +92,10 @@ export default function EmojiReactions({ roomId, user, className = '', isHost = 
             style={{ left: `${r.xOffset || 50}%`, bottom: '120px' }}
             className="absolute animate-float-reaction flex flex-col items-center"
           >
-            <span className="text-4xl filter drop-shadow-[0_0_16px_rgba(34,197,94,0.95)] select-none">
+            <span className="text-4xl filter drop-shadow-[0_0_16px_rgba(0,255,135,0.9)] select-none">
               {r.emoji}
             </span>
-            <span className="text-[10px] font-bold text-white bg-black/80 border border-green-500/40 px-2 py-0.5 rounded-full backdrop-blur-md mt-1 shadow-xl whitespace-nowrap">
+            <span className="text-[10px] font-bold text-white bg-black/85 border border-[#00FF87]/40 px-2.5 py-0.5 rounded-full backdrop-blur-md mt-1 shadow-neon-sm whitespace-nowrap">
               {r.senderName}
             </span>
           </div>
@@ -105,12 +105,12 @@ export default function EmojiReactions({ roomId, user, className = '', isHost = 
       {/* Emoji Picker Bar */}
       <div className={`relative ${className}`}>
         {!isHost && allowGuestReactions === false ? (
-          <div className="flex items-center justify-center gap-1.5 px-3 py-2 bg-panel/70 rounded-full border border-white/5 text-[11px] text-white/40">
+          <div className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0A100D]/80 rounded-full border border-white/[0.08] text-[11px] text-[#9AA59F]">
             <span>🔒</span> Host paused emoji reactions
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-1.5 px-3 py-2 bg-panel/90 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-green-400 pl-1 shrink-0 flex items-center gap-1">
+          <div className="flex items-center justify-between gap-1.5 px-3.5 py-2 bg-[#0A100D]/90 backdrop-blur-xl rounded-full border border-white/[0.08] shadow-lg">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#00FF87] pl-1 shrink-0 flex items-center gap-1">
               <span>✨</span> React
             </span>
             <div className="flex items-center gap-1 sm:gap-2">
@@ -119,7 +119,7 @@ export default function EmojiReactions({ roomId, user, className = '', isHost = 
                   key={emoji}
                   onClick={() => sendReaction(emoji)}
                   type="button"
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 active:scale-125 hover:scale-110 transition-all flex items-center justify-center text-base"
+                  className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/15 active:scale-125 hover:scale-110 transition-all flex items-center justify-center text-base"
                   title={`React with ${emoji}`}
                 >
                   {emoji}

@@ -90,31 +90,31 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto my-4 rounded-[28px] overflow-hidden shadow-2xl bg-black border border-green-500/30">
-      {/* Background Image: TuneTogether Earbuds Case with green ambient glow */}
-      <div className="relative w-full aspect-[9/13] sm:aspect-[9/14] overflow-hidden">
+    <div className="relative w-full max-w-md mx-auto my-4 rounded-[32px] overflow-hidden shadow-2xl bg-black border border-white/15">
+      {/* Background Image: TuneTogether Luxury Earbuds Case with glowing lid display */}
+      <div className="relative w-full aspect-[9/14] sm:aspect-[9/14] overflow-hidden bg-black">
         <img
-          src="/airpods_green.jpg"
+          src="/earbuds_case.png"
           alt="TuneTogether Earbuds"
-          className="absolute inset-0 w-full h-full object-cover object-bottom"
+          className="absolute inset-0 w-full h-full object-cover object-center select-none"
         />
 
-        {/* Cinematic Ambient Dark Green Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#052e16]/80 via-transparent to-black/85 pointer-events-none" />
+        {/* Ambient Dark Green & Silver Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none" />
 
         {/* Top Tagline */}
-        <div className="relative z-10 pt-6 px-6 text-center">
-          <p className="text-white/95 text-base sm:text-lg font-bold tracking-tight drop-shadow-md">
+        <div className="relative z-10 pt-5 px-6 text-center">
+          <p className="text-[#F5F7F5] text-sm sm:text-base font-extrabold tracking-tight drop-shadow-md">
             {has ? 'Now playing in perfect sync' : 'Room is ready'}
           </p>
-          <p className="text-green-400 text-xs sm:text-sm font-semibold tracking-tight mt-0.5 drop-shadow">
+          <p className="text-[#00FF87] text-[11px] sm:text-xs font-semibold tracking-tight mt-0.5 drop-shadow">
             {has ? 'one beat · one connection' : 'pick a song below to start listening together 🎵'}
           </p>
         </div>
 
-        {/* GLOWING NEON GREEN HUD PLAYER CAPSULE */}
-        <div className="absolute top-[18%] left-4 right-4 z-20">
-          <div className="neon-green-box rounded-[26px] bg-black/85 backdrop-blur-xl p-4 transition-all duration-300">
+        {/* LUMINOUS EARBUD CASE DISPLAY CAPSULE */}
+        <div className="absolute top-[16%] left-3.5 right-3.5 sm:left-4 sm:right-4 z-20">
+          <div className="earbud-screen-capsule rounded-[28px] p-4 text-[#F5F7F5] transition-all duration-300">
             {!has ? (
               /* PROMINENT "PLAY A SONG" CALL TO ACTION HUD */
               <div className="py-2 px-2 text-center flex flex-col items-center">
@@ -143,7 +143,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                 <button
                   type="button"
                   onClick={scrollToSearch}
-                  className="mt-4 w-full py-3 px-5 rounded-full bg-green-500 text-black font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(34,197,94,0.6)] hover:brightness-110 active:scale-95 transition cursor-pointer"
+                  className="mt-4 w-full py-3 px-5 rounded-full neon-green-btn text-[#020403] font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition cursor-pointer"
                 >
                   <span>▶</span> {isHost ? 'Search & Play a Song' : 'Suggest / Queue a Song'}
                 </button>
@@ -157,7 +157,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                     <img
                       src={playback.thumb}
                       alt={playback.title}
-                      className="w-14 h-14 rounded-xl object-cover shadow-lg border border-green-500/40 shrink-0"
+                      className="w-14 h-14 rounded-xl object-cover shadow-lg border border-[#00FF87]/50 shrink-0"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white/40 shrink-0 shadow-inner">
@@ -169,21 +169,21 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isPlaying ? 'bg-green-400 animate-pulse' : 'bg-white/30'
+                          isPlaying ? 'bg-[#00FF87] animate-pulse' : 'bg-white/30'
                         }`}
                       />
                       <span
                         className={`text-[10px] font-bold tracking-wider uppercase ${
-                          isPlaying ? 'text-green-400' : 'text-white/40'
+                          isPlaying ? 'text-[#00FF87]' : 'text-white/40'
                         }`}
                       >
                         LIVE · {isHost ? 'HOST' : 'LISTENING'}
                       </span>
                     </div>
-                    <h3 className="font-extrabold text-white text-base leading-tight line-clamp-1 drop-shadow mt-0.5">
+                    <h3 className="font-extrabold text-[#F5F7F5] text-base leading-tight line-clamp-1 drop-shadow mt-0.5">
                       {playback.title || 'YouTube Song'}
                     </h3>
-                    <p className="text-xs text-white/50 truncate mt-0.5 font-medium">
+                    <p className="text-xs text-[#9AA59F] truncate mt-0.5 font-medium">
                       {playback.addedByName ? `Added by ${playback.addedByName}` : 'Live in room'}
                     </p>
                   </div>
@@ -253,7 +253,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                       type="button"
                       onClick={onToggle}
                       disabled={!isHost}
-                      className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-white/30 disabled:opacity-40"
+                      className="w-12 h-12 rounded-full bg-white hover:bg-[#00FF87] text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-white/30 disabled:opacity-40"
                       aria-label={isPlaying ? 'Pause' : 'Play'}
                     >
                       {isPlaying ? (
@@ -279,7 +279,7 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
                   </div>
 
                   {/* TuneTogether Icon */}
-                  <div className="w-6 h-6 rounded-full overflow-hidden border border-green-400/60 shadow-[0_0_8px_rgba(34,197,94,0.5)]">
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-[#00FF87]/80 shadow-[0_0_10px_rgba(0,255,135,0.45)]">
                     <img src="/logo.png" alt="" className="w-full h-full object-cover" />
                   </div>
                 </div>
@@ -288,16 +288,15 @@ export default function NowPlaying({ playback, playerRef, isHost, user, onToggle
           </div>
         </div>
 
-
         {/* Volume & Status Bar at bottom of card */}
-        <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center justify-between bg-black/70 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 text-xs">
+        <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center justify-between bg-[#0A100D]/85 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 text-xs">
           <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${
-                has && isPlaying ? 'bg-green-400 animate-ping' : 'bg-white/30'
+                has && isPlaying ? 'bg-[#00FF87] animate-ping' : 'bg-white/30'
               }`}
             />
-            <span className="text-white/70 font-medium">
+            <span className="text-white/80 font-medium">
               {has ? (isHost ? 'You are Host' : 'In Sync') : 'Room Idle'}
             </span>
 

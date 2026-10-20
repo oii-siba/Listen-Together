@@ -36,41 +36,41 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col justify-center text-white font-sans pt-safe pb-safe">
+    <div className="min-h-[100dvh] max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col justify-center text-[#F5F7F5] font-sans pt-safe pb-safe relative">
       <div className="text-center flex flex-col items-center">
-        {/* TuneTogether Official Logo with glowing aura */}
-        <div className="relative w-24 h-24 rounded-full overflow-hidden p-1 border-2 border-green-400 shadow-[0_0_35px_rgba(34,197,94,0.7)] animate-pulse">
+        {/* TuneTogether Official Logo with glowing emerald aura */}
+        <div className="relative w-24 h-24 rounded-full overflow-hidden p-1 border-2 border-[#00FF87] shadow-[0_0_35px_rgba(0,255,135,0.65)] animate-pulse bg-black">
           <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
         </div>
 
         {/* Brand Tagline Badge */}
-        <div className="mt-5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[10px] font-bold tracking-wider uppercase">
-          ★ ONE BEAT. ONE CONNECTION.
+        <div className="mt-5 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#00FF87]/10 border border-[#00FF87]/30 text-[#00FF87] text-[10.5px] font-bold tracking-wider uppercase shadow-[0_0_12px_rgba(0,255,135,0.2)]">
+          ★ MUSIC BRINGS US CLOSER
         </div>
 
-        <h1 className="mt-3 text-3xl font-extrabold tracking-tight">
-          Tune<span className="text-green-400">Together</span>
+        <h1 className="mt-3.5 text-3xl sm:text-4xl font-black tracking-tight">
+          Tune<span className="text-[#00FF87] neon-text-glow">Together</span>
         </h1>
-        <p className="mt-1.5 text-sm text-white/60 max-w-xs">
-          Listen to YouTube songs together in real-time with friends.
+        <p className="mt-1.5 text-sm text-[#9AA59F] max-w-xs leading-relaxed">
+          Listen to YouTube songs together in real-time sync with friends.
         </p>
       </div>
 
-      <div className="mt-8 bg-panel rounded-[24px] p-6 border border-white/10 shadow-xl">
-        <p className="text-xs text-white/70 text-center leading-relaxed">
-          Sign in with Google to enter or create rooms.
+      <div className="mt-8 glass-card rounded-[32px] p-6 sm:p-7 border border-white/10 shadow-2xl">
+        <p className="text-xs text-[#9AA59F] text-center leading-relaxed">
+          Sign in with Google to create rooms, invite friends, and save favorites.
         </p>
 
         <button
           onClick={go}
           disabled={busy}
-          className="mt-5 w-full flex items-center justify-center gap-3 bg-white text-black font-bold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100 shadow-md cursor-pointer"
+          className="mt-5 w-full flex items-center justify-center gap-3 bg-white text-black font-extrabold rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-60 hover:bg-neutral-100 shadow-[0_0_20px_rgba(255,255,255,0.25)] cursor-pointer text-sm"
         >
           <GoogleG />
-          {busy ? 'Connecting to Google…' : 'Continue with Google'}
+          <span>{busy ? 'Connecting to Google…' : 'Continue with Google'}</span>
         </button>
 
-        {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
+        {error && <p className="mt-3 text-xs text-red-400 text-center font-medium">{error}</p>}
       </div>
 
 
