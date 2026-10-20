@@ -78,8 +78,10 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
                   </button>
                 )}
 
-                {/* Navigation Menu Bar Drawer Button */}
-                <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
+                {/* Navigation Menu Bar Drawer Button (Anchored far right with divider) */}
+                <div className="pl-1 sm:pl-1.5 border-l border-white/10 ml-0.5">
+                  <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
+                </div>
               </>
             ) : (
               <div className="flex items-center gap-2">

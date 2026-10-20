@@ -9,7 +9,7 @@ import AndroidAppModal from './AndroidAppModal';
 import { triggerDirectInstall, isInstalled } from '../lib/pwa';
 import { checkRemoteVersion, CURRENT_APP_VERSION } from '../lib/appUpdate';
 
-export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong, onOpenPrivacy, onOpenAndroid }) {
+export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong, onOpenPrivacy, onOpenAndroid, className = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -90,17 +90,17 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
 
   return (
     <>
-      {/* Ultra Stylish Menu Bar Trigger Button (Hamburger) */}
+      {/* Sleek, Professional Circular Menu Bar Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group relative w-10 h-10 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex flex-col items-center justify-center gap-1 text-white hover:text-green-400 active:scale-95 transition-all duration-300 hover:border-green-500/50 hover:shadow-[0_0_20px_rgba(34,197,94,0.35)] backdrop-blur-xl"
-        title="Open Menu"
+        className={`group relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel hover:bg-panel2 border border-white/15 hover:border-green-500/50 flex flex-col items-center justify-center gap-1 text-white hover:text-green-400 active:scale-95 transition-all duration-300 shadow-sm shrink-0 backdrop-blur-xl ${className}`}
+        title="Navigation Menu"
         aria-label="Navigation Menu"
       >
-        <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400" />
-        <span className="w-3.5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400 self-center" />
-        <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:bg-green-400" />
+        <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
+        <span className="w-2.5 sm:w-3.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:w-4.5 group-hover:bg-green-400" />
+        <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
       </button>
 
       {/* Slide-over Drawer Backdrop & Panel */}

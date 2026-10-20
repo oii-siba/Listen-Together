@@ -397,56 +397,69 @@ export default function Room() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <NotificationCenter user={user} roomId={roomId} />
-          <button
-            type="button"
-            onClick={() => setShowFriends(true)}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
-            title="Friends"
-          >
-            <span className="text-xs sm:text-sm">👥</span>
-          </button>
+          {/* Live Listeners Indicator Badge */}
+          <span className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 shrink-0 shadow-sm">
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
+            <span className="font-semibold text-white">{people.length}</span>
+            <span className="hidden xs:inline text-white/50">live</span>
+          </span>
+
+          {/* Quick Room Actions: QR & Friends */}
           <button
             type="button"
             onClick={() => setShowQr(true)}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:border-green-500/40 active:scale-95 transition shadow-sm"
             title="Show Room QR Code Invite"
           >
             <span className="text-xs sm:text-sm">📷</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowFriends(true)}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:border-green-500/40 active:scale-95 transition shadow-sm"
+            title="Friends"
+          >
+            <span className="text-xs sm:text-sm">👥</span>
+          </button>
+
+          {/* Notification Center */}
+          <NotificationCenter user={user} roomId={roomId} />
+
           {/* Front Direct Install App Button */}
           {!installed && (
             <button
               type="button"
               onClick={triggerDirectInstall}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.2)] active:scale-95"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 hover:text-green-200 text-xs font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.2)] active:scale-95"
               title="Direct Install App"
             >
               <span className="text-xs">📲</span>
-              <span className="hidden md:inline">Install</span>
+              <span>Install</span>
             </button>
           )}
-          <MenuBar
-            user={user}
-            roomId={roomId}
-            onPlaySong={addSong}
-            onOpenPrivacy={() => setShowPrivacy(true)}
-            onOpenAndroid={() => setShowAndroid(true)}
-          />
-          <span className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-white/70 bg-panel border border-white/10 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 shrink-0">
-            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${online ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
-            <span>{people.length} <span className="hidden xs:inline">live</span></span>
-          </span>
 
           {/* Leave Room Button */}
           <button
             type="button"
             onClick={handleLeave}
-            className="text-xs text-white/40 hover:text-red-400 p-1 sm:px-2 sm:py-1 rounded-full border border-white/10 hover:border-red-500/30 transition shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-panel border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 flex items-center justify-center text-xs transition active:scale-95 shadow-sm"
             title="Leave Room"
+            aria-label="Leave Room"
           >
             ✕
           </button>
+
+          {/* Navigation Menu Bar (Anchored at the far right with elegant divider) */}
+          <div className="pl-1 sm:pl-1.5 border-l border-white/10 ml-0.5">
+            <MenuBar
+              user={user}
+              roomId={roomId}
+              onPlaySong={addSong}
+              onOpenPrivacy={() => setShowPrivacy(true)}
+              onOpenAndroid={() => setShowAndroid(true)}
+            />
+          </div>
         </div>
       </header>
 
