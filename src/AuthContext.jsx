@@ -106,18 +106,20 @@ export function AuthProvider({ children }) {
           setUser(initialUser);
           registerUserDirectory(initialUser).catch(() => {});
 
-          // Realtime profile subscription: sync display name across all tabs & devices
+          // Realtime profile subscription: sync profile across all tabs & devices
           const profileRef = ref(db, `users/${u.uid}/profile`);
           unsubProfile = onValue(profileRef, (snap) => {
             const data = snap.val();
-            if (data && data.displayName) {
+            if (data && (data.displayName || data.photoURL || data.bio)) {
               setUser((prev) => {
                 if (!prev || prev.uid !== u.uid) return prev;
                 return {
                   ...prev,
                   ...data,
-                  displayName: data.displayName,
+                  displayName: data.displayName || prev.displayName,
                   photoURL: data.photoURL || prev.photoURL,
+                  bio: data.bio !== undefined ? data.bio : prev.bio,
+                  favoriteGenre: data.favoriteGenre || prev.favoriteGenre,
                 };
               });
             }
@@ -222,8 +224,21 @@ export function AuthProvider({ children }) {
     // 2. Persist locally and in Firebase Realtime Database
     await saveUserProfile(user.uid, fullProfile);
 
+    // If demo session, keep LT_DEMO_USER synchronized in localStorage
+    if (user.isDemo || localStorage.getItem('LT_DEMO_USER')) {
+      try {
+        const demoUser = {
+          ...user,
+          ...fullProfile,
+          displayName: newName,
+          photoURL: newPhoto,
+        };
+        localStorage.setItem('LT_DEMO_USER', JSON.stringify(demoUser));
+      } catch {}
+    }
+
     // 3. Update Firebase Auth currentUser profile if available
-    if (auth.currentUser) {
+    if (auth.currentUser && !user.isDemo) {
       try {
         await updateProfile(auth.currentUser, {
           displayName: newName,
@@ -247,6 +262,7 @@ export function AuthProvider({ children }) {
     // 5. Update user directory so friends searching can find the user with the new display name
     await registerUserDirectory({
       ...user,
+      ...fullProfile,
       displayName: newName,
       photoURL: newPhoto,
     }).catch(() => {});

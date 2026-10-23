@@ -156,26 +156,43 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
               {/* User Profile VIP Card matching mockup */}
               {user && (
                 <div className="rounded-[22px] bg-[#0c1510]/95 border border-emerald-500/35 p-3.5 backdrop-blur-xl shadow-[0_0_25px_rgba(16,185,129,0.15)] relative overflow-hidden group">
-                  <div className="flex items-center gap-3">
-                    <div className="relative shrink-0">
-                      <img
-                        src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
-                        alt=""
-                        className="w-12 h-12 rounded-2xl border-2 border-emerald-400 object-cover shadow-[0_0_14px_rgba(16,185,129,0.4)]"
-                      />
-                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#0c1510] shadow-sm animate-pulse" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-black text-sm text-white truncate leading-tight">
-                          {user.displayName || 'Music Fan'}
-                        </p>
-                        <span className="text-amber-400 text-xs" title="Verified Member">★</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={openProfile}
+                      className="flex items-center gap-3 min-w-0 text-left flex-1 group/btn cursor-pointer"
+                      title="Click to edit profile"
+                    >
+                      <div className="relative shrink-0">
+                        <img
+                          src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
+                          alt=""
+                          className="w-12 h-12 rounded-2xl border-2 border-emerald-400 object-cover shadow-[0_0_14px_rgba(16,185,129,0.4)] group-hover/btn:scale-105 transition"
+                        />
+                        <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#0c1510] shadow-sm animate-pulse" />
                       </div>
-                      <p className="text-[11px] text-white/50 truncate mt-0.5 font-medium">
-                        {user.email || 'Online Listener'}
-                      </p>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-black text-sm text-white truncate leading-tight group-hover/btn:text-emerald-400 transition">
+                            {user.displayName || 'Music Fan'}
+                          </p>
+                          <span className="text-amber-400 text-xs" title="Verified Member">★</span>
+                        </div>
+                        <p className="text-[11px] text-white/50 truncate mt-0.5 font-medium">
+                          {user.email || 'Online Listener'}
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={openProfile}
+                      className="px-2.5 py-1.5 rounded-xl border border-emerald-400/50 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-extrabold text-[11px] transition active:scale-95 shadow-sm flex items-center gap-1 shrink-0 cursor-pointer"
+                      title="Edit Profile Settings"
+                    >
+                      <span>✏️</span>
+                      <span>Edit</span>
+                    </button>
                   </div>
 
                   {/* Friend Code with Copy Box matching mockup */}

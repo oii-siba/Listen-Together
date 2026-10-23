@@ -89,20 +89,29 @@ export function logSongHistory(uid, song) {
 // ---------------- PROFILE CUSTOMIZATION ----------------
 export function getUserProfile(uid, fallbackUser = {}) {
   const local = getLocal(`${PROFILE_KEY}_${uid}`, null);
-  if (local) return local;
-  return {
+  const fallback = {
     displayName: fallbackUser.displayName || 'Music Fan',
     photoURL: fallbackUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${uid}`,
-    bio: 'Vibing with friends on TuneTogether 🎧',
-    favoriteGenre: 'Lo-Fi & Pop',
-    friendCode: `TT-${(uid || 'USER').slice(0, 6).toUpperCase()}`,
+    bio: fallbackUser.bio || 'Vibing with friends on TuneTogether 🎧',
+    favoriteGenre: fallbackUser.favoriteGenre || 'Lo-Fi & Pop',
+    friendCode: fallbackUser.friendCode || `TT-${(uid || 'USER').slice(0, 6).toUpperCase()}`,
+  };
+  if (!local) return fallback;
+  return {
+    ...fallback,
+    ...local,
+    displayName: local.displayName || fallback.displayName,
+    photoURL: local.photoURL || fallback.photoURL,
+    bio: local.bio !== undefined ? local.bio : fallback.bio,
+    favoriteGenre: local.favoriteGenre || fallback.favoriteGenre,
+    friendCode: local.friendCode || fallback.friendCode,
   };
 }
 
 export async function saveUserProfile(uid, profileData) {
   if (!uid) return;
   setLocal(`${PROFILE_KEY}_${uid}`, profileData);
-  if (isFirebaseConfigured) {
+  if (isFirebaseConfigured && !uid.startsWith('demo-')) {
     set(ref(db, `users/${uid}/profile`), {
       ...profileData,
       updatedAt: serverTimestamp(),

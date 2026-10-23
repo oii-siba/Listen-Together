@@ -394,6 +394,7 @@ export default function Room() {
           {/* MenuBar on the left */}
           <MenuBar
             user={user}
+            onUpdateUser={updateUserProfile}
             roomId={roomId}
             onPlaySong={addSong}
             onOpenPrivacy={() => setShowPrivacy(true)}
@@ -449,6 +450,22 @@ export default function Room() {
           >
             <span className="text-xs sm:text-sm">👥</span>
           </button>
+
+          {/* User Profile Customization */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setShowProfile(true)}
+              className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-green-400/80 shadow-[0_0_10px_rgba(34,197,94,0.3)] active:scale-95 transition hidden xs:inline-block shrink-0 cursor-pointer"
+              title="Customize Profile"
+            >
+              <img
+                src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`}
+                alt={user.displayName || 'User'}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          )}
 
           {/* Notification Center */}
           <NotificationCenter user={user} roomId={roomId} />
