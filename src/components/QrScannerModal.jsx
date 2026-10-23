@@ -68,81 +68,108 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         setPermState('denied');
         setError(
           window.isSecureContext === false
-            ? 'Camera access requires a secure connection (HTTPS or localhost). Please upload a QR image below.'
+            ? 'Camera requires a secure HTTPS connection or localhost. Please open via HTTPS or upload a QR image below.'
             : 'Camera access is not supported on this browser. Please upload a QR image below.'
         );
         return;
       }
 
-      // 2. Cleanly stop any running instance and wait for hardware lock release
+      // 2. Cleanly stop any running scanner instance
       try {
         if (scannerRef.current) {
-          if (scannerRef.current.isScanning) {
-            await scannerRef.current.stop();
-          }
-          scannerRef.current.clear();
+          try {
+            if (scannerRef.current.isScanning) await scannerRef.current.stop();
+          } catch {}
+          try {
+            scannerRef.current.clear();
+          } catch {}
           scannerRef.current = null;
         }
       } catch {}
 
-      // Short pause to ensure DirectShow/MediaFoundation releases the camera device
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      // Short pause to ensure media hardware releases cleanly
+      await new Promise((resolve) => setTimeout(resolve, 120));
       if (isStoppedRef.current) return;
 
-      try {
-        const id = 'qr-reader-viewport';
-        const el = document.getElementById(id);
-        if (!el) {
-          setTimeout(() => {
-            if (!isStoppedRef.current) startCamera(preferredCameraId);
-          }, 100);
-          return;
-        }
+      const id = 'qr-reader-viewport';
+      const el = document.getElementById(id);
+      // Wait if container element is not yet rendered or has 0 dimensions
+      if (!el || el.clientWidth === 0) {
+        setTimeout(() => {
+          if (!isStoppedRef.current) startCamera(preferredCameraId);
+        }, 120);
+        return;
+      }
+
+      const config = {
+        fps: 15,
+        qrbox: (viewfinderWidth, viewfinderHeight) => {
+          const minEdge = Math.min(viewfinderWidth || 250, viewfinderHeight || 250);
+          const qrboxSize = Math.max(80, Math.min(minEdge - 24, Math.floor(minEdge * 0.72)));
+          return { width: qrboxSize, height: qrboxSize };
+        },
+      };
+
+      // Helper to attempt starting with a fresh Html5Qrcode instance
+      const tryStartScanner = async (target) => {
+        try {
+          if (scannerRef.current) {
+            try {
+              if (scannerRef.current.isScanning) await scannerRef.current.stop();
+            } catch {}
+            try {
+              scannerRef.current.clear();
+            } catch {}
+            scannerRef.current = null;
+          }
+        } catch {}
 
         const scanner = new Html5Qrcode(id);
         scannerRef.current = scanner;
 
-        const config = {
-          fps: 15,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxSize = Math.max(160, Math.floor(minEdge * 0.72));
-            return { width: qrboxSize, height: qrboxSize };
-          },
-          aspectRatio: 1.0,
-        };
+        await scanner.start(
+          target,
+          config,
+          (text) => handleDetected(text),
+          () => {}
+        );
+        return scanner;
+      };
 
-        // If specific camera ID requested (from flip button), use it.
-        // Otherwise start directly with rear camera constraint { facingMode: "environment" }.
-        // Do NOT call getCameras() first because opening/closing temporary streams causes "Device in use".
-        const cameraTarget = preferredCameraId || { facingMode: 'environment' };
+      try {
+        let activeScanner = null;
 
-        try {
-          await scanner.start(
-            cameraTarget,
-            config,
-            (text) => handleDetected(text),
-            () => {}
-          );
-        } catch (firstErr) {
-          console.warn('Rear camera start failed or not present, trying user/front camera fallback:', firstErr);
-          if (!isStoppedRef.current && !preferredCameraId) {
-            // Laptop / PC webcam or front-only devices fallback:
-            await scanner.start(
-              { facingMode: 'user' },
-              config,
-              (text) => handleDetected(text),
-              () => {}
-            );
-          } else {
-            throw firstErr;
+        // Sequence of camera candidates:
+        if (preferredCameraId) {
+          activeScanner = await tryStartScanner(preferredCameraId);
+        } else {
+          try {
+            // Priority 1: Rear camera (environment)
+            activeScanner = await tryStartScanner({ facingMode: 'environment' });
+          } catch (envErr) {
+            console.warn('Rear camera not available, trying user/front camera...', envErr);
+            if (isStoppedRef.current) return;
+            try {
+              // Priority 2: Front / User camera (webcams, laptops, tablets)
+              activeScanner = await tryStartScanner({ facingMode: 'user' });
+            } catch (userErr) {
+              console.warn('Front camera failed, trying enumerated device fallback...', userErr);
+              if (isStoppedRef.current) return;
+              // Priority 3: First available device ID
+              const devices = await Html5Qrcode.getCameras().catch(() => []);
+              if (devices && devices.length > 0) {
+                activeScanner = await tryStartScanner(devices[0].id);
+              } else {
+                throw userErr || envErr;
+              }
+            }
           }
         }
 
         if (isStoppedRef.current) {
           try {
-            if (scanner.isScanning) await scanner.stop();
-            scanner.clear();
+            if (activeScanner && activeScanner.isScanning) await activeScanner.stop();
+            activeScanner?.clear();
           } catch {}
           return;
         }
@@ -150,15 +177,15 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         setPermState('granted');
         setIsScanning(true);
 
-        // Check torch / flashlight capability
+        // Check torch capability
         try {
-          const caps = scanner.getRunningTrackCapabilities();
+          const caps = activeScanner.getRunningTrackCapabilities();
           if (caps && caps.torch) {
             setHasTorch(true);
           }
         } catch {}
 
-        // Populate available cameras for Flip Camera button after permission has been granted
+        // Populate available cameras for flip button
         try {
           const devices = await Html5Qrcode.getCameras();
           if (devices && devices.length > 0) {
@@ -171,7 +198,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         const msg = (err?.message || '').toLowerCase();
         if (err?.name === 'NotAllowedError' || msg.includes('permission') || msg.includes('denied')) {
           setError(
-            'Camera permission was denied. Please tap the lock or camera icon in your browser address bar to allow Camera access.'
+            'Camera permission was denied. Please tap the lock/settings icon in your browser address bar to allow Camera access.'
           );
         } else if (err?.name === 'NotReadableError' || msg.includes('device in use') || msg.includes('could not start video source')) {
           setError(
@@ -179,7 +206,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
           );
         } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError' || msg.includes('no camera')) {
           setError(
-            'No camera found on this device. You can upload an image with a QR code below.'
+            'No camera found on this device. You can upload a QR image from Photos below.'
           );
         } else {
           setError(
