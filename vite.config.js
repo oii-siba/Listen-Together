@@ -93,6 +93,12 @@ function youtubeSearchPlugin() {
 
 export default defineConfig({
   plugins: [react(), youtubeSearchPlugin()],
+  server: {
+    host: true,
+    headers: {
+      'Permissions-Policy': 'camera=*',
+    },
+  },
   build: {
     sourcemap: false,
     minify: 'esbuild',

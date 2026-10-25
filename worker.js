@@ -113,9 +113,17 @@ export default {
       }
     }
 
-    // 3. For all other routes, serve static SPA assets safely
+    // 3. For all other routes, serve static SPA assets safely with mobile camera permissions
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-      return env.ASSETS.fetch(request);
+      const response = await env.ASSETS.fetch(request);
+      const headers = new Headers(response.headers);
+      headers.set('Permissions-Policy', 'camera=*');
+      headers.set('Feature-Policy', 'camera *');
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     }
 
     return new Response('Loading assets...', { status: 200 });
