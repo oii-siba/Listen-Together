@@ -24,7 +24,7 @@ if (typeof navigator !== 'undefined') {
 
 export default function QrScannerModal({ onClose, onScanSuccess }) {
   const [error, setError] = useState('');
-  const [permState, setPermState] = useState('prompt'); // 'prompt' | 'requesting' | 'granted' | 'denied'
+  const [permState, setPermState] = useState('requesting'); // 'requesting' | 'granted' | 'denied'
   const [cameras, setCameras] = useState([]);
   const [activeCameraId, setActiveCameraId] = useState(null);
   const [hasTorch, setHasTorch] = useState(false);
@@ -81,14 +81,14 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
     [onScanSuccess, stopScanner]
   );
 
-  // Core start scanner method
+  // Core start camera scanner (DO NOT call preliminary getUserMedia and stop it, keep stream active!)
   const startCamera = useCallback(
     async (preferredCameraId = null) => {
       setError('');
       setPermState('requesting');
       isStoppedRef.current = false;
 
-      // Cleanly stop any existing scanner
+      // Stop any existing scanner first
       if (scannerRef.current) {
         try {
           if (scannerRef.current.isScanning) await scannerRef.current.stop();
@@ -110,80 +110,40 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
 
       el.innerHTML = '';
 
-      // Scanner configuration (no fixed aspectRatio to prevent mobile camera sensor overconstraint)
-      const config = {
-        fps: 15,
-        qrbox: (viewfinderWidth, viewfinderHeight) => {
-          const minEdge = Math.min(viewfinderWidth || 250, viewfinderHeight || 250);
-          const qrboxSize = Math.max(80, Math.min(minEdge - 16, Math.floor(minEdge * 0.78)));
-          return { width: qrboxSize, height: qrboxSize };
-        },
-      };
-
-      const tryStart = async (target) => {
-        if (scannerRef.current) {
-          try {
-            if (scannerRef.current.isScanning) await scannerRef.current.stop();
-          } catch {}
-          try {
-            scannerRef.current.clear();
-          } catch {}
-        }
-        el.innerHTML = '';
-        const scanner = new Html5Qrcode(id);
-        scannerRef.current = scanner;
-
-        await scanner.start(
-          target,
-          config,
-          (text) => handleDetected(text),
-          () => {}
-        );
-        return scanner;
-      };
+      const scanner = new Html5Qrcode(id);
+      scannerRef.current = scanner;
 
       try {
-        let activeScanner = null;
+        let target = preferredCameraId;
 
-        if (preferredCameraId) {
-          activeScanner = await tryStart(preferredCameraId);
-          setActiveCameraId(preferredCameraId);
-        } else {
-          // Priority 1: Rear camera via facingMode environment
-          try {
-            activeScanner = await tryStart({ facingMode: 'environment' });
-          } catch (envErr) {
-            console.warn('facingMode environment failed, checking device cameras...', envErr);
-            if (isStoppedRef.current) return;
-
-            // Priority 2: Check enumerated cameras for back camera
-            const devices = await Html5Qrcode.getCameras().catch(() => []);
-            if (devices && devices.length > 0) {
-              setCameras(devices);
-              const backCam = devices.find((d) =>
-                /back|rear|environment|facing back|world|main/i.test(d.label || '')
-              );
-              const targetId = backCam ? backCam.id : devices[0].id;
-              try {
-                activeScanner = await tryStart(targetId);
-                setActiveCameraId(targetId);
-              } catch (idErr) {
-                console.warn('Camera deviceId failed, trying user camera...', idErr);
-                if (isStoppedRef.current) return;
-                // Priority 3: Front camera fallback
-                activeScanner = await tryStart({ facingMode: 'user' });
-              }
-            } else {
-              // Priority 4: Generic user camera
-              activeScanner = await tryStart({ facingMode: 'user' });
-            }
+        if (!target) {
+          // If no preferred camera, check enumerated cameras
+          const devices = await Html5Qrcode.getCameras().catch(() => []);
+          if (devices && devices.length > 0) {
+            setCameras(devices);
+            const backCam = devices.find((d) =>
+              /back|rear|environment|world|main/i.test(d.label || '')
+            );
+            target = backCam ? backCam.id : devices[0].id;
+            setActiveCameraId(target);
+          } else {
+            // Default to environment facingMode
+            target = { facingMode: 'environment' };
           }
         }
 
+        // Start scanner without fixed qrbox or aspectRatio to avoid mobile camera constraints crash
+        await scanner.start(
+          target,
+          { fps: 15 },
+          (text) => handleDetected(text),
+          () => {} // Frame error callback (ignored)
+        );
+
         if (isStoppedRef.current) {
           try {
-            if (activeScanner && activeScanner.isScanning) await activeScanner.stop();
-            activeScanner?.clear();
+            if (scanner.isScanning) await scanner.stop();
+            scanner.clear();
           } catch {}
           return;
         }
@@ -191,7 +151,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         setPermState('granted');
         setIsScanning(true);
 
-        // Fetch cameras for switch button
+        // Fetch all cameras for the flip button
         try {
           const devices = await Html5Qrcode.getCameras();
           if (devices && devices.length > 0) {
@@ -201,7 +161,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
 
         // Check torch capability
         try {
-          const caps = activeScanner.getRunningTrackCapabilities();
+          const caps = scanner.getRunningTrackCapabilities();
           if (caps && caps.torch) {
             setHasTorch(true);
           }
@@ -228,24 +188,10 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
     [handleDetected]
   );
 
-  // Direct user-gesture permission prompt & start handler
-  const handleEnablePermission = async () => {
+  // Directly start camera on button tap (NEVER stop tracks here!)
+  const handleEnablePermission = () => {
     setError('');
-    setPermState('requesting');
-
-    // Explicitly prompt via native getUserMedia in user gesture stack
-    try {
-      if (navigator?.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-        });
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    } catch (e) {
-      console.warn('Direct getUserMedia prompt rejected:', e);
-    }
-
-    startCamera();
+    startCamera(activeCameraId);
   };
 
   // Try auto-starting on mount
@@ -479,7 +425,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
             </button>
           )}
 
-          {/* Mobile Native Camera Snap Fallback: Opens phone camera app natively */}
+          {/* Mobile Native Camera Snap Fallback */}
           <button
             type="button"
             onClick={() => cameraSnapRef.current?.click()}
