@@ -24,7 +24,7 @@ if (typeof navigator !== 'undefined') {
 
 export default function QrScannerModal({ onClose, onScanSuccess }) {
   const [error, setError] = useState('');
-  const [permState, setPermState] = useState('requesting'); // 'requesting' | 'granted' | 'denied'
+  const [permState, setPermState] = useState('prompt'); // 'prompt' | 'requesting' | 'granted' | 'denied'
   const [cameras, setCameras] = useState([]);
   const [activeCameraId, setActiveCameraId] = useState(null);
   const [hasTorch, setHasTorch] = useState(false);
@@ -36,14 +36,6 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
   const isStoppedRef = useRef(false);
   const fileInputRef = useRef(null);
   const cameraSnapRef = useRef(null);
-
-  // Check if browser context is secure
-  const isSecureContext =
-    typeof window !== 'undefined' &&
-    (window.isSecureContext !== false ||
-      location.protocol === 'https:' ||
-      location.hostname === 'localhost' ||
-      location.hostname === '127.0.0.1');
 
   // Stop scanner cleanly
   const stopScanner = useCallback(async () => {
@@ -89,21 +81,12 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
     [onScanSuccess, stopScanner]
   );
 
-  // Start camera scanner
+  // Core start scanner method
   const startCamera = useCallback(
     async (preferredCameraId = null) => {
       setError('');
       setPermState('requesting');
       isStoppedRef.current = false;
-
-      // Check secure context
-      if (!isSecureContext && !navigator?.mediaDevices?.getUserMedia) {
-        setPermState('denied');
-        setError(
-          'Mobile browsers block live camera on HTTP. Please test via HTTPS or tap "Take Photo" below to scan directly.'
-        );
-        return;
-      }
 
       // Cleanly stop any existing scanner
       if (scannerRef.current) {
@@ -125,15 +108,14 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         return;
       }
 
-      // Clear previous HTML inside viewport
       el.innerHTML = '';
 
-      // Scanner configuration (DO NOT set aspectRatio - mobile cameras reject fixed aspect ratio constraints!)
+      // Scanner configuration (no fixed aspectRatio to prevent mobile camera sensor overconstraint)
       const config = {
         fps: 15,
         qrbox: (viewfinderWidth, viewfinderHeight) => {
           const minEdge = Math.min(viewfinderWidth || 250, viewfinderHeight || 250);
-          const qrboxSize = Math.max(80, Math.min(minEdge - 16, Math.floor(minEdge * 0.76)));
+          const qrboxSize = Math.max(80, Math.min(minEdge - 16, Math.floor(minEdge * 0.78)));
           return { width: qrboxSize, height: qrboxSize };
         },
       };
@@ -171,10 +153,10 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
           try {
             activeScanner = await tryStart({ facingMode: 'environment' });
           } catch (envErr) {
-            console.warn('facingMode environment failed, querying available cameras...', envErr);
+            console.warn('facingMode environment failed, checking device cameras...', envErr);
             if (isStoppedRef.current) return;
 
-            // Priority 2: Enumerate devices and look for back camera
+            // Priority 2: Check enumerated cameras for back camera
             const devices = await Html5Qrcode.getCameras().catch(() => []);
             if (devices && devices.length > 0) {
               setCameras(devices);
@@ -186,13 +168,13 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
                 activeScanner = await tryStart(targetId);
                 setActiveCameraId(targetId);
               } catch (idErr) {
-                console.warn('Camera deviceId failed, trying facingMode user...', idErr);
+                console.warn('Camera deviceId failed, trying user camera...', idErr);
                 if (isStoppedRef.current) return;
                 // Priority 3: Front camera fallback
                 activeScanner = await tryStart({ facingMode: 'user' });
               }
             } else {
-              // Try user facing mode as last resort
+              // Priority 4: Generic user camera
               activeScanner = await tryStart({ facingMode: 'user' });
             }
           }
@@ -233,7 +215,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         if (errName === 'NotAllowedError' || msg.includes('permission') || msg.includes('denied')) {
           setError('Camera permission was blocked. Tap "Allow Camera" or enable Camera access in your browser settings.');
         } else if (errName === 'NotReadableError' || msg.includes('in use') || msg.includes('source')) {
-          setError('Camera is being used by another application. Please close other camera apps and retry.');
+          setError('Camera is being used by another app. Please close other camera apps and retry.');
         } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
           setError('No camera device found. Tap "Take Photo" below to snap the QR code.');
         } else {
@@ -243,22 +225,36 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         }
       }
     },
-    [handleDetected, isSecureContext]
+    [handleDetected]
   );
 
-  // Mount effect
+  // Direct user-gesture permission prompt & start handler
+  const handleEnablePermission = async () => {
+    setError('');
+    setPermState('requesting');
+
+    // Explicitly prompt via native getUserMedia in user gesture stack
+    try {
+      if (navigator?.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+        });
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (e) {
+      console.warn('Direct getUserMedia prompt rejected:', e);
+    }
+
+    startCamera();
+  };
+
+  // Try auto-starting on mount
   useEffect(() => {
     startCamera();
     return () => {
       stopScanner();
     };
   }, [startCamera, stopScanner]);
-
-  // User click trigger for permissions
-  const handleEnablePermission = () => {
-    setError('');
-    startCamera(activeCameraId);
-  };
 
   const toggleTorch = async () => {
     if (!scannerRef.current || !hasTorch) return;
@@ -281,21 +277,34 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
     startCamera(nextId);
   };
 
-  // Image scanner for native camera photo & gallery uploads
+  // Dedicated file scanner (uses dummy element so it never conflicts with live camera)
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setError('Scanning QR photo…');
     try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode('qr-reader-viewport');
+      await stopScanner();
+
+      const dummyId = 'qr-reader-file-dummy';
+      let dummyEl = document.getElementById(dummyId);
+      if (!dummyEl) {
+        dummyEl = document.createElement('div');
+        dummyEl.id = dummyId;
+        dummyEl.style.display = 'none';
+        document.body.appendChild(dummyEl);
       }
-      const text = await scannerRef.current.scanFile(file, true);
+      dummyEl.innerHTML = '';
+
+      const fileScanner = new Html5Qrcode(dummyId);
+      const text = await fileScanner.scanFile(file, false);
+      try {
+        fileScanner.clear();
+      } catch {}
       handleDetected(text);
     } catch (scanErr) {
       console.warn('Image scan failed:', scanErr);
-      setError('Could not detect a TuneTogether QR code in this photo. Please hold camera closer to the QR code.');
+      setError('Could not detect QR code in this photo. Please hold camera closer to the QR code.');
       setTimeout(() => setError(''), 4000);
     } finally {
       e.target.value = '';
@@ -336,16 +345,16 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         {/* In-App Browser Warning Alert */}
         {inApp && (
           <div className="mb-2 p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[10.5px] text-amber-300 text-left leading-relaxed">
-            ⚠️ You are in an in-app browser. Tap <strong>⋮ / •••</strong> and choose <strong>Open in Chrome / Safari</strong>, or use <strong>Take Photo</strong> below.
+            ⚠️ You are in an in-app browser. Tap <strong>⋮ / •••</strong> and choose <strong>Open in Chrome / Safari</strong>, or tap <strong>Take Photo</strong> below.
           </div>
         )}
 
         {/* Camera Viewport Container */}
-        <div className="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-green-500/40 shadow-inner flex items-center justify-center">
+        <div className="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-green-500/40 shadow-inner">
           {/* html5-qrcode target container */}
           <div
             id="qr-reader-viewport"
-            className="absolute inset-0 w-full h-full overflow-hidden"
+            style={{ width: '100%', height: '100%', minHeight: '260px' }}
           />
 
           {/* Futuristic HUD Scan Overlay */}
@@ -385,7 +394,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
               <span className="text-3xl mb-1.5">📸</span>
               <p className="text-xs font-bold text-red-300">Camera Access Blocked</p>
               <p className="text-[10.5px] text-white/70 mt-1 max-w-xs leading-relaxed">
-                Tap below to prompt camera permissions, or use phone photo capture:
+                Mobile browser needs permission, or you can take a photo of the QR code:
               </p>
 
               <button
@@ -428,6 +437,9 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
           )}
         </div>
 
+        {/* Hidden dummy element for scanFile */}
+        <div id="qr-reader-file-dummy" className="hidden" />
+
         {/* Feedback message */}
         {error && (
           <div className="mt-2 text-[10.5px] font-medium text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-xl px-3 py-1.5 transition text-left">
@@ -467,7 +479,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
             </button>
           )}
 
-          {/* Mobile Native Camera Snap Fallback */}
+          {/* Mobile Native Camera Snap Fallback: Opens phone camera app natively */}
           <button
             type="button"
             onClick={() => cameraSnapRef.current?.click()}
@@ -515,6 +527,7 @@ export default function QrScannerModal({ onClose, onScanSuccess }) {
         #qr-reader-viewport {
           width: 100% !important;
           height: 100% !important;
+          min-height: 260px !important;
           border: none !important;
         }
         #qr-reader-viewport video {
