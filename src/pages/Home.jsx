@@ -273,7 +273,20 @@ export default function Home() {
             {/* Scan Room QR Code Button */}
             <button
               type="button"
-              onClick={() => setShowScanner(true)}
+              onClick={async () => {
+                // Request camera permission directly in user touch event so mobile browser triggers native prompt
+                if (navigator?.mediaDevices?.getUserMedia) {
+                  try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                      video: { facingMode: { ideal: 'environment' } },
+                    });
+                    stream.getTracks().forEach((track) => track.stop());
+                  } catch (err) {
+                    console.warn('User gesture camera prompt error:', err);
+                  }
+                }
+                setShowScanner(true);
+              }}
               className="w-full py-3 rounded-full bg-gradient-to-r from-green-500/15 via-emerald-500/15 to-green-500/10 border border-green-500/30 text-green-400 font-extrabold text-xs flex items-center justify-center gap-2 hover:bg-green-500/25 active:scale-[0.98] transition shadow-[0_0_15px_rgba(34,197,94,0.15)]"
             >
               <span className="text-base">📷</span>
