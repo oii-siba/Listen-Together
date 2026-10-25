@@ -5,7 +5,7 @@
 import { ref, onValue } from './db';
 import { db, isFirebaseConfigured } from '../firebase';
 
-export const CURRENT_APP_VERSION = '1.0.5';
+export const CURRENT_APP_VERSION = '1.0.6';
 
 export function getInstalledVersion() {
   try {

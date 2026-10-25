@@ -1,12 +1,12 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "size": "1.2 MB",
   "sizeMB": 1.2,
   "forceUpdate": true,
-  "title": "Camera Scanner & QR Sync Update 📷 (v1.0.5)",
-  "message": "TuneTogether v1.0.5 is ready. Update now to enable smooth mobile QR camera scanning and room join.",
+  "title": "Camera Scanner & Permission Fix 📷 (v1.0.6)",
+  "message": "TuneTogether v1.0.6 is ready. Update now to enable smooth mobile QR camera scanning and room join.",
   "changelog": [
-    "📷 Mobile QR Camera Scanner & Permission Fix",
+    "📷 Mobile QR Camera Scanner & Chrome Permission Fix",
     "⚡ Instant QR detection and room sync",
     "📸 Direct camera snapshot fallback",
     "🎧 Real-time Music Sync & Smooth Playback"
