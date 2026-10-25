@@ -9,7 +9,18 @@ import AndroidAppModal from './AndroidAppModal';
 import { triggerDirectInstall, isInstalled } from '../lib/pwa';
 import { checkRemoteVersion, CURRENT_APP_VERSION } from '../lib/appUpdate';
 
-export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlaySong, onOpenPrivacy, onOpenAndroid, className = '' }) {
+export default function MenuBar({
+  user,
+  roomId,
+  onSignOut,
+  onUpdateUser,
+  onPlaySong,
+  onOpenPrivacy,
+  onOpenAndroid,
+  className = '',
+  children,
+  hideTrigger = false,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -90,18 +101,26 @@ export default function MenuBar({ user, roomId, onSignOut, onUpdateUser, onPlayS
 
   return (
     <>
-      {/* Sleek, Professional Circular Menu Bar Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={`group relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel hover:bg-panel2 border border-white/15 hover:border-green-500/50 flex flex-col items-center justify-center gap-1 text-white hover:text-green-400 active:scale-95 transition-all duration-300 shadow-sm shrink-0 backdrop-blur-xl ${className}`}
-        title="Navigation Menu"
-        aria-label="Navigation Menu"
-      >
-        <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
-        <span className="w-2.5 sm:w-3.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:w-4.5 group-hover:bg-green-400" />
-        <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
-      </button>
+      {/* Trigger: Either custom children (e.g. Logo) or default circular MenuBar button */}
+      {!hideTrigger && (
+        children ? (
+          <div onClick={() => setIsOpen(true)} className="inline-flex items-center cursor-pointer">
+            {children}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className={`group relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel hover:bg-panel2 border border-white/15 hover:border-green-500/50 flex flex-col items-center justify-center gap-1 text-white hover:text-green-400 active:scale-95 transition-all duration-300 shadow-sm shrink-0 backdrop-blur-xl ${className}`}
+            title="Navigation Menu"
+            aria-label="Navigation Menu"
+          >
+            <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
+            <span className="w-2.5 sm:w-3.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:w-4.5 group-hover:bg-green-400" />
+            <span className="w-3.5 sm:w-4.5 h-[2px] bg-current rounded-full transition-all duration-300 group-hover:bg-green-400" />
+          </button>
+        )
+      )}
 
       {/* Slide-over Drawer Backdrop & Panel (Left Aligned) */}
       {isOpen && (

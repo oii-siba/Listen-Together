@@ -21,20 +21,34 @@ export default function BrandHeader({ user, onSignOut, showNav = true, onUpdateU
   return (
     <>
       <header className="flex items-center justify-between py-3 sm:py-4 px-1 sm:px-2 w-full">
-        {/* Left: Menu Bar Drawer Button + Brand Logo & Name */}
+        {/* Left: Brand Logo & Name (Clicking Logo opens Menu Drawer) */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-          {user && (
-            <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser} />
+          {user ? (
+            <MenuBar user={user} onSignOut={onSignOut} onUpdateUser={onUpdateUser}>
+              <div
+                className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0 select-none cursor-pointer"
+                title="Click Logo to open Navigation Menu"
+              >
+                <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 active:scale-95 transition shrink-0">
+                  <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
+                </div>
+                <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none group-hover:opacity-90 transition">
+                  <span className="text-white">Tune</span>
+                  <span className="text-green-400 ml-0.5">Together</span>
+                </div>
+              </div>
+            </MenuBar>
+          ) : (
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0">
+              <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition shrink-0">
+                <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
+              </div>
+              <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none">
+                <span className="text-white">Tune</span>
+                <span className="text-green-400 ml-0.5">Together</span>
+              </div>
+            </Link>
           )}
-          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0">
-            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden p-0.5 border-2 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.7)] group-hover:scale-105 transition shrink-0">
-              <img src="/logo.png" alt="TuneTogether Logo" className="w-full h-full object-cover rounded-full" />
-            </div>
-            <div className="font-extrabold text-base sm:text-xl tracking-tight leading-none">
-              <span className="text-white">Tune</span>
-              <span className="text-green-400 ml-0.5">Together</span>
-            </div>
-          </Link>
         </div>
 
         {/* Right Actions */}
